@@ -25,11 +25,22 @@ import gzip
 
 
 def get_create_time():
+    """
+    generate file create time, like 2021_01_06_16_16_23
+
+    :return: create time,
+    """
     return "%04d_%02d_%02d_%02d_%02d_%02d" % time.localtime()[:6]
 
 
 def compress_and_copy_files(src, dst):
-    """compress if the src file is uncompressed else copied"""
+    """
+    compress if the src file is uncompressed else copied
+
+    :param src: the path customer config
+    :param dst: the path will be compress
+    :return:
+    """
     print("compress files:" + src)
     if src.lower().endswith(".gz"):
         try:
@@ -44,6 +55,12 @@ def compress_and_copy_files(src, dst):
 
 
 def compress_mindx_files(dst_src_paths):
+    """
+    copy the customer config file to des path
+
+    :param dst_src_paths: the config path and copy destination path
+    :return:
+    """
     for dst_path, _ in dst_src_paths:
         if not os.path.exists(dst_path):
             os.makedirs(dst_path)
@@ -56,6 +73,13 @@ def compress_mindx_files(dst_src_paths):
 
 
 def get_compress_file_by_path(dst_path, src_path):
+    """
+    get the files all in given path
+
+    :param dst_path: the path customer config
+    :param src_path: the path will be compress
+    :return:
+    """
     file_names = os.listdir(src_path)
     for tmp_file in file_names:
         src = os.path.join(src_path, tmp_file)
@@ -68,6 +92,12 @@ def get_compress_file_by_path(dst_path, src_path):
 
 
 def compress_os_files(base):
+    """
+    collect the os file into base path, support ubuntu, centos, debian
+
+    :param base: the path will be compress
+    :return:
+    """
     sys_str = platform.platform().lower()
 
     if "ubuntu" in sys_str:
@@ -97,11 +127,23 @@ def compress_os_files(base):
 
 
 def get_mindx_dl_compress_files(base, dst_src_file_list):
+    """
+    collect all the files(customer config and os)
+
+    :param base: the destination path
+    :param dst_src_file_list: the config path and copy destination path
+    :return:
+    """
     compress_mindx_files(dst_src_file_list)
     compress_os_files(base)
 
 
 def set_log_report_file_path():
+    """
+    set the collected file path, compress path, file name
+
+    :return: collected file path, compress path, file name
+    """
     time_base = get_create_time()
     host_name = socket.gethostname()
     tmp_path = "MindX_Report_" + time_base
@@ -116,7 +158,12 @@ def set_log_report_file_path():
 
 
 def get_log_path_src_and_dst(base):
-    # compress all files from source folders into destination folders
+    """
+    set all file which need to be compressed
+
+    :param base:  compress path
+    :return: the config path and compress destination path
+    """
     dst_src_paths = \
         [(os.path.join(base, "volcano-scheduler"),
           "/var/log/atlas_dls/volcano-scheduler"),
@@ -141,7 +188,13 @@ def get_log_path_src_and_dst(base):
 
 
 def create_compress_file(tmp_path, tar_file_path):
-    # create a tar file, and archive all compressed files into ita
+    """
+    create a tar file, and archive all compressed files into it
+
+    :param tmp_path:  the copied path
+    :param tar_file_path:  tar file name
+    :return:
+    """
     print("create tar file:" + tar_file_path + ", from all compressed files")
     try:
         os.path.abspath(tar_file_path)
@@ -153,15 +206,32 @@ def create_compress_file(tmp_path, tar_file_path):
 
 
 def set_file_right(tar_file_path):
+    """
+    set the tar file mod
+
+    :param tar_file_path: tar file path
+    :return:
+    """
     os.chmod(tar_file_path, stat.S_IREAD)
 
 
 def delete_tmp_file(tmp_path):
+    """
+    delete the copy path after compressed
+
+    :param tmp_path: copy file path
+    :return:
+    """
     print("delete temp folder" + tmp_path)
     shutil.rmtree(tmp_path)
 
 
 def main():
+    """
+    do the file collect
+
+    :return:
+    """
     print("begin to collect log files")
 
     base, tmp_path, tar_file_path = set_log_report_file_path()
