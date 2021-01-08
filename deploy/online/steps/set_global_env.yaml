@@ -30,7 +30,7 @@
       shell:
         cmd:
           yum install -y libselinux-python3 libselinux-python;
-          pip 3.7 install selinux
+          pip3.7 install selinux
       environment:
         http_proxy: "{{ proxy }}"
         https_proxy: "{{ proxy }}"
@@ -72,7 +72,7 @@
     - name: Allow packet forwarding next
       lineinfile:
         path: /etc/rc.local
-        line: "/usr/sbin/iptables - P FORWARD ACCEPT"
+        line: "/usr/sbin/iptables -P FORWARD ACCEPT"
         create: yes
 
     - name: Network config

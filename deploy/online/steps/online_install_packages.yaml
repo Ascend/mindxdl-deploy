@@ -192,7 +192,7 @@
     # =================================================================================
 
     # ===================== CentOS 7.6 ================================================
-    - name: Create kubernetes repo source -arm64
+    - name: Create kubernetes repo source - arm64
       lineinfile:
         path: /etc/yum.repos.d/kubernetes.repo
         line: |
@@ -221,10 +221,10 @@
           repo_gpgcheck=1
           gpgkey=http://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg http://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
         create: yes
-        tags: kubernetes
-        when:
-          - ansible_architecture == "x86_64"
-          - ansible_distribution == 'CentOS'
+      tags: kubernetes
+      when:
+        - ansible_architecture == "x86_64"
+        - ansible_distribution == 'CentOS'
 
     - name: Install kubelet kubeadm kubectl
       shell:
@@ -265,11 +265,11 @@
     - name: Modify docker runtime - master
       shell:
         cmd: |
-          cat <<EOF > /etc/docker/daemon.json
+          cat <<EOF >/etc/docker/daemon.json
           {
             "registry-mirrors": ["https://dockerhub.azk8s.cn",
-                                  "https://docker.mirrors.ustc.edu.cn",
-                                  "http://hub-mirror.c.163.com"],
+                                 "https://docker.mirrors.ustc.edu.cn",
+                                 "http://hub-mirror.c.163.com"],
             "insecure-registries": ["http://docker.mirrors.ustc.edu.cn",
                                     "swr.cn-south-1.myhuaweicloud.com"],
             "exec-opts": ["native.cgroupdriver=systemd"]
@@ -289,8 +289,8 @@
           cat <<EOF > /etc/docker/daemon.json
           {
             "registry-mirrors": ["https://dockerhub.azk8s.cn",
-                                  "https://docker.mirrors.ustc.edu.cn",
-                                  "http://hub-mirror.c.163.com"],
+                                 "https://docker.mirrors.ustc.edu.cn",
+                                 "http://hub-mirror.c.163.com"],
             "insecure-registries": ["http://docker.mirrors.ustc.edu.cn",
                                     "swr.cn-south-1.myhuaweicloud.com"],
             "exec-opts": ["native.cgroupdriver=systemd"],
@@ -341,7 +341,7 @@
     - name: Install Linux NFS - CentOS
       shell:
         cmd:
-           yum install -y nfs-utils
+          yum install -y nfs-utils
       when:
         - ansible_distribution == 'CentOS'
       environment:
@@ -397,7 +397,7 @@
           systemctl enable rpcbind
       tags: nfs
 
-    - name: Start NFS service -Ubuntu
+    - name: Start NFS service - Ubuntu
       shell:
         cmd:
           systemctl start nfs-server;
