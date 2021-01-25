@@ -308,10 +308,10 @@ function check_mindxdl_by_name() {
                                                                        | awk -F ' ' '{print $1":"$2}' \
                                                                        | xargs \
                                                                        | sed -e 's/ /,/g')
-              if [[ "${service_image}" == "" ]]
-              then
-                  service_image=${NO_IMAGE}
-              fi
+                if [[ "${service_image}" == "" ]]
+                then
+                    service_image=${NO_IMAGE}
+                fi
             fi
         fi
     else
