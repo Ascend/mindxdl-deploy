@@ -56,7 +56,7 @@ function set_environment_variables()
     fi
 }
 
-function pre_treat()
+function pre_process()
 {
     mkdir -p "${train_job_dir}"
     mkdir -p "${model_dir}"
@@ -128,7 +128,7 @@ function train()
     fi
 }
 
-function post_treat()
+function post_process()
 {
     mv ./*.pth.tar "${model_dir}"
 }
@@ -136,9 +136,9 @@ function post_treat()
 function main()
 {
     set_environment_variables
-    pre_treat
+    pre_process
     train
-    post_treat
+    post_process
 }
 
 main
