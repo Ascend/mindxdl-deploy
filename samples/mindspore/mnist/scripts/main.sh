@@ -33,7 +33,7 @@ else
     rank_start=$((DEVICE_NUM * SERVER_ID))
 
     # 先启动后台任务，最后留一个前台任务查看日志输出
-    for((i=1; i<${DEVICE_NUM}; i++))
+    for((i=$(($DEVICE_NUM-1)); i>=0; i--))
     do
         rankid=$((rank_start + i))
         export DEVICE_ID=${i}
@@ -47,24 +47,15 @@ else
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
 
-        python train.py > train.log 2>&1 &
+        if [ $i -eq 0 ];then
+            python train.py | tee train.log
+        else
+            python train.py > train.log 2>&1 &
+        fi
         cd ..
     done
 
-    rankid=$((rank_start))
-    export DEVICE_ID=0
-    export RANK_ID=${rankid}
-    rm -rf train_parallel${rankid}
-    mkdir train_parallel${rankid}
-    cp ../train.py ./train_parallel${rankid}
-    cp -rf ../MNIST_Data ./train_parallel${rankid}
-    cp -rf ../src ./train_parallel${rankid}
-    cd ./train_parallel${rankid} || exit
-    echo "start training for rank $RANK_ID, device $DEVICE_ID"
-    env > env.log
-    # 保持前台输出
-    python train.py | tee train.log
-
     echo "training completed"
-    cd ..
 fi
+
+wait

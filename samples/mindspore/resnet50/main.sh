@@ -37,7 +37,7 @@ if [ $# == 5 ]; then
     rank_start=$((${device_each_server} * SERVER_ID))
 
     # 先启动后台任务，最后留一个前台任务查看日志输出
-    for((i=1; i<${device_each_server}; i++))
+    for((i=$(($device_each_server-1)); i>=0; i--))
     do
         rankid=$((rank_start + i))
         export DEVICE_ID=${i}
@@ -51,24 +51,14 @@ if [ $# == 5 ]; then
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
 
-        python train.py --net=resnet50 --dataset=cifar10 --run_distribute=True --device_num=$device_each_server --dataset_path=$5 &> log &
+        if [ $i -eq 0 ];then
+            python train.py --net=resnet50 --dataset=cifar10 --run_distribute=True --device_num=$device_each_server --dataset_path=$5 | tee log
+        else
+            python train.py --net=resnet50 --dataset=cifar10 --run_distribute=True --device_num=$device_each_server --dataset_path=$5 &> log &
+        fi
 
         cd ..
     done
-
-    rankid=$((rank_start))
-    export DEVICE_ID=0
-    export RANK_ID=${rankid}
-    rm -rf ./train_parallel${rankid}
-    mkdir ./train_parallel${rankid}
-    cp ../*.py ./train_parallel${rankid}
-    cp *.sh ./train_parallel${rankid}
-    cp -r ../src ./train_parallel${rankid}
-    cd ./train_parallel${rankid} || exit
-    echo "start training for rank $RANK_ID, device $DEVICE_ID"
-    env > env.log
-
-    python train.py --net=resnet50 --dataset=cifar10 --run_distribute=True --device_num=$device_each_server --dataset_path=$5 | tee log
-
-    cd ..
 fi
+
+wait

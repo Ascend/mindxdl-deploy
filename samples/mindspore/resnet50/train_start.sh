@@ -97,4 +97,3 @@ else
     bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} /job/data/cifar-10-batches-bin/
 fi
 
-wait
