@@ -33,7 +33,7 @@ from src.network import LeNet5
 from src.network import PerformanceCallback
 from src.network import SoftmaxCrossEntropyExpand
 
-parser = argparse.ArgumentParser(description="Mnist")
+parser = argparse.ArgumentParser(description='Mnist')
 parser.add_argument('--ckpt_save_path', type=str, default='./ckpt',
                     help='Save the checkpoint path')
 parser.add_argument('--dataset_path', type=str, default='./MNIST_Data',
