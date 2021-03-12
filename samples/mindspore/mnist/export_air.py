@@ -22,23 +22,20 @@ from mindspore import Tensor
 from mindspore import export
 from mindspore import load_checkpoint
 
-from src.lenet import LeNet5
+from src.network import LeNet5
 
 parser = argparse.ArgumentParser(description='MNIST Export Model Example')
-parser.add_argument("--ckpt_path", type=str, default=None,
-                    help="The checkpoint path.")
-parser.add_argument("--file_name", type=str, default="mnist",
-                    help="output file name.")
+parser.add_argument('--ckpt_path', type=str, default=None,
+                    help='The checkpoint path')
+parser.add_argument('--file_name', type=str, default='mnist',
+                    help='Output file name')
 parser.add_argument("--file_format", type=str,
                     choices=["AIR", "ONNX", "MINDIR"],
                     default="AIR", help="file format")
 args = parser.parse_args()
-if not args.ckpt_path:
-    print("The checkpoint file path is none.")
-    sys.exit(1)
 
-if __name__ == "__main__":
 
+def main():
     network = LeNet5()
     # load the parameter into net
     load_checkpoint(args.ckpt_path, net=network)
@@ -46,3 +43,10 @@ if __name__ == "__main__":
                                 size=[1, 1, 32, 32]).astype(np.float32)
     export(network, Tensor(input_x), file_name=args.file_name,
            file_format=args.file_format)
+
+
+if __name__ == "__main__":
+    if not args.ckpt_path:
+        print("The checkpoint file path is none.")
+        sys.exit(1)
+    main()
