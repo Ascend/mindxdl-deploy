@@ -42,7 +42,7 @@ function rollbackVolcanoComponent() {
 
   if [ "$(grep -c "0.4.0" ../check_log.txt)" -eq "1" ];then
       tr -d '\r' < gen-admission-secret.sh > gen-admission-secret-exec.sh
-      bash -x gen-admission-secret.sh --service volcano-admission-service --namespace volcano-system --secret volcano-admission-secret || true
+      bash -x gen-admission-secret-exec.sh --service volcano-admission-service --namespace volcano-system --secret volcano-admission-secret || true
   fi
 
   chown -R hwMindX:hwMindX /var/log/atlas_dls/volcano-*
