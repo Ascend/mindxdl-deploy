@@ -36,6 +36,19 @@ function versionPrint(){
     echo -e "\nAscend-device-plugin\n$dp\n"
 }
 
+function rollbackVolcanoComponent() {
+  # volcano 0.4.0 version need to do special handing
+  cd ../volcano-difference
+
+  if [ "$(grep -c "0.4.0" ../check_log.txt)" -eq "1" ];then
+      tr -d '\r' < gen-admission-secret.sh > gen-admission-secret-exec.sh
+      bash -x gen-admission-secret.sh --service volcano-admission-service --namespace volcano-system --secret volcano-admission-secret || true
+  fi
+
+  chown -R hwMindX:hwMindX /var/log/atlas_dls/volcano-*
+  kubectl apply -f volcano-v*.yaml
+  cd ..
+}
 
 function upgrade(){
     set -e
@@ -100,11 +113,8 @@ function upgrade(){
             kubectl apply -f 910-ascend-device-plugin-export.yaml
             kubectl apply -f cadvisor-export.yaml
             kubectl apply -f hccl-controller-export.yaml
-            cd ../volcano-difference
-            tr -d '\r' < gen-admission-secret.sh > gen-admission-secret-exec.sh
-            bash -x gen-admission-secret-exec.sh --service volcano-admission-service --namespace volcano-system --secret volcano-admission-secret || true
-            kubectl apply -f volcano-v*.yaml
-            cd ..
+
+            rollbackVolcanoComponent
             # Wait a short period of time til resources rolled back.
             sleep 30s
             while [ "$(kubectl get pods -A | grep -c Terminating)" -gt 0 ];do
@@ -114,6 +124,7 @@ function upgrade(){
             saveImageVersion
             echo -e "\nAfter Roll back:" | tee ./post_check.txt
             versionPrint | tee ./post_check.txt
+            ansible-playbook upgrade.yaml --tags=remove-files
         else
             saveImageVersion
             echo -e "Roll back not applied:" | tee ./post_check.txt
@@ -130,6 +141,7 @@ function upgrade(){
         # Remove old version images.
         if [ "$remove" == 'yes'  ];then
                 ansible-playbook upgrade.yaml --tags=remove-images --extra-vars "vA=$vcAdmission vC=$vcControllers vS=$vcScheduler hc=$hc ca=$ca dp=$dp"
+                ansible-playbook upgrade.yaml --tags=remove-files
         fi
 
         rm -rf ./Previous_version_info
