@@ -14,7 +14,7 @@ function exportYaml(){
 }
 
 function printVersion(){
-    echo -e "$(kubectl describe pod -n "${1}" "$(kubectl get pods -A | grep "${2}" | awk '{print $2}' | head -n 1)" | grep Image: | awk '{print $2}')"
+    echo -e "$(kubectl describe pod -n "${1}" "$(kubectl get pods --all-namespaces | grep "${2}" | awk '{print $2}' | head -n 1)" | grep Image: | awk '{print $2}')"
 }
 
 
@@ -37,7 +37,7 @@ function versionPrint(){
 }
 
 function rollbackVolcanoComponent() {
-  # volcano 0.4.0 version need to do special handing
+  # volcano 0.4.0 version needs to do special processing
   cd ../volcano-difference
 
   if [ "$(grep -c "0.4.0" ../check_log.txt)" -eq "1" ];then
@@ -103,7 +103,7 @@ function upgrade(){
             kubectl delete deployment volcano-admission -n volcano-system || true
             kubectl delete job volcano-admission-init -n volcano-system || true
             # Wait a short period of time til resources deleted.
-            while [ "$(kubectl get pods -A | grep -c Terminating)" -gt 0 ];do
+            while [ "$(kubectl get pods --all-namespaces | grep -c Terminating)" -gt 0 ];do
                 echo -e "\nWaiting for the pods to terminate, please do not interrupt.\n"
                 sleep 10
             done
@@ -117,7 +117,7 @@ function upgrade(){
             rollbackVolcanoComponent
             # Wait a short period of time til resources rolled back.
             sleep 30s
-            while [ "$(kubectl get pods -A | grep -c Terminating)" -gt 0 ];do
+            while [ "$(kubectl get pods --all-namespaces | grep -c Terminating)" -gt 0 ];do
                 echo -e "\nWaiting for the pods to terminate, please do not interrupt.\n"
                 sleep 10
             done
