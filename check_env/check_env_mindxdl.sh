@@ -54,6 +54,8 @@ fi
 A910_LABEL="accelerator=huawei-Ascend910"
 # A310
 A310_LABEL="accelerator=huawei-Ascend310"
+# A710
+A710_LABEL="accelerator=huawei-Ascend710"
 # mindx dl master
 MINDXDL_MASTER_LABEL="masterselector=dls-master-node"
 # mindx dl worker
@@ -129,8 +131,8 @@ function check_service_by_name() {
             write_single_line_to_file "${tmp_output_file}" "${service_name}" "${service_status}" "${service_image}" "${service_message_code}"
         else
             docker_image_str=$(${DOCKER_IMAGES} 2>&1)
-            if [[ "${docker_image_str}" =~ (Cannot connect to the Docker daemon.*) ]] \
-                || [[ "${docker_image_str}" =~ (.*not install) ]]
+            error_str="$(echo "${docker_image_str}" | grep -E "Cannot connect to the Docker daemon|not install")"
+            if [[ "${error_str}" != "" ]]
             then
                 # docker没启动
                 service_message_code="${ERROR_DOCKER_SERVICE_CODE}"
@@ -335,15 +337,24 @@ function check_nup_available_by_service() {
         allocatable_message_code="${INFO_PERMISSION_DENIED_CODE}"
         discovered_npu_status="${STATUS_PERMISSION_DENIED}"
     else
+        if [[ "${hardWare}" == "${HW_300T}" ]] || [[ "${hardWare}" == "${HW_TRAIN}" ]]
+        then
+            resource_type="huawei.com/Ascend910"
+        elif [[ "${hardWare}" == "${HW_300I_PRO}" ]]
+        then
+            resource_type="huawei.com/Ascend710"
+        else
+            resource_type="huawei.com/Ascend310"
+        fi
         # 分配给整个节点的、可用的总数
-        allocatable_npu_num="$(echo "${node_describe_info}" | grep -B 10 "System Info:" \
-                                                            | grep -A 5 "Allocatable:" \
-                                                            | grep "huawei.com/Ascend" \
+        allocatable_npu_num="$(echo "${node_describe_info}" | grep -B 20 "System Info:" \
+                                                            | grep -A 20 "Allocatable:" \
+                                                            | grep "${resource_type}" \
                                                             | awk -F ":" '{print $2}' \
                                                             | sed 's/ //g')"
-        used_npu_num="$(echo "${node_describe_info}" | grep -B 10 "Events" \
-                                                     | grep -A 10 "Allocated resources:" \
-                                                     | grep "huawei.com/Ascend" \
+        used_npu_num="$(echo "${node_describe_info}" | grep -B 20 "Events" \
+                                                     | grep -A 20 "Allocated resources:" \
+                                                     | grep "${resource_type}" \
                                                      | awk '{print $2}' \
                                                      | sed 's/ //g')"
 
@@ -389,6 +400,10 @@ function check_node_label() {
         then
             # 310推理标签
             worker_label_filter="${MINDXDL_WORKER_LABEL}|${K8S_WORKER_LABEL}|${A310_LABEL}"
+        elif [[ "${hardWare}" == "${HW_300I_PRO}" ]]
+        then
+            # A300I Pro标签
+            worker_label_filter="${MINDXDL_WORKER_LABEL}|${K8S_WORKER_LABEL}|${A710_LABEL}"
         fi
     fi
 
