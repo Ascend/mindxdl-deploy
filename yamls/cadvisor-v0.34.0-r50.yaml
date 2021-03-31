@@ -89,7 +89,7 @@ spec:
             - --log_dir=/var/log/cadvisor
             - --log_file=/var/log/cadvisor/cadvisor.log
             - --v=3
-          image: google/cadvisor:v0.34.0-r40
+          image: google/cadvisor:v0.34.0-r50
           resources:
             requests:
               memory: 300Mi

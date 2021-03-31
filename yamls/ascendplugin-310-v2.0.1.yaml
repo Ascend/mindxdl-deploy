@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: ascend-device-plugin710-daemonset
+  name: ascend-device-plugin2-daemonset
   namespace: kube-system
 spec:
   selector:
@@ -19,7 +19,7 @@ spec:
       tolerations:
         - key: CriticalAddonsOnly
           operator: Exists
-        - key: huawei.com/Ascend710
+        - key: huawei.com/Ascend310
           operator: Exists
           effect: NoSchedule
         - key: "ascendplugin"
@@ -28,9 +28,9 @@ spec:
           effect: NoSchedule
       priorityClassName: "system-node-critical"
       nodeSelector:
-        accelerator: huawei-Ascend710
+        accelerator: huawei-Ascend310
       containers:
-      - image: ascend-k8sdeviceplugin:v20.2.0
+      - image: ascend-k8sdeviceplugin:v2.0.1
         name: device-plugin-01
         resources:
           requests:
