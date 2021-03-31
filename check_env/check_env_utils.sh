@@ -24,6 +24,8 @@ HW_COMMON="common"
 HW_300T="300T"
 HW_TRAIN="train"
 HW_INFER="infer"
+HW_300I_PRO="300i_pro"
+export HW_ARR=("${HW_COMMON}" "${HW_300T}" "${HW_TRAIN}" "${HW_INFER}" "${HW_300I_PRO}")
 
 # 命令
 UNSET_PROXY="unset http_proxy https_proxy"
