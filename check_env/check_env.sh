@@ -91,7 +91,7 @@ function check_param_hardware() {
         fi
     done
 
-    if [[ ${is_valid} == "false"  ]]
+    if [[ ${is_valid} == "false" ]]
     then
         echo -e "\n'-hw(--hardware)' can only be set to '${HW_COMMON}', '${HW_TRAIN}', '${HW_INFER}', '${HW_300T}', '${HW_300I_PRO}'.\n"
         exit 1
