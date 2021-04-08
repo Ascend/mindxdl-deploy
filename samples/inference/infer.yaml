@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: resnetinfer1-1
+spec:
+  template:
+    spec:
+      nodeSelector:
+        accelerator: huawei-Ascend310           # Select the inference processor node. If the Ascend 710 Processor is used, change it to huawei-Ascend710.
+      containers:
+      - image: ubuntu-infer:v1                  # Inference image name
+        imagePullPolicy: IfNotPresent
+        name: resnet50infer
+        resources:
+          requests:
+            huawei.com/Ascend310: 1             # Number of the Ascend 310 Processors. If the Ascend 710 Processor is used, change it to huawei.com/Ascend710.
+          limits:
+            huawei.com/Ascend310: 1             # The value should be the same as that of requests . If the Ascend 710 Processor is used, change it to huawei.com/Ascend710.
+        volumeMounts:
+        - name: slog
+          mountPath: /var/log/npu/conf/slog/    #Log path
+        - name: localtime                       #The container time must be the same as the host time.
+          mountPath: /etc/localtime
+      volumes:
+      - name: slog
+        hostPath:
+          path: /var/log/npu/conf/slog/
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      restartPolicy: OnFailure
