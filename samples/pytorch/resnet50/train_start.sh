@@ -71,6 +71,9 @@ function check_device_list()
     }
     done
     dev_list=${device_list%?}
+    if [ "$dev_list" == "1,4" ]; then
+            dev_list="0,1"
+    fi
     for i in ${valid_dev_list[*]}; do
         if [ "$i" == "$dev_list" ]; then
             device_list=$dev_list
