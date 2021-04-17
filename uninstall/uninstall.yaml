@@ -249,7 +249,7 @@
     - name: Uninstall docker on every node - Ubuntu
       shell:
         cmd:
-          apt-get --purge remove -y docker docker-ce docker-ce-cli docker-engine docker.io container.io runc;
+          apt-get --purge remove -y docker docker-ce docker-ce-cli docker-engine docker.io containerd.io runc;
           apt-get autoremove -y
       ignore_errors: True
       when:
