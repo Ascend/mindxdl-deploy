@@ -41,8 +41,8 @@ function check_hccl_status()
 {
     local retry_times=60
     local retry_interval=5
-    for (( n=1;n<="$retry_times";n++ ));do
-    {
+    for (( n=1;n<="$retry_times";n++ ));
+    do
         local status
         status=$(get_json_value ${RANK_TABLE_FILE} status)
         if [[ "$status" != "completed" ]]; then
@@ -53,43 +53,19 @@ function check_hccl_status()
             echo 0
             return
         fi
-    }
     done
     echo 1
 }
 
-function check_device_list()
+function gen_device_list()
 {
     local device_per_server=$1
-    local is_valid=0
-    local valid_dev_list=("0" "1" "2" "3" "4" "5" "6" "7" "0,1" "2,3" "4,5" "6,7" "0,1,2,3" "4,5,6,7" "0,1,2,3,4,5,6,7")
     # Generate device list for training job
-    for (( i=1;i<="${device_per_server}";i++ ));do
-    {
-        dev_id=$(get_json_value ${RANK_TABLE_FILE} device_id "${i}")
-        device_list=$device_list$dev_id','
-    }
+    for (( i=0;i<"${device_per_server}";i++ ));
+    do
+        device_list="${device_list}${i}"
     done
-    dev_list=${device_list%?}
-    if [ "$dev_list" == "1,4" ]; then
-            dev_list="0,1"
-    fi
-    for i in ${valid_dev_list[*]}; do
-        if [ "$i" == "$dev_list" ]; then
-            device_list=$dev_list
-            echo "The devices id ${device_list} are valid." |
-             tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
-            is_valid=1
-            break
-        else
-            is_valid=0
-        fi
-    done
-    if [ $is_valid -eq 0 ];then
-        echo "The devices id ${dev_list} are invalid, current job will be stopped." |
-         tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
-        exit 1
-    fi
+    device_list="${device_list%?}"
 }
 
 function get_server_id()
@@ -137,20 +113,16 @@ function train_start()
     rank_size=${device_count}
     # single node training job
     if [[ "$server_count" == "1" ]]; then
-        echo "This is a single node training job." |
-         tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
         cluster=False
         device_id=0
         rank_index=0
         log_id=${train_start_time}
         mkdir -p ${logDir}/"${log_id}"
         chmod 777 -R ${logDir}
-        check_device_list "${device_count_per_server}"
+        gen_device_list "${device_count_per_server}"
         bash main.sh ${device_id} "${device_list}" "${rank_size}" "${rank_index}" "${log_id}" ${cluster} &
     # multiple node training job
     else
-        echo "This is a cluster distribution training job." |
-         tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
         cluster=True
         # Generate hccl bridge device file
         config_path=/usr/serverid/devindex/config
@@ -164,18 +136,17 @@ function train_start()
         touch ${hccl_bridge_device_path}
         chmod 755 ${hccl_bridge_device_path}
         # Getting cluster node devices' ips for each first device.
-        for (( i=1;i<="${device_count}";i+="${device_count_per_server}" )); do
-        {
+        for (( i=1;i<="${device_count}";i+="${device_count_per_server}" ));
+        do
             dev_ip=$(get_json_value ${RANK_TABLE_FILE} device_ip ${i})
             echo "${dev_ip}:0" >> ${hccl_bridge_device_path}
-        }
         done
         export HCCL_BRIDGE_DEVICE_FILE=${hccl_bridge_device_path}
         echo "hccl bridge device file: ${HCCL_BRIDGE_DEVICE_FILE}" |
          tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
 
         device_id=0
-        check_device_list "${device_count_per_server}"
+        gen_device_list "${device_count_per_server}"
         rank_index=$(get_server_id)
         log_id=${train_start_time}${rank_index}
         mkdir -p ${logDir}/"${log_id}"
