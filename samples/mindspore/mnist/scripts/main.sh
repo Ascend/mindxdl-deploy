@@ -13,6 +13,7 @@ if [ $# -eq 0 ]; then
     export DEVICE_ID=0
     export RANK_ID=0
     export RANK_SIZE=1
+    unset RANK_TABLE_FILE
     echo "start training for device $DEVICE_ID"
     env > env.log
     # 保持前台输出

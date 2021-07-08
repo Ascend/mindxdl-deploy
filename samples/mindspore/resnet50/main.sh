@@ -8,6 +8,7 @@ if [ $# == 1 ]; then
     export DEVICE_ID=0
     export RANK_ID=0
     export RANK_SIZE=1
+    unset RANK_TABLE_FILE
 
     if [ -d "train" ];
     then
