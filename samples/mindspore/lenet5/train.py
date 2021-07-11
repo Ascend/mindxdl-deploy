@@ -27,16 +27,16 @@ from mindspore.train.callback import CheckpointConfig
 from mindspore.train.callback import LossMonitor
 from mindspore.train.callback import ModelCheckpoint
 
-from src.config import mnist_cfg as config
+from src.config import lenet_cfg as config
 from src.dataset import create_dataset
 from src.network import LeNet5
 from src.network import PerformanceCallback
 from src.network import SoftmaxCrossEntropyExpand
 
-parser = argparse.ArgumentParser(description='Mnist')
+parser = argparse.ArgumentParser(description='LeNet')
 parser.add_argument('--ckpt_save_path', type=str, default='./ckpt',
                     help='Save the checkpoint path')
-parser.add_argument('--dataset_path', type=str, default='./MNIST_Data',
+parser.add_argument('--dataset_path', type=str, default='./dataset_lenet',
                     help='Dataset path')
 args_opt = parser.parse_args()
 

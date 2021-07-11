@@ -20,8 +20,8 @@ network config setting, will be used in train.py
 
 from easydict import EasyDict as ed
 
-# config for mnist
-mnist_cfg = ed({
+# config
+lenet_cfg = ed({
     "batch_size": 32,
     "lr": 0.01,
     "momentum": 0.9,

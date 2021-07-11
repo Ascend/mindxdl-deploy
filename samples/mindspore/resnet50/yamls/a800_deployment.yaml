@@ -84,7 +84,7 @@ spec:
       - name: data
         nfs:
           server: 127.0.0.1
-          path: "/data/atlas_dls/public/dataset/cifar-10"    # Configure the path of the training set.
+          path: "/data/atlas_dls/public/dataset/dataset_MS"  # Configure the path of the training set.
       - name: ascend-driver
         hostPath:
           path: /usr/local/Ascend/driver                     # Configure the NPU driver and mount it to Docker.

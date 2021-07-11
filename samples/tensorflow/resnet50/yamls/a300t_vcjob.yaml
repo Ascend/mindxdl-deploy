@@ -72,7 +72,7 @@ spec:
           - name: code
             mountPath: /job/code/                              # Path of the training script in the container.
           - name: data
-            mountPath: /job/data/resnet50/imagenet_TF          # Path of the training dataset in the container.
+            mountPath: /job/data/resnet50/dataset_TF           # Path of the training dataset in the container.
           - name: output
             mountPath: /job/output                             # Training output path in the container.
           - name: slog
@@ -93,7 +93,7 @@ spec:
         - name: data
           nfs:
             server: 127.0.0.1
-            path: "/data/atlas_dls/public/dataset/resnet50/imagenet_TF"    # Configure the path of the training set.
+            path: "/data/atlas_dls/public/dataset/resnet50/dataset_TF"     # Configure the path of the training set.
         - name: output
           nfs:
             server: 127.0.0.1
