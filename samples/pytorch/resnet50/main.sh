@@ -69,7 +69,7 @@ function pre_process()
 function train()
 {
     if [ x"${cluster}" = x"True" ];then
-        python3.7 "${currentDir}"/DistributedResnet50/main-apex-d76-npu.py \
+        python3.7 "${currentDir}"/DistributedResnet50/main_apex_d76_npu.py \
             --data=${data_url} \
             --addr="${MASTER_ADDR}" \
             --seed=49 \
@@ -92,7 +92,7 @@ function train()
             --epochs=${EPOCHS} \
             --batch-size=${BATCH_SIZE} > "${train_job_dir}"/train_"${rank_size}"p.log 2>&1
     elif [ x"${rank_size}" = x"1" ];then
-        python3.7 "${currentDir}"/pytorch-resnet50-apex.py \
+        python3.7 "${currentDir}"/pytorch_resnet50_apex.py \
             "--data=${data_url}" \
             --workers=64 \
             --epochs=${EPOCHS} \
@@ -103,7 +103,7 @@ function train()
             --optimizer-batch-size=1024 \
             --npu="${device_id}" > "${train_job_dir}"/train_1p.log 2>&1
     else
-        python3.7 "${currentDir}"/DistributedResnet50/main-apex-d76-npu.py \
+        python3.7 "${currentDir}"/DistributedResnet50/main_apex_d76_npu.py \
             --data=${data_url} \
             --addr="${MASTER_ADDR}" \
             --seed=49 \
