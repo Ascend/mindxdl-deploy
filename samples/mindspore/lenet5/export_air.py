@@ -24,10 +24,10 @@ from mindspore import load_checkpoint
 
 from src.network import LeNet5
 
-parser = argparse.ArgumentParser(description='MNIST Export Model Example')
+parser = argparse.ArgumentParser(description='LE-NET5 Export Model Example')
 parser.add_argument('--ckpt_path', type=str, default=None,
                     help='The checkpoint path')
-parser.add_argument('--file_name', type=str, default='mnist',
+parser.add_argument('--file_name', type=str, default='lenet5',
                     help='Output file name')
 parser.add_argument("--file_format", type=str,
                     choices=["AIR", "ONNX", "MINDIR"],

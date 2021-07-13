@@ -7,7 +7,7 @@ if [ $# -eq 0 ]; then
     rm -rf train
     mkdir train
     cp ../train.py ./train
-    cp -rf ../MNIST_Data ./train
+    cp -rf ../dataset_lenet ./train
     cp -rf ../src ./train
     cd ./train || exit
     export DEVICE_ID=0
@@ -42,7 +42,7 @@ else
         rm -rf train_parallel${rankid}
         mkdir train_parallel${rankid}
         cp ../train.py ./train_parallel${rankid}
-        cp -rf ../MNIST_Data ./train_parallel${rankid}
+        cp -rf ../dataset_lenet ./train_parallel${rankid}
         cp -rf ../src ./train_parallel${rankid}
         cd ./train_parallel${rankid} || exit
         echo "start training for rank $RANK_ID, device $DEVICE_ID"

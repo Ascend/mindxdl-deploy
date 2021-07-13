@@ -80,10 +80,10 @@ fi
 if [[ "$server_count" == "1" ]]; then
     server_id=0
     if [ ${device_count} -eq 1 ]; then
-        bash main.sh /job/data/cifar-10-batches-bin/
+        bash main.sh /job/data/cf-10-batches-bin/
     fi
     if [ ${device_count} -gt 1 ]; then
-        bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} /job/data/cifar-10-batches-bin/
+        bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} /job/data/cf-10-batches-bin/
     fi
 
 # 分布式训练场景
@@ -94,6 +94,6 @@ else
         exit 1
     fi
     echo "server id is: "${server_id}
-    bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} /job/data/cifar-10-batches-bin/
+    bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} /job/data/cf-10-batches-bin/
 fi
 
