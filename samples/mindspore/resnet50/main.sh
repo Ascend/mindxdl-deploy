@@ -23,7 +23,7 @@ if [ $# == 1 ]; then
     env > env.log
 
     # 保持前台输出
-    python train.py --net=resnet50 --dataset=dataset_MS --dataset_path=$1 | tee log
+    python train.py --net=resnet50 --dataset=cifar10 --dataset_path=$1 | tee log
 fi
 
 # 单机多卡和分布式
@@ -53,9 +53,9 @@ if [ $# == 5 ]; then
         env > env.log
 
         if [ $i -eq 0 ];then
-            python train.py --net=resnet50 --dataset=dataset_MS --run_distribute=True --device_num=$device_each_server --dataset_path=$5 | tee log
+            python train.py --net=resnet50 --dataset=cifar10 --run_distribute=True --device_num=$device_each_server --dataset_path=$5 | tee log
         else
-            python train.py --net=resnet50 --dataset=dataset_MS --run_distribute=True --device_num=$device_each_server --dataset_path=$5 &> log &
+            python train.py --net=resnet50 --dataset=cifar10 --run_distribute=True --device_num=$device_each_server --dataset_path=$5 &> log &
         fi
 
         cd ..
