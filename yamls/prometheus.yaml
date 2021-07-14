@@ -157,18 +157,6 @@ data:
         target_label: __metrics_path__
         replacement: /api/v1/nodes/${1}/proxy/metrics
 
-    - job_name: 'kubernetes-cadvisor'
-      kubernetes_sd_configs:
-      - role: pod
-      scheme: http
-      relabel_configs:
-      - action: keep
-        source_labels: [__meta_kubernetes_namespace]
-        regex: cadvisor
-      - source_labels: [__meta_kubernetes_pod_node_name]
-        target_label: job
-        replacement: ${1}
-
     - job_name: 'kubernetes-npu-exporter'
       kubernetes_sd_configs:
       - role: pod
