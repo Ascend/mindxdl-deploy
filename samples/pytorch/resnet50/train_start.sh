@@ -63,7 +63,7 @@ function gen_device_list()
     # Generate device list for training job
     for (( i=0;i<"${device_per_server}";i++ ));
     do
-        device_list="${device_list}${i}"
+        device_list="${device_list}${i},"
     done
     device_list="${device_list%?}"
 }
@@ -79,7 +79,7 @@ function get_server_id()
          tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
         exit 1
     fi
-    srv_id=$(("$srv_id"-1))
+    srv_id=$((srv_id-1))
     echo ${srv_id}
 }
 
@@ -109,7 +109,7 @@ function parse_parameters()
 
 function train_start()
 {
-    device_count_per_server=$(("$device_count" / "$server_count"))
+    device_count_per_server=$((device_count / server_count))
     rank_size=${device_count}
     # single node training job
     if [[ "$server_count" == "1" ]]; then
@@ -142,8 +142,6 @@ function train_start()
             echo "${dev_ip}:0" >> ${hccl_bridge_device_path}
         done
         export HCCL_BRIDGE_DEVICE_FILE=${hccl_bridge_device_path}
-        echo "hccl bridge device file: ${HCCL_BRIDGE_DEVICE_FILE}" |
-         tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
 
         device_id=0
         gen_device_list "${device_count_per_server}"
@@ -151,6 +149,8 @@ function train_start()
         log_id=${train_start_time}${rank_index}
         mkdir -p ${logDir}/"${log_id}"
         chmod 777 -R ${logDir}
+        echo "hccl bridge device file: ${HCCL_BRIDGE_DEVICE_FILE}" |
+         tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
         bash main.sh ${device_id} "${device_list}" "${rank_size}" "${rank_index}" "${log_id}" ${cluster} &
     fi
 
