@@ -17,7 +17,7 @@ train_start_time=$(date +%Y_%m%d_%H%M)
 # Create log directory
 logDir="/job/output/pytorch/logs"
 mkdir -p ${logDir}
-chmod 777 -R ${logDir}
+chmod 750 -R ${logDir}
 
 
 function get_json_value()
@@ -118,7 +118,7 @@ function train_start()
         rank_index=0
         log_id=${train_start_time}
         mkdir -p ${logDir}/"${log_id}"
-        chmod 777 -R ${logDir}
+        chmod 750 -R ${logDir}
         gen_device_list "${device_count_per_server}"
         bash main.sh ${device_id} "${device_list}" "${rank_size}" "${rank_index}" "${log_id}" ${cluster} &
     # multiple node training job
@@ -148,7 +148,7 @@ function train_start()
         rank_index=$(get_server_id)
         log_id=${train_start_time}${rank_index}
         mkdir -p ${logDir}/"${log_id}"
-        chmod 777 -R ${logDir}
+        chmod 750 -R ${logDir}
         echo "hccl bridge device file: ${HCCL_BRIDGE_DEVICE_FILE}" |
          tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
         bash main.sh ${device_id} "${device_list}" "${rank_size}" "${rank_index}" "${log_id}" ${cluster} &

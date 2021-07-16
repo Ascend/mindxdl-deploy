@@ -60,7 +60,7 @@ function pre_process()
 {
     mkdir -p "${train_job_dir}"
     mkdir -p "${model_dir}"
-    chmod -R 777 "${output_dir}"
+    chmod -R 750 "${output_dir}"
 
     device_count=$(( rank_size / WORLD_SIZE ))
     env > ${log_dir}/"${log_id}"/env_${device_count}.log
@@ -131,6 +131,7 @@ function train()
 function post_process()
 {
     mv ./*.pth.tar "${model_dir}"
+    chmod -R 440 "${model_dir}" "${log_dir}"
 }
 
 function main()
