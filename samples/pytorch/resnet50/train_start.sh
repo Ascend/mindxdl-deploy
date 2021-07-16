@@ -17,7 +17,7 @@ train_start_time=$(date +%Y_%m%d_%H%M)
 # Create log directory
 logDir="/job/output/pytorch/logs"
 mkdir -p ${logDir}
-chmod 777 -R ${logDir}
+chmod 750 -R ${logDir}
 
 
 function get_json_value()
@@ -74,7 +74,7 @@ function get_server_id()
     local srv_id
     srv_id=$(cat "${RANK_TABLE_FILE}" | awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'${key}'\042/){print $(i+1)}}}' |
              awk '{print FNR ":" $1}' | grep "${XDL_IP}" | awk -F ":" '{print $1}')
-    if [ -z "${srv_id}" ];then
+    if [[ -z "${srv_id}" ]];then
         echo "Fail to get server id, current job will be stopped." |
          tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
         exit 1
@@ -118,7 +118,7 @@ function train_start()
         rank_index=0
         log_id=${train_start_time}
         mkdir -p ${logDir}/"${log_id}"
-        chmod 777 -R ${logDir}
+        chmod 750 -R ${logDir}
         gen_device_list "${device_count_per_server}"
         bash main.sh ${device_id} "${device_list}" "${rank_size}" "${rank_index}" "${log_id}" ${cluster} &
     # multiple node training job
@@ -130,7 +130,7 @@ function train_start()
             mkdir -p ${config_path}
         fi
         hccl_bridge_device_path=${config_path}/hccl_bridge_device_file
-        if [ -f ${hccl_bridge_device_path} ];then
+        if [[ -f ${hccl_bridge_device_path} ]];then
             rm -f ${hccl_bridge_device_path}
         fi
         touch ${hccl_bridge_device_path}
@@ -148,7 +148,7 @@ function train_start()
         rank_index=$(get_server_id)
         log_id=${train_start_time}${rank_index}
         mkdir -p ${logDir}/"${log_id}"
-        chmod 777 -R ${logDir}
+        chmod 750 -R ${logDir}
         echo "hccl bridge device file: ${HCCL_BRIDGE_DEVICE_FILE}" |
          tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
         bash main.sh ${device_id} "${device_list}" "${rank_size}" "${rank_index}" "${log_id}" ${cluster} &

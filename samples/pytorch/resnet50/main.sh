@@ -49,7 +49,7 @@ function set_environment_variables()
     export RANK_INDEX=${rank_index}
     export DEVICE_INDEX=$(( DEVICE_ID + RANK_INDEX * 8 ))
 
-    if [ x"${RANK_SIZE}" != x"1" ]; then
+    if [[ x"${RANK_SIZE}" != x"1" ]]; then
       export WHICH_OP=GEOP
       export NEW_GE_FE_ID=1
       export GE_AICPU_FLAG=1
@@ -60,7 +60,8 @@ function pre_process()
 {
     mkdir -p "${train_job_dir}"
     mkdir -p "${model_dir}"
-    chmod -R 777 "${output_dir}"
+    chmod -R 750 "${output_dir}"
+    umask 037
 
     device_count=$(( rank_size / WORLD_SIZE ))
     env > ${log_dir}/"${log_id}"/env_${device_count}.log
@@ -68,7 +69,7 @@ function pre_process()
 
 function train()
 {
-    if [ x"${cluster}" = x"True" ];then
+    if [[ x"${cluster}" = x"True" ]];then
         python3.7 "${currentDir}"/DistributedResnet50/main_apex_d76_npu.py \
             --data=${data_url} \
             --addr="${MASTER_ADDR}" \
@@ -91,7 +92,7 @@ function train()
             --device='npu' \
             --epochs=${EPOCHS} \
             --batch-size=${BATCH_SIZE} > "${train_job_dir}"/train_"${rank_size}"p.log 2>&1
-    elif [ x"${rank_size}" = x"1" ];then
+    elif [[ x"${rank_size}" = x"1" ]];then
         python3.7 "${currentDir}"/pytorch_resnet50_apex.py \
             "--data=${data_url}" \
             --workers=64 \
@@ -131,6 +132,7 @@ function train()
 function post_process()
 {
     mv ./*.pth.tar "${model_dir}"
+    chmod -R 440 "${model_dir}" "${log_dir}"
 }
 
 function main()
