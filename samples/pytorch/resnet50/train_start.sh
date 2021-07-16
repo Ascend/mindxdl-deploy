@@ -74,7 +74,7 @@ function get_server_id()
     local srv_id
     srv_id=$(cat "${RANK_TABLE_FILE}" | awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'${key}'\042/){print $(i+1)}}}' |
              awk '{print FNR ":" $1}' | grep "${XDL_IP}" | awk -F ":" '{print $1}')
-    if [ -z "${srv_id}" ];then
+    if [[ -z "${srv_id}" ]];then
         echo "Fail to get server id, current job will be stopped." |
          tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
         exit 1
@@ -130,7 +130,7 @@ function train_start()
             mkdir -p ${config_path}
         fi
         hccl_bridge_device_path=${config_path}/hccl_bridge_device_file
-        if [ -f ${hccl_bridge_device_path} ];then
+        if [[ -f ${hccl_bridge_device_path} ]];then
             rm -f ${hccl_bridge_device_path}
         fi
         touch ${hccl_bridge_device_path}
