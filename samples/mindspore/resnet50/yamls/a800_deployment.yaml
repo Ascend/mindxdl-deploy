@@ -16,18 +16,18 @@ kind: Deployment
 metadata:
   name: mindx-dls-test               # The value of this parameter must be consistent with the name of ConfigMap.
   labels:
-    app: tf
+    app: mindspore
     ring-controller.atlas: ascend-910
   namespace: vcjob                   # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and deployments must be the same.)
 spec:
   replicas: 1                        # The value of replicas is 1 in a single-node scenario and N in an N-node scenario. The number of NPUs in the requests field is 8 in an N-node scenario.
   selector:
     matchLabels:
-      app: tf
+      app: mindspore
   template:
     metadata:
       labels:
-        app: tf
+        app: mindspore
         ring-controller.atlas: ascend-910
         deploy-name: mindx-dls-test  # The value must be the same as that of Deployment name.
     spec:
