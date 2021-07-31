@@ -324,7 +324,7 @@
                                  "https://docker.mirrors.ustc.edu.cn",
                                  "http://hub-mirror.c.163.com"],
             "insecure-registries": ["http://docker.mirrors.ustc.edu.cn",
-                                    "swr.cn-south-1.myhuaweicloud.com"],
+                                    "{{ ascendhub_domain }}"],
             "exec-opts": ["native.cgroupdriver=systemd"]
           }
           EOF
@@ -345,7 +345,7 @@
                                  "https://docker.mirrors.ustc.edu.cn",
                                  "http://hub-mirror.c.163.com"],
             "insecure-registries": ["http://docker.mirrors.ustc.edu.cn",
-                                    "swr.cn-south-1.myhuaweicloud.com"],
+                                    "{{ ascendhub_domain }}"],
             "exec-opts": ["native.cgroupdriver=systemd"],
             "runtimes":
             {
