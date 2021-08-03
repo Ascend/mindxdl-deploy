@@ -55,7 +55,7 @@ spec:
           # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
           - "cd /job/code/ModelZoo_Resnet50_HC; bash train_start.sh"
           #args: [ "while true; do sleep 30000; done;"  ]      # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
-          -                                                    # The command is 'kubectl exec -it -n {namespace} {podname} bash'
+                                                               # The command is 'kubectl exec -it -n {namespace} {podname} bash'
           resources:
             requests:
               huawei.com/Ascend910: 1             # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
