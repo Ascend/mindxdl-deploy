@@ -76,8 +76,8 @@ if [[ "$server_count" == "" ]]; then
     exit 1
 fi
 
-# 全局配置参数：数据集路径，配置参数文件路径
-dataset_path=/job/data/imagenet_full
+# 根据实际情况进行修改，全局配置参数：数据集路径，配置参数文件路径
+dataset_path=/job/data/imagenet_full/train
 config_yaml_path=/job/code/resnet/resnet50_imagenet2012_config.yaml
 
 # 单节点训练场景

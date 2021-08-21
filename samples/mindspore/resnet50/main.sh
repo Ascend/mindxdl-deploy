@@ -3,7 +3,7 @@
 ulimit -u unlimited
 
 # checkpoint save path
-output_path="/job/code/output"
+OUTPUT_PATH="/job/code/output"
 
 # 单机单卡
 if [ $# == 2 ]; then
@@ -13,6 +13,8 @@ if [ $# == 2 ]; then
     export RANK_SIZE=1
     unset RANK_TABLE_FILE
 
+    DATA_PATH=$1
+    CONFIG_PATH=$2
     if [ -d "train" ];
     then
         rm -rf ./train
@@ -26,7 +28,7 @@ if [ $# == 2 ]; then
     env > env.log
 
     # 保持前台输出
-    python train.py --data_path=$1 --config_path=$2 --output_path=${output_path} | tee log
+    python train.py --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
 fi
 
 # 单机多卡和分布式
@@ -40,8 +42,11 @@ if [ $# == 6 ]; then
     device_each_server=$((DEVICE_NUM / SERVER_NUM))
     rank_start=$((${device_each_server} * SERVER_ID))
 
+    DATA_PATH=$5
+    CONFIG_PATH=$6
+
     # 先启动后台任务，最后留一个前台任务查看日志输出
-    for((i=$(($device_each_server-1)); i>=0; i--))
+    for((i=$((${device_each_server}-1)); i>=0; i--))
     do
         rankid=$((rank_start + i))
         export DEVICE_ID=${i}
@@ -56,9 +61,9 @@ if [ $# == 6 ]; then
         env > env.log
 
         if [ $i -eq 0 ]; then
-            python train.py --run_distribute=True --device_num=$device_each_server --data_path=$5 --config_path=$6 --output_path=${output_path} | tee log
+            python train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
         else
-            python train.py --run_distribute=True --device_num=$device_each_server --data_path=$5 --config_path=$6 --output_path=${output_path} &> log &
+            python train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} &> log &
         fi
     done
 else

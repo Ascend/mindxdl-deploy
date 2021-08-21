@@ -27,8 +27,9 @@ if [ $# == 5 ]; then
     device_each_server=$((RANK_SIZE / SERVER_NUM))
     rank_start=$((${device_each_server} * SERVER_ID))
 
+    data_path=$5
     # 先启动后台任务，最后留一个前台任务查看日志输出
-    for((i=$(($device_each_server-1)); i>=0; i--))
+    for((i=$((${device_each_server}-1)); i>=0; i--))
     do
         rankid=$((rank_start + i))
         export DEVICE_ID=${i}
@@ -40,9 +41,9 @@ if [ $# == 5 ]; then
         env > env.log
 
         if [ $i -eq 0 ]; then
-            python ${ROOT_PATH}/../train.py --distribute=true --device_num=$device_each_server --data_url=$5 --run_type=train --param_init_type=fp32 --mode=2.6B | tee log
+            python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp32 --mode=2.6B | tee log
         else
-            python ${ROOT_PATH}/../train.py --distribute=true --device_num=$device_each_server --data_url=$5 --run_type=train --param_init_type=fp32 --mode=2.6B &> log &
+            python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp32 --mode=2.6B &> log &
         fi
     done
 else
