@@ -1,4 +1,18 @@
 #!/bin/bash
+# Copyright 2021 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
 
 # hccl-controller组件生成的rank_table_file
 export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
@@ -33,12 +47,11 @@ function check_hccl_status()
             sleep $retry_interval
             continue
         else
-            echo 0
-            return
+            return 0
         fi
     }
     done
-    echo 1
+    return 1
 }
 
 function get_server_id()
@@ -76,18 +89,17 @@ if [[ "$server_count" == "" ]]; then
     exit 1
 fi
 
-# 全局配置参数：数据集路径，配置参数文件路径
-dataset_path=/job/data/imagenet_full
-config_yaml_path=/job/code/resnet/resnet50_imagenet2012_config.yaml
+# 训练数据集路径，根据实际情况修改
+dataset="/job/data/train_data"
 
 # 单节点训练场景
 if [[ "$server_count" == "1" ]]; then
     server_id=0
-    if [ ${device_count} -eq 1 ]; then
-        bash main.sh ${dataset_path} ${config_yaml_path}
+    if [ ${device_count} -lt 8 ]; then
+        echo "Less than 8 card training is not supported for pangu alpha model." | tee log
     fi
-    if [ ${device_count} -gt 1 ]; then
-        bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
+    if [ ${device_count} -eq 8 ]; then
+        bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset}
     fi
 
 # 分布式训练场景
@@ -98,5 +110,5 @@ else
         exit 1
     fi
     echo "server id is: "${server_id}
-    bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
+    bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset}
 fi
