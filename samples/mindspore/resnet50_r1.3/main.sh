@@ -2,14 +2,19 @@
 
 ulimit -u unlimited
 
+# checkpoint save path
+OUTPUT_PATH="/job/code/output"
+
 # 单机单卡
-if [ $# == 1 ]; then
+if [ $# == 2 ]; then
     export DEVICE_NUM=1
     export DEVICE_ID=0
     export RANK_ID=0
     export RANK_SIZE=1
     unset RANK_TABLE_FILE
 
+    DATA_PATH=$1
+    CONFIG_PATH=$2
     if [ -d "train" ];
     then
         rm -rf ./train
@@ -23,11 +28,11 @@ if [ $# == 1 ]; then
     env > env.log
 
     # 保持前台输出
-    python train.py --net=resnet50 --dataset=cifar10 --dataset_path=$1 | tee log
+    python train.py --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
 fi
 
 # 单机多卡和分布式
-if [ $# == 5 ]; then
+if [ $# == 6 ]; then
     export DEVICE_NUM=$1
     export SERVER_NUM=$2
     export RANK_SIZE=$1
@@ -37,8 +42,11 @@ if [ $# == 5 ]; then
     device_each_server=$((DEVICE_NUM / SERVER_NUM))
     rank_start=$((${device_each_server} * SERVER_ID))
 
+    DATA_PATH=$5
+    CONFIG_PATH=$6
+
     # 先启动后台任务，最后留一个前台任务查看日志输出
-    for((i=$(($device_each_server-1)); i>=0; i--))
+    for((i=$((${device_each_server}-1)); i>=0; i--))
     do
         rankid=$((rank_start + i))
         export DEVICE_ID=${i}
@@ -52,14 +60,15 @@ if [ $# == 5 ]; then
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
 
-        if [ $i -eq 0 ];then
-            python train.py --net=resnet50 --dataset=cifar10 --run_distribute=True --device_num=$device_each_server --dataset_path=$5 | tee log
+        if [ $i -eq 0 ]; then
+            python train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
         else
-            python train.py --net=resnet50 --dataset=cifar10 --run_distribute=True --device_num=$device_each_server --dataset_path=$5 &> log &
+            python train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} &> log &
         fi
-
-        cd ..
     done
+else
+    echo "Invalid input parameter, usage: main.sh device_count server_count rank_table_file server_id dataset config_file_path" | tee log
+    exit 1
 fi
 
 wait
