@@ -5,6 +5,8 @@ ulimit -u unlimited
 # checkpoint save path
 OUTPUT_PATH="/job/code/output"
 
+ROOT_PATH=$(cd "`dirname $0`" || exit; pwd)
+
 # 单机单卡
 if [ $# == 2 ]; then
     export DEVICE_NUM=1
@@ -17,18 +19,18 @@ if [ $# == 2 ]; then
     CONFIG_PATH=$2
     if [ -d "train" ];
     then
-        rm -rf ./train
+        rm -rf ${ROOT_PATH}/train
     fi
-    mkdir ./train
-    cp ../*.py ./train
-    cp *.sh ./train
-    cp -r ../src ./train
-    cd ./train || exit
+    mkdir ${ROOT_PATH}/train
+    cp ${ROOT_PATH}/../*.py ${ROOT_PATH}/train
+    cp ${ROOT_PATH}/*.sh ${ROOT_PATH}/train
+    cp -r ${ROOT_PATH}/../src ${ROOT_PATH}/train
+    cd ${ROOT_PATH}/train || exit
     echo "start training for device $DEVICE_ID"
     env > env.log
 
     # 保持前台输出
-    python train.py --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
+    python ${ROOT_PATH}/../train.py --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
 fi
 
 # 单机多卡和分布式
@@ -51,19 +53,19 @@ if [ $# == 6 ]; then
         rankid=$((rank_start + i))
         export DEVICE_ID=${i}
         export RANK_ID=${rankid}
-        rm -rf ./train_parallel${rankid}
-        mkdir ./train_parallel${rankid}
-        cp ../*.py ./train_parallel${rankid}
-        cp *.sh ./train_parallel${rankid}
-        cp -r ../src ./train_parallel${rankid}
-        cd ./train_parallel${rankid} || exit
+        rm -rf ${ROOT_PATH}/train_parallel${rankid}
+        mkdir ${ROOT_PATH}/train_parallel${rankid}
+        cp ${ROOT_PATH}/../*.py ${ROOT_PATH}/train_parallel${rankid}
+        cp ${ROOT_PATH}/*.sh ${ROOT_PATH}/train_parallel${rankid}
+        cp -r ${ROOT_PATH}/../src ${ROOT_PATH}/train_parallel${rankid}
+        cd ${ROOT_PATH}/train_parallel${rankid} || exit
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
 
         if [ $i -eq 0 ]; then
-            python train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
+            python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
         else
-            python train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} &> log &
+            python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} &> log &
         fi
     done
 else
