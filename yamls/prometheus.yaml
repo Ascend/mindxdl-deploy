@@ -204,3 +204,15 @@ data:
         source_labels: 
         - __meta_kubernetes_service_name        
         target_label: kubernetes_name
+
+    - job_name: kubernetes-access-manager
+      metrics_path: /accessmanager/v1/metrics
+      static_configs:
+        - targets:
+            - access-manager.default:8090
+
+    - job_name: kubernetes-license-agent
+      metrics_path: /v1/license_agent_metric
+      static_configs:
+        - targets:
+            - access-manager.default:8090
