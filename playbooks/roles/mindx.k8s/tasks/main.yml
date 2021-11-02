@@ -1,0 +1,59 @@
+- debug:
+    msg: "start install k8s"
+
+- name: disable swap
+  shell: swapoff -a
+
+- name: set swap in fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    state: absent
+    regexp: '.*?swap.*?'
+
+- include_tasks: ubuntu_18.04.yml
+  when:
+    - OS_ID == 'ubuntu'
+    - OS_VERSION_ID == '18.04'
+
+- name: load k8s images
+  shell: docker load -i {{item}}
+  with_fileglob:
+    - "{{image_dir}}/kube*.tar"
+    - "{{image_dir}}/pause*.tar"
+    - "{{image_dir}}/etcd*.tar"
+    - "{{image_dir}}/coredns*.tar"
+
+- name: "restart kubelet"
+  systemd:
+    name: "kubelet"
+    enabled: true
+    state: restarted
+
+- name: init cluster
+  shell: >
+    kubeadm init --kubernetes-version={{k8s_version}} --node-name={{ansible_hostname}}
+    --pod-network-cidr=192.168.0.0/16
+    --apiserver-advertise-address={{node_ip}}
+
+- debug: var=role_path
+
+- name: create config directory
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+
+- name: set cluster config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ ansible_env.HOME }}/.kube/config"
+
+- name: load calico images
+  shell: docker load -i {{item}}
+  with_fileglob:
+    - "{{image_dir}}/calico*.tar"
+
+- name: apply calico
+  shell: "kubectl apply -f  {{ role_path }}/files/calico_{{calico_version}}.yaml"
+
+- name: taint nodes
+  shell: kubectl taint nodes --all node-role.kubernetes.io/master-
