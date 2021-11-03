@@ -44,7 +44,7 @@ function dls_logger {
                 stdbuf -oL -eL "${MindXDL_PIPE}" "${log_url}"
             fi
         else
-            echo "[Modelarts Service Log][modelarts_logger] ${MindXDL_PIPE} not found, use cat instead"
+            echo "[MindXDL Service Log][MindXDL_logger] ${MindXDL_PIPE} not found, use cat instead"
             local log_dir="`dirname -- "${log_url}"`"
             mkdir -p "${log_dir}"
             if [ "${param}" = "append" ]
@@ -85,7 +85,7 @@ function install_dependencies {
 }
 
 function logger {
-    echo "[Modelarts Service Log]$*"
+    echo "[MindXDL Service Log]$*"
 }
 
 function logger_error() {
