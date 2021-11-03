@@ -117,7 +117,7 @@ if [[ $server_count -gt 1 ]]; then
 
     device_each_server=${device_count} / ${server_count}
     rank_start=$((${device_each_server} * ${server_id}))
-    for((i=$(($device_count-1)); i>=0; i--))
+    for((i=$(($device_each_server-1)); i>=0; i--))
     do
       get_env_for_multip_job
       ${DLS_PROGRAM_EXECUTOR}  ${boot_file_path} "$@" | dls_logger "$log_url" append
