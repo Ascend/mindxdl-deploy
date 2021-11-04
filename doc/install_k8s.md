@@ -2,6 +2,8 @@
 # init
 kubeadm init --apiserver-advertise-address=192.168.56.2 --image-repository registry.aliyuncs.com/google_containers
 
+低版本kubeadm不支持image-repository
+
 
 # get token
 kubeadm token list

@@ -1,0 +1,48 @@
+- name: install k8s
+  copy:
+    src: "{{resource_dir}}/linux_{{ansible_architecture}}/k8s/{{ item }}"
+    dest: "/usr/bin/{{ item }}"
+    mode: "0750"
+  with_items:
+    - kubeadm
+    - kubelet
+    - kubectl
+
+- name: create directory
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/systemd/system/kubelet.service.d
+    - /opt/cni/bin
+
+- name: set kubelet service
+  copy:
+    src : "{{ role_path }}/files/kubelet.service"
+    dest: /lib/systemd/system/kubelet.service
+    mode: "0750"
+
+- name: set kubeadm conf
+  copy:
+    src : "{{ role_path }}/files/10-kubeadm.conf"
+    dest: /etc/systemd/system/kubelet.service.d
+
+- name: enable kubelet
+  systemd:
+    name: "kubelet"
+    enabled: true
+    state: started
+
+- name: install cni plugin
+  ansible.builtin.unarchive:
+    src: "{{ item }}"
+    dest: /opt/cni/bin
+  with_fileglob:
+    - "{{resource_dir}}/linux_{{ansible_architecture}}/cni-plugin*.tgz"
+
+- name: install crictl
+  ansible.builtin.unarchive:
+    src: "{{ item }}"
+    dest: /usr/bin
+  with_fileglob:
+    - "{{resource_dir}}/linux_{{ansible_architecture}}/crictl*.tgz"

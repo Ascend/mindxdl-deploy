@@ -39,6 +39,7 @@ function main()
     local os_version=$(get_os_version)
     echo "OS=${os_name}"
     echo "OS=${os_version}"
+    install_ansible
     if [ ! -d ~/.ansible/roles ];then
         mkdir -p ~/.ansible/roles
     fi

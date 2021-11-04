@@ -1,8 +1,8 @@
 IMG_REPO="registry.aliyuncs.com/google_containers"
 ORIGIN_REPO="k8s.gcr.io"
-IMG_TAG="v1.19.6"
+IMG_TAG="v1.22.1"
 
-PLAT="linux/arm64"
+PLAT="linux/amd64"
 
 docker pull --platform ${PLAT} ${IMG_REPO}/kube-apiserver:${IMG_TAG}
 docker tag  ${IMG_REPO}/kube-apiserver:${IMG_TAG} ${ORIGIN_REPO}/kube-apiserver:${IMG_TAG}
@@ -25,17 +25,17 @@ docker save ${ORIGIN_REPO}/kube-scheduler:${IMG_TAG} -o kube-scheduler_${IMG_TAG
 echo "kube-scheduler complete"
 
 
-docker pull --platform ${PLAT} ${IMG_REPO}/pause:3.2
-docker tag  ${IMG_REPO}/pause:3.2 ${ORIGIN_REPO}/pause:3.2
-docker save ${ORIGIN_REPO}/pause:3.2 -o pause_3.2.tar
+docker pull --platform ${PLAT} ${IMG_REPO}/pause:3.5
+docker tag  ${IMG_REPO}/pause:3.5 ${ORIGIN_REPO}/pause:3.5
+docker save ${ORIGIN_REPO}/pause:3.5 -o pause_3.5.tar
 echo "pause complete"
 
-docker pull --platform ${PLAT}  ${IMG_REPO}/etcd:3.4.13-0
-docker tag  ${IMG_REPO}/etcd:3.4.13-0 ${ORIGIN_REPO}/etcd:3.4.13-0
-docker save ${ORIGIN_REPO}/etcd:3.4.13-0 -o etcd_3.4.13-0.tar
+docker pull --platform ${PLAT}  ${IMG_REPO}/etcd:3.5.0-0
+docker tag  ${IMG_REPO}/etcd:3.5.0-0 ${ORIGIN_REPO}/etcd:3.5.0-0
+docker save ${ORIGIN_REPO}/etcd:3.5.0-0 -o etcd_3.5.0-0.tar
 echo "etcd complete"
 
-docker pull --platform ${PLAT}  ${IMG_REPO}/coredns:1.7.0
-docker tag  ${IMG_REPO}/coredns:1.7.0 ${ORIGIN_REPO}/coredns:1.7.0
-docker save ${ORIGIN_REPO}/coredns:1.7.0 -o coredns_1.7.0.tar
+docker pull --platform ${PLAT}  ${IMG_REPO}/coredns:1.8.4
+docker tag  ${IMG_REPO}/coredns:1.8.4 ${ORIGIN_REPO}/coredns:1.8.4
+docker save ${ORIGIN_REPO}/coredns:1.8.4 -o coredns_1.8.4.tar
 echo "coredns complete"

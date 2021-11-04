@@ -5,6 +5,7 @@
     { "name": "python3-minimal" },
     { "name": "libpython3.6-stdlib" },
     { "name": "libpython3-stdlib" },
+    { "name": "libpython3.6" },
     { "name": "python3.6" },
     { "name": "python3" },
     { "name": "python-pip-whl" },
@@ -17,5 +18,6 @@
     { "name": "conntrack" ,"info":"k8s"},
     { "name": "socat" },
     { "name": "ebtables" },
-    { "name": "ethtool" }
+    { "name": "ethtool" },
+    { "name": "sshpass", "info": "ansible use"}
 ]

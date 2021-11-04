@@ -1,0 +1,21 @@
+- name: init cluster
+  shell: >
+    kubeadm init --kubernetes-version={{k8s_version}} --node-name={{ansible_hostname}}
+    --pod-network-cidr=192.168.0.0/16
+    --apiserver-advertise-address={{node_ip}}
+
+- name: create config directory
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+
+- name: set cluster config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ ansible_env.HOME }}/.kube/config"
+
+- name: apply calico
+  shell: "kubectl apply -f  {{ role_path }}/files/calico_{{calico_version}}.yaml"
+
+- name: taint nodes
+  shell: kubectl taint nodes --all node-role.kubernetes.io/master-

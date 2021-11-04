@@ -1,6 +1,0 @@
----
-- name: "restart kubelet"
-  systemd:
-    name: "kubelet"
-    enabled: true
-    state: restarted
