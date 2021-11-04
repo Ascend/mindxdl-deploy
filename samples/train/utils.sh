@@ -14,7 +14,7 @@ function dls_create_log {
             "$MindXDL_PIPE" "${log_url}" create
         else
             echo "[MindXDL Service Log][MindXDL_create_log] ${MindXDL_PIPE} not found, use mkdir/touch instead (owner/mode may be incorrect!)"
-            local log_dir="`dirname -- "${log_url}"`"
+            local log_dir="$(dirname -- "${log_url}")"
             mkdir -p "${log_dir}"
             touch "${log_url}"
         fi
@@ -45,7 +45,7 @@ function dls_logger {
             fi
         else
             echo "[MindXDL Service Log][MindXDL_logger] ${MindXDL_PIPE} not found, use cat instead"
-            local log_dir="`dirname -- "${log_url}"`"
+            local log_dir="$(dirname -- "${log_url}")"
             mkdir -p "${log_dir}"
             if [ "${param}" = "append" ]
             then
@@ -59,9 +59,9 @@ function dls_logger {
 }
 
 function dls_get_executor {
-    local filename="`basename -- "$1"`"
+    local filename="$(basename -- "$1")"
     local extension="${filename##*.}"
-    extension="`echo "$extension" | tr '[:upper:]' '[:lower:]'`"
+    extension="$(echo "$extension" | tr '[:upper:]' '[:lower:]')"
     case "$extension" in
     py|pyc|pyw|pyo|pyd)
         which python
@@ -76,27 +76,24 @@ function dls_get_executor {
 
 function install_dependencies {
     dependencies_file_dir="$1"
-    cd "$dependencies_file_dir"
     if [ -f "$dependencies_file_dir/requirements.txt" ];then
         logger_info " exec pip install"
         pip install -r "$dependencies_file_dir/requirements.txt"
     fi
-    cd -
 }
 
 function logger {
-    echo "[MindXDL Service Log]$*"
+    echo "[$(date +%Y%m%d-%H:%M:%S)] [MindXDL Service Log]$*"
 }
 
 function logger_error() {
-    logger "[ERROR]$*"
+    logger "[$(date +%Y%m%d-%H:%M:%S)] [ERROR]$*"
 }
 
 function logger_warn() {
-    logger "[WARN]$*"
+    logger "[$(date +%Y%m%d-%H:%M:%S)] [WARN]$*"
 }
 
 function logger_info() {
-    logger "[INFO]$*"
+    logger "[$(date +%Y%m%d-%H:%M:%S)] [INFO]$*"
 }
-

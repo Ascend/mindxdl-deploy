@@ -15,7 +15,7 @@ function get_json_value()
 
   local value=$(cat "${json}" | awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'${key}'\042/){print $(i+1)}}}' |
                 tr -d '"' | sed -n ${num}p)
-  echo ${value}
+  echo "${value}"
 }
 
 # 检查rank_table_file文件状态
@@ -60,5 +60,6 @@ function get_server_id_0_ip()
     srv_id=$(($srv_id-1))
     if [ ${srv_id} -eq 0 ];then
       first_server_ip=${XDL_IP}
-      echo ${first_server_ip}
+      echo "${first_server_ip}"
+    fi
 }
