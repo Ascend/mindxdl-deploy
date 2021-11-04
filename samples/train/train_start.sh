@@ -21,6 +21,7 @@ source utils.sh
 app_url="$1"
 boot_file="$2"
 log_url="$3"
+shift 3
 
 function show_help() {
   echo "Usage train_start.sh /job/code/resnet50 train.py /tmp/log/training.log"
