@@ -45,7 +45,6 @@ fi
 
 sleep 1
 
-
 # 获取hccl.json文件中的device_count字段
 device_count=$(cat "${RANK_TABLE_FILE}" | grep -o device_id | wc -l)
 if [[ "$device_count" -eq 0 ]]; then
@@ -108,6 +107,7 @@ if [[ $server_count -eq 1 ]]; then
         get_env_for_1p_job
         ${DLS_PROGRAM_EXECUTOR}  ${boot_file_path} "$@" 2>&1 | dls_logger "$log_url" append
     fi
+fi
 
 # 单节点多卡场景
 if [[ $server_count -eq 1 ]]; then
@@ -120,6 +120,7 @@ if [[ $server_count -eq 1 ]]; then
         ${DLS_PROGRAM_EXECUTOR}  ${boot_file_path} "$@" | dls_logger "$log_url" append
       done
     fi
+fi
 
 # 多节点场景
 if [[ $server_count -gt 1 ]]; then
