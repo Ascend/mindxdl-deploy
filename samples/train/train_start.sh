@@ -114,13 +114,6 @@ function get_env_for_multi_card_job() {
 }
 
 function get_env_for_pytorch_multi_node_job() {
-  export JOB_ID=123456789
-  rankid=$((rank_start + i))
-  export DEVICE_ID=${i}
-  export ASCEND_DEVICE_ID=${DEVICE_ID}
-  export RANK_ID=${rankid}
-  export RANK_SIZE=${device_count}
-  export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
   export HCCL_WHITELIST_DISABLE=1
   export HCCL_IF_IP=${XDL_IP}
   first_server_ip=get_server_id_0_ip
@@ -170,6 +163,7 @@ if [[ $server_count -gt 1 ]]; then
     device_each_server=$((device_count / server_count))
     rank_start=$((device_each_server * server_id))
     for ((i = $((device_each_server - 1)); i >= 0; i--)); do
+      get_env_for_multi_card_job
       get_env_for_multi_card_job
       ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" | dls_logger "$log_url" append
     done
