@@ -1,5 +1,6 @@
 #!/bin/bash
-#set -e
+set -e
+
 # default start shell path
 DLS_USER_HOME_DIR="$(
   cd "$(dirname "$0")" || exit 1
