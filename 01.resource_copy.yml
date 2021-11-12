@@ -5,4 +5,4 @@
   roles:
     - role: mindx.resource
       vars:
-        resource_dir: "/media/sf_D_DRIVE/code/mindxdl-deploy/resources"
+        resource_dir: "{{ playbook_dir }}/resources"

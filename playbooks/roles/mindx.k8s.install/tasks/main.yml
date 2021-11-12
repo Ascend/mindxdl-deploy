@@ -10,10 +10,10 @@
     state: absent
     regexp: '.*?swap.*?'
 
-#- include_tasks: ubuntu_18.04.yml
-#  when:
-#    - OS_ID == 'ubuntu'
-#    - OS_VERSION_ID == '18.04'
+- include_tasks: ubuntu_18.04.yml
+  when:
+    - OS_ID == 'ubuntu'
+    - OS_VERSION_ID == '18.04'
 
 - include_tasks: common.yml
 

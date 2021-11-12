@@ -10,6 +10,7 @@
   when:
     - ansible_connection == "local"
     - not resource_tar.stat.exists
+    - not (host_count == "1" and first_host == "localhost")
 
 - name: local host link
   file:

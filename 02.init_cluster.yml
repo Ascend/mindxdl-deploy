@@ -3,14 +3,13 @@
   remote_user: root
   roles:
     - role: mindx.docker
-    - role: mindx.k8s.installer
+    - role: mindx.k8s.install
     - role: mindx.k8s.master
       vars:
-        k8s_version: "v1.19.4"
-        node_ip: "192.168.56.10"
+        pod_network_cidr: "192.168.0.0/16"
 
 - hosts: worker
   roles:
     - role: mindx.docker
-    - role: mindx.k8s.installer
+    - role: mindx.k8s.install
     - role: mindx.k8s.worker

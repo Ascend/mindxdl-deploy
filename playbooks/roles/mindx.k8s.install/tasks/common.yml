@@ -7,6 +7,7 @@
     - kubeadm
     - kubelet
     - kubectl
+    - kube-proxy
 
 - name: create directory
   file:

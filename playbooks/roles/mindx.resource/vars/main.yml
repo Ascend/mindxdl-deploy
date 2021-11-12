@@ -1,0 +1,5 @@
+---
+# vars file for mindx.resource
+ansible_python_interpreter: /usr/bin/python3
+host_count: "{{ ansible_play_hosts_all | length }}"
+first_host: "{{ ansible_play_hosts_all[0] }}"
