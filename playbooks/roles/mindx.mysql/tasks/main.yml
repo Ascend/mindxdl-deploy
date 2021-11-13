@@ -1,0 +1,42 @@
+- debug:
+    msg: "start deploy mysql"
+
+- name: load mysql image
+  shell: docker load -i {{item}}
+  with_fileglob:
+    - "{{image_dir}}/mysql*.tar"
+
+- name: build new docker image
+  shell: docker build {{ role_path }}/files/ -t mysql-dl:8.0.26
+
+- name: create directory
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /var/log/atlas_dls/mysql
+
+- name: create random password
+  set_fact:
+    pwd: "Huawei12#$"
+
+  #shell: kubectl create secret generic dbsecret --from-literal="root_pwd={{pwd}}"
+- name: create secret
+  shell: echo "hellow"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+
+- name: deploy mysql
+  shell: "kubectl apply -f {{ role_path }}/files/{{ item }}"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  with_items:
+    - mysql-pv.yaml
+    - mysql-pvc.yaml
+    - mysql-deployment.yaml
