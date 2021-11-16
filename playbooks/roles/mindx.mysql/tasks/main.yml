@@ -9,25 +9,45 @@
 - name: build new docker image
   shell: docker build {{ role_path }}/files/ -t mysql-dl:8.0.26
 
-- name: create directory
+- name: create directory on host
   file:
     path: "{{ item }}"
     state: directory
   with_items:
+    - "{{ mysql_data_path }}"
     - /var/log/atlas_dls/mysql
 
 - name: create random password
   set_fact:
     pwd: "Huawei12#$"
 
-  #shell: kubectl create secret generic dbsecret --from-literal="root_pwd={{pwd}}"
+- name: create namespace
+  shell: kubectl create namespace {{ k8s_namespace }}
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+  ignore_errors: True
+
 - name: create secret
-  shell: echo "hellow"
+  shell: |
+    kubectl delete secret --namespace={{ k8s_namespace }} dbsecret --ignore-not-found=true
+    kubectl create secret --namespace={{ k8s_namespace }} generic dbsecret --from-literal="root_pwd={{pwd}}"
   environment:
     http_proxy: ""
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
+
+- name: create yamls
+  template:
+    src: "{{ item }}"
+    dest: "{{ role_path }}/files/{{ item }}"
+    mode: 0644
+  with_items:
+    - mysql-pv.yaml
+    - mysql-pvc.yaml
+    - mysql-deployment.yaml
 
 - name: deploy mysql
   shell: "kubectl apply -f {{ role_path }}/files/{{ item }}"

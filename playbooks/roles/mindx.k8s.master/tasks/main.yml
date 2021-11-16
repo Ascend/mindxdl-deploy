@@ -48,3 +48,11 @@
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
+
+- name: ceate namespace
+  shell: kubectl create namespace mindx-dl
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
