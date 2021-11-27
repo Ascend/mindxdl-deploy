@@ -39,6 +39,7 @@ spec:
           app: mindspore
           ring-controller.atlas: ascend-910
       spec:
+        terminationGracePeriodSeconds: 360
         containers:
         - image: mindspore:b035         # Training framework image, which can be modified.
           imagePullPolicy: IfNotPresent
@@ -52,12 +53,13 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
-          command:
-          - "/bin/bash"
-          - "-c"
-          - "cd /job/code/resnet/scripts; chmod +x train_start.sh; ./train_start.sh" # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
+          command: ["/bin/bash", "-c", "cd /job/code/resnet/scripts; chmod +x train_start.sh; ./train_start.sh;"] # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
           #args: [ "while true; do sleep 30000; done;"  ]                            # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                                                      # The command is 'kubectl exec -it -n {namespace} {podname} bash'
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/bash", "-c", "cd /job/code/resnet/scripts; bash pre_stop.sh"]
           resources:
             requests:
               huawei.com/Ascend910: 1                                                # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
