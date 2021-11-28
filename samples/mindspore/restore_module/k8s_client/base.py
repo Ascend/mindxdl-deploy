@@ -1,4 +1,17 @@
-# 监视configmap
+# Copyright 2021 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
 from __future__ import print_function
 
 import os
@@ -15,7 +28,9 @@ else:
 client_core_api = client.CoreV1Api()
 
 class BaseResource:
-# 获取configmap内容
+    """
+    Base Resource of k8s class
+    """
     def __init__(self):
         super().__init__()
         self._cls_name = self.__class__.__name__
@@ -27,7 +42,7 @@ class BaseResource:
 
     def get_resource_list(self, namespace, **kwargs):
         """
-        获取资源列表
+        Get k8s resource list by apiserver
         """
         res_list = []
         verbose = kwargs.get("verbose", False)
