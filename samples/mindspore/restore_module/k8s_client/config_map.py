@@ -23,7 +23,7 @@ class ConfigMap(BaseResource):
     It is called to get data in config map.
     """
     def init_method(self):
-        self.func_get_list = client_core_api.list_namespaced_config_map()
+        self.func_get_list = client_core_api.list_namespaced_config_map
         self.configmap_namespace = "vcjob"
 
     def get_fault_ranks(self,
@@ -56,11 +56,17 @@ class ConfigMap(BaseResource):
                 continue
             filter_config_map_name = parts[-1]
             if filter_config_map_name in job_id:
-                res_config_map_fault_ranks = \
-                res.get("data").get("fault-npus").get("FaultRankIds")
-                fault_ranks += res_config_map_fault_ranks
+                if res.get("data").get("fault-npus"):
+                    record_fault_rank_list = eval(res.get("data").get(
+                        "fault-npus")).get("FaultRankIds")
 
-        if len(res_list) > 1:
-            return False, None
+                    clear_fault_rank_list = []
+                    for ele in eval(record_fault_rank_list):
+                        if ele.isdigit() and eval(ele) >= 0 and eval(
+                                ele) <= 4095:
+                            clear_fault_rank_list.append(ele)
+
+                    res_config_map_fault_ranks = ",".join(clear_fault_rank_list)
+                    fault_ranks += res_config_map_fault_ranks
 
         return True, fault_ranks
