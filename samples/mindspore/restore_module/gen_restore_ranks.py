@@ -12,17 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import sys
+
 from k8s_client.config_map import ConfigMap
 from restore_manager.restore_manager import RestoreManager
 
 if __name__ == "__main__":
     res_manager = RestoreManager()
     config_map_handler = ConfigMap()
-    fault_ranks = config_map_handler.get_fault_ranks(namespace="vcjob")
+    get_fault_ranks_flag, fault_ranks = config_map_handler.get_fault_ranks(
+        namespace="vcjob")
+
+    restore_strategy_output_file_path = "/job/code/restore_ranks.sh"
+
+    if not get_fault_ranks_flag:
+        restore_ranks = '-1'
+        with open(restore_strategy_output_file_path, "w") as wfile:
+            wfile.write(f"export RESTORE_RANKS={restore_ranks}")
+        sys.exit(1)
+
+    if not fault_ranks:
+        restore_ranks = '-1'
+        with open(restore_strategy_output_file_path, "w") as wfile:
+            wfile.write(f"export RESTORE_RANKS={restore_ranks}")
+        sys.exit(1)
+
     res_manager.generate_restore_strategy(
-        strategy_input_file_path="",
+        strategy_input_file_path=None,
         fault_ranks=fault_ranks,
-        restore_strategy_output_file_path="/job/code/restore_ranks.sh"
+        restore_strategy_output_file_path=restore_strategy_output_file_path
     )
-
-
