@@ -23,7 +23,7 @@ if __name__ == "__main__":
     get_fault_ranks_flag, fault_ranks = config_map_handler.get_fault_ranks(
         namespace="vcjob")
 
-    restore_strategy_output_file_path = "/job/restore_ranks.sh"
+    restore_strategy_output_file_path = "/job/code/restore_ranks.sh"
 
     if not get_fault_ranks_flag:
         restore_ranks = '-1'
