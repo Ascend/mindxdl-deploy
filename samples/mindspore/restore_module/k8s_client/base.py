@@ -20,17 +20,19 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 INCLUSTER_FLAG = os.getenv("INCLUSTER_FLAG")
-if INCLUSTER_FLAG=="True":
+if INCLUSTER_FLAG == "True":
     config.load_incluster_config()
 else:
     config.load_kube_config()
 
 client_core_api = client.CoreV1Api()
 
+
 class BaseResource:
     """
     Base Resource of k8s class
     """
+
     def __init__(self):
         super().__init__()
         self._cls_name = self.__class__.__name__
@@ -56,5 +58,3 @@ class BaseResource:
             return False, res_list
         else:
             return True, res_list
-
-

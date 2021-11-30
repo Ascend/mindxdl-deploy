@@ -53,6 +53,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
+          - name: INCLUSTER_FLAG                # IP address of the physical node, which is used to identify the node where the pod is running
+            value: "True"
           command:
           - "/bin/bash"
           - "-c"

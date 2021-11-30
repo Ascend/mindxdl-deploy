@@ -142,3 +142,4 @@ class ExceptionCheckpoint(Callback):
                         self._config.async_save,
                         self._append_dict, self._config.enc_key,
                         self._config.enc_mode)
+        raise RuntimeError("Term exception happened.")

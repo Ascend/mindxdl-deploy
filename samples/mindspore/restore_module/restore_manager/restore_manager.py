@@ -15,11 +15,10 @@
 import glob
 import json
 import os
+import warnings
 
 import mindspore.communication.management as D
 from mindspore.train.serialization import restore_group_info_list
-
-from k8s_client.config_map import ConfigMap
 
 
 class RestoreManager:
@@ -47,6 +46,7 @@ class RestoreManager:
 
     def generate_restore_strategy(self, strategy_input_file_path, fault_ranks,
                                   restore_strategy_output_file_path):
+        warnings.simplefilter('ignore', ResourceWarning)
         strategy_name = "group_info.pb"
         if not strategy_input_file_path:
             tmp_strategy_input_file_path = self.strategy_input_file_path
@@ -71,18 +71,15 @@ class RestoreManager:
 
         # get ranks
         if not fault_ranks:
-            cm = ConfigMap()
-            ret, fault_ranks = cm.get_fault_ranks(self.namespace, self.job_id)
-            if not ret:
-                restore_ranks = set(-1)
-                with open(restore_strategy_output_file_path, "w") as wfile:
-                    wfile.write(f"export RESTORE_RANKS={restore_ranks}")
-                return restore_ranks
+            restore_ranks = '-1'
+            with open(restore_strategy_output_file_path, "w") as wfile:
+                wfile.write(f"export RESTORE_RANKS={restore_ranks}\n")
+            return restore_ranks
 
         if "-1" == fault_ranks:
-            restore_ranks = set(-1)
+            restore_ranks = '-1'
             with open(restore_strategy_output_file_path, "w") as wfile:
-                wfile.write(f"export RESTORE_RANKS={restore_ranks}")
+                wfile.write(f"export RESTORE_RANKS={restore_ranks}\n")
             return restore_ranks
 
         fault_ranks_list = []
@@ -103,7 +100,7 @@ class RestoreManager:
                     restore_ranks_list.append(str(idx))
                 restore_ranks_str = ",".join(restore_ranks_list)
                 with open(restore_strategy_output_file_path, "w") as wfile:
-                    wfile.write(f"export RESTORE_RANKS={restore_ranks_str}")
+                    wfile.write(f"export RESTORE_RANKS={restore_ranks_str}\n")
 
                 return restore_ranks_str
 
@@ -116,10 +113,10 @@ class RestoreManager:
             for idx in restore_ranks:
                 restore_ranks_list.append(str(idx))
             restore_ranks_str = ",".join(restore_ranks_list)
-            wfile.write(f"export RESTORE_RANKS={restore_ranks_str}")
+            wfile.write(f"export RESTORE_RANKS={restore_ranks_str}\n")
 
             restore_ranks_json = json.dumps(restore_rank_dict)
-            wfile.write(f"export RESTORE_RANKS_MAP={str(restore_ranks_json)}")
+            wfile.write(f"export RESTORE_RANKS_MAP='{str(restore_ranks_json)}'\n")
         return restore_ranks_str
 
     def load_restore_strategy(self, restore_strategy_output_file_path):

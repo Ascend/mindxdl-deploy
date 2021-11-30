@@ -16,6 +16,11 @@
 
 source ~/.bashrc
 
+if [ -z $GROUP_INFO_FILE_REFLECT ]; then
+  echo "Group info file not corrected generated."
+  exit 1
+fi
+
 export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
 
 function get_json_value()
