@@ -42,5 +42,3 @@ if __name__ == "__main__":
         fault_ranks=fault_ranks,
         restore_strategy_output_file_path=restore_strategy_output_file_path
     )
-
-
