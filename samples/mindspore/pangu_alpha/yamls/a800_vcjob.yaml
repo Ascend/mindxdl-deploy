@@ -77,8 +77,6 @@ spec:
             mountPath: /job/code/
           - name: data
             mountPath: /job/data
-          - name: k8s-config
-            mountPath: /root/.kube/config
           - name: ascend-driver
             mountPath: /usr/local/Ascend/driver
           - name: ascend-add-ons
@@ -99,9 +97,6 @@ spec:
           nfs:
             server: 127.0.0.1
             path: "/data/atlas_dls/public/dataset/dataset_MS"  # Configure the path of the training set.
-        - name: k8s-config
-          hostPath:
-            path: ~/.kube/config
         - name: ascend-driver
           hostPath:
             path: /usr/local/Ascend/driver                     # Configure the NPU driver and mount it to Docker.

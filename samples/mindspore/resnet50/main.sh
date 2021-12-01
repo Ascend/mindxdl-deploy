@@ -2,32 +2,39 @@
 
 ulimit -u unlimited
 
+# checkpoint save path
+OUTPUT_PATH="/job/code/output"
+
+ROOT_PATH=$(cd "`dirname $0`" || exit; pwd)
+
 # 单机单卡
-if [ $# == 1 ]; then
+if [ $# == 2 ]; then
     export DEVICE_NUM=1
     export DEVICE_ID=0
     export RANK_ID=0
     export RANK_SIZE=1
     unset RANK_TABLE_FILE
 
+    DATA_PATH=$1
+    CONFIG_PATH=$2
     if [ -d "train" ];
     then
-        rm -rf ./train
+        rm -rf ${ROOT_PATH}/train
     fi
-    mkdir ./train
-    cp ../*.py ./train
-    cp *.sh ./train
-    cp -r ../src ./train
-    cd ./train || exit
+    mkdir ${ROOT_PATH}/train
+    cp ${ROOT_PATH}/../*.py ${ROOT_PATH}/train
+    cp ${ROOT_PATH}/*.sh ${ROOT_PATH}/train
+    cp -r ${ROOT_PATH}/../src ${ROOT_PATH}/train
+    cd ${ROOT_PATH}/train || exit
     echo "start training for device $DEVICE_ID"
     env > env.log
 
     # 保持前台输出
-    python train.py --net=resnet50 --dataset=cifar10 --dataset_path=$1 | tee log
+    python ${ROOT_PATH}/../train.py --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
 fi
 
 # 单机多卡和分布式
-if [ $# == 5 ]; then
+if [ $# == 6 ]; then
     export DEVICE_NUM=$1
     export SERVER_NUM=$2
     export RANK_SIZE=$1
@@ -37,29 +44,33 @@ if [ $# == 5 ]; then
     device_each_server=$((DEVICE_NUM / SERVER_NUM))
     rank_start=$((${device_each_server} * SERVER_ID))
 
+    DATA_PATH=$5
+    CONFIG_PATH=$6
+
     # 先启动后台任务，最后留一个前台任务查看日志输出
-    for((i=$(($device_each_server-1)); i>=0; i--))
+    for((i=$((${device_each_server}-1)); i>=0; i--))
     do
         rankid=$((rank_start + i))
         export DEVICE_ID=${i}
         export RANK_ID=${rankid}
-        rm -rf ./train_parallel${rankid}
-        mkdir ./train_parallel${rankid}
-        cp ../*.py ./train_parallel${rankid}
-        cp *.sh ./train_parallel${rankid}
-        cp -r ../src ./train_parallel${rankid}
-        cd ./train_parallel${rankid} || exit
+        rm -rf ${ROOT_PATH}/train_parallel${rankid}
+        mkdir ${ROOT_PATH}/train_parallel${rankid}
+        cp ${ROOT_PATH}/../*.py ${ROOT_PATH}/train_parallel${rankid}
+        cp ${ROOT_PATH}/*.sh ${ROOT_PATH}/train_parallel${rankid}
+        cp -r ${ROOT_PATH}/../src ${ROOT_PATH}/train_parallel${rankid}
+        cd ${ROOT_PATH}/train_parallel${rankid} || exit
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
 
-        if [ $i -eq 0 ];then
-            python train.py --net=resnet50 --dataset=cifar10 --run_distribute=True --device_num=$device_each_server --dataset_path=$5 | tee log
+        if [ $i -eq 0 ]; then
+            python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
         else
-            python train.py --net=resnet50 --dataset=cifar10 --run_distribute=True --device_num=$device_each_server --dataset_path=$5 &> log &
+            python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} &> log &
         fi
-
-        cd ..
     done
+else
+    echo "Invalid input parameter, usage: main.sh device_count server_count rank_table_file server_id dataset config_file_path" | tee log
+    exit 1
 fi
 
 wait
