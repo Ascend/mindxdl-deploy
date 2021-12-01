@@ -1,0 +1,17 @@
+- name: get token
+  shell: kubeadm token create --print-join-command
+  delegate_to: "{{ groups['master'][0] }}"
+  register: register_cmd
+
+- name: join cluster
+  shell: "{{ register_cmd.stdout }}"
+
+- name: create kube directory
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+
+- name: set cluster config
+  copy:
+    src: /etc/kubernetes/kubelet.conf
+    dest: "{{ ansible_env.HOME }}/.kube/config"

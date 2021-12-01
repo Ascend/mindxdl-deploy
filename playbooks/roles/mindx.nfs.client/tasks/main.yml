@@ -1,0 +1,9 @@
+---
+# tasks file for mindx.nfs.client
+#
+- name: install nfs client
+  shell: dpkg --force-all -i {{ client_deb }}/*.deb
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    DEBIAN_PRIORITY: critical
+  when: OS_ID == 'ubuntu'

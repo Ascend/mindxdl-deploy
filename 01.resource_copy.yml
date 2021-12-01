@@ -1,0 +1,8 @@
+---
+- hosts:
+    - master
+    - worker
+  roles:
+    - role: mindx.resource
+      vars:
+        resource_dir: "{{ playbook_dir }}/resources"

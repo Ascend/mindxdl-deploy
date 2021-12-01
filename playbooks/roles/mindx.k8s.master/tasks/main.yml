@@ -1,0 +1,58 @@
+- name: no apiserver_advertise_address
+  set_fact:
+    addr_cmd: ""
+  when:
+    - apiserver_advertise_address == ""
+
+- name: set apiserver_advertise_address
+  set_fact:
+    addr_cmd: "--apiserver-advertise-address={{ apiserver_advertise_address }}"
+  when:
+    - apiserver_advertise_address != ""
+
+- name: init cluster by kubeadm init
+  shell: >
+    kubeadm init
+    --kubernetes-version={{ kubernetes_version }}
+    --node-name={{ ansible_hostname }}
+    --pod-network-cidr={{ pod_network_cidr }}
+    {{ addr_cmd }}
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+
+- name: create home kube directory
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+
+- name: set cluster config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ ansible_env.HOME }}/.kube/config"
+
+- name: apply calico
+  shell: "kubectl apply -f  {{ role_path }}/files/calico_{{calico_version}}.yaml"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+
+- name: taint nodes
+  shell: kubectl taint nodes --all node-role.kubernetes.io/master-
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+
+- name: ceate namespace
+  shell: kubectl create namespace mindx-dl
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""

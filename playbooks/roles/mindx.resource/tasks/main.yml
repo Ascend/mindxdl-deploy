@@ -1,0 +1,39 @@
+---
+- name: check if resource tar exist
+  local_action: stat path=~/resources.tar.gz
+  register: resource_tar
+
+- name: archive
+  archive:
+    path: "{{ resource_dir }}"
+    dest: ~/resources.tar.gz
+  when:
+    - ansible_connection == "local"
+    - not resource_tar.stat.exists
+    - not (host_count == "1" and first_host == "localhost")
+
+- name: local host link
+  file:
+    src: "{{ resource_dir }}"
+    dest: ~/resources
+    state: link
+  when: ansible_connection == "local"
+
+- name: copy to resources remote hosts
+  copy:
+    src: ~/resources.tar.gz
+    dest: ~/
+  when: ansible_connection != "local"
+
+- name: clean remote resources
+  file:
+    state: absent
+    path: ~/resources
+  when: ansible_connection != "local"
+
+- name: uncompress on remote
+  unarchive:
+    src: ~/resources.tar.gz
+    dest: ~/
+    copy: no
+  when: ansible_connection != "local"

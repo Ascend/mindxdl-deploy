@@ -1,0 +1,39 @@
+---
+- hosts:
+    - master
+    - worker
+  roles:
+    - role: mindx.resource
+      vars:
+        resource_dir: "{{ playbook_dir }}/resources"
+    - role: mindx.docker
+    - role: mindx.k8s.install
+    - role: mindx.nfs.client
+
+- hosts: nfs_server
+  roles:
+    - role: mindx.nfs.server
+      vars:
+        host_path: /data/atlas_dls
+
+- hosts: master
+  remote_user: root
+  roles:
+    - role: mindx.k8s.master
+      vars:
+        pod_network_cidr: "192.168.0.0/16"
+
+- hosts: worker
+  roles:
+    - role: mindx.k8s.worker
+
+- hosts: mysql
+  remote_user: root
+  roles:
+    - role: mindx.k8s.label
+      vars:
+        label_key: mysql
+        label_value: master
+    - role: mindx.mysql
+      vars:
+        k8s_namespace: mindx-dl

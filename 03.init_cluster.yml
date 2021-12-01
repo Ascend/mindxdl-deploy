@@ -1,0 +1,15 @@
+---
+- hosts: master
+  remote_user: root
+  roles:
+    - role: mindx.docker
+    - role: mindx.k8s.install
+    - role: mindx.k8s.master
+      vars:
+        pod_network_cidr: "192.168.0.0/16"
+
+- hosts: worker
+  roles:
+    - role: mindx.docker
+    - role: mindx.k8s.install
+    - role: mindx.k8s.worker
