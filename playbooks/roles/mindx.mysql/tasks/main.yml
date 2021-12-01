@@ -29,7 +29,7 @@
     HTTP_PROXY: ""
   ignore_errors: True
 
-- name: create secret
+- name: create secret for mysql
   shell: |
     kubectl delete secret --namespace={{ k8s_namespace }} dbsecret --ignore-not-found=true
     kubectl create secret --namespace={{ k8s_namespace }} generic dbsecret --from-literal="root_pwd={{pwd}}"
@@ -38,6 +38,32 @@
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
+
+- name: create secret for service
+  shell: |
+    kubectl delete secret --namespace={{ k8s_namespace }} mysql-secret-{{item.service}}
+    kubectl create secret \
+    --namespace={{ k8s_namespace }} \
+    generic mysql-secret-{{item.service}} \
+    --from-literal='connecton-path={{item.user}}:{{pwd}}@mysql.mindxdl.svc.cluster.local/{{item.dbname}}?charset=utf8&parseTime=True&loc=Local'
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+  with_items:
+    - { "user":"user_user",    "dbname":"user_manager",    "service": "user-manager"}
+    - { "user":"edge_user",    "dbname":"edge_manager",    "service": "edge-manager"}
+    - { "user":"dataset_user", "dbname":"dataset_manager", "service": "dataset-manager"}
+    - { "user":"license_user", "dbname":"license_manager", "service": "license-manager"}
+    - { "user":"train_user",   "dbname":"train_manager",   "service": "train-manager"}
+    - { "user":"label_user",   "dbname":"label_manager",   "service": "label-manager"}
+    - { "user":"model_user",   "dbname":"model_manager",   "service": "model-manager"}
+    - { "user":"task_user",    "dbname":"task_manager",    "service": "task-manager"}
+    - { "user":"image_user",   "dbname":"image_manager",   "service": "image-manager"}
+    - { "user":"data_user",    "dbname":"data_manager",    "service": "data-manager"}
+    - { "user":"cluster_user", "dbname":"cluster_manager", "service": "cluster-manager"}
+    - { "user":"access_user",  "dbname":"access_manager",  "service": "access-manager"}
+
 
 - name: create yamls
   template:
