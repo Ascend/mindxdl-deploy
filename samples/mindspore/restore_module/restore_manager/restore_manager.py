@@ -27,7 +27,6 @@ class RestoreManager:
     """
     def __init__(self):
         self.strategy_input_file_path = os.getenv("GROUP_INFO_FILE_REFLECT")
-        self.namespace = "vcjob"
         self.job_id = os.getenv("mindx-dls-test")
         self.restore_strategy_output_file_path = "/job/code/restore_ranks.sh"
 

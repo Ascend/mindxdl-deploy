@@ -95,7 +95,6 @@ class ConfigMap(BaseResource):
         if not job_id:
             job_id = os.getenv("mindx-dls-test")
 
-        fault_ranks = ""
         for res in res_list:
             config_map_name = res["metadata"].get("name")
             parts = config_map_name.split("fault-config-")
@@ -103,11 +102,16 @@ class ConfigMap(BaseResource):
                 continue
             filter_config_map_name = parts[-1]
             if filter_config_map_name in job_id:
-                if res.get("data").get("fault-npus"):
-                    record_fault_rank_timestamp = eval(res.get("data").get(
-                        "fault-npus")).get("CreateTime")
-                    dt_early = datetime.datetime.now() - datetime.timedelta(minutes=5)
-                    if int(dt_early.timestamp()) < record_fault_rank_timestamp:
-                        return True
+                if not res.get("data").get("fault-npus"):
+                    return False
+
+                record_fault_rank_timestamp = eval(res.get("data").get(
+                    "fault-npus")).get("CreateTime")
+                if not record_fault_rank_timestamp:
+                    return False
+
+                dt_early = datetime.datetime.now() - datetime.timedelta(minutes=5)
+                if int(dt_early.timestamp()) < record_fault_rank_timestamp:
+                    return True
 
         return False
