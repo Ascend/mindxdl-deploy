@@ -1,4 +1,4 @@
 **Directory description** <br/>
-**python_examples**: docking demo code written in Python <br/>
-**samples**: start script used for training and reasoning, yaml configuration demo file<br/>
-**yamls**: yaml configuration demo file launched by Prometheus and calico
+**python_examples**: demo docking code written in Python <br/>
+**samples**: startup scripts used for training and inference, and YAML configuration demo files<br/>
+**yamls**: YAML configuration demo files launched by Prometheus and calico
