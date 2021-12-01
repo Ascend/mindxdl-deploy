@@ -1,5 +1,4 @@
 #!/bin/bash
-# set -x
 
 # hccl-controller组件生成的rank_table_file
 export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
@@ -54,8 +53,8 @@ function get_server_id()
     echo ${srv_id}
 }
 
-ret=$(check_hccl_status)
-if [[ "${ret}" == "1" ]]; then
+check_hccl_status
+if [[ $? -eq 1 ]]; then
     echo "wait hccl status timeout, train job failed." | tee -a hccl.log
     exit 1
 fi
@@ -76,14 +75,19 @@ if [[ "$server_count" == "" ]]; then
     echo "server count is 0, train job failed." | tee -a hccl.log
     exit 1
 fi
+
+# 根据实际情况进行修改，全局配置参数：数据集路径，配置参数文件路径
+dataset_path=/job/data/imagenet_full/train
+config_yaml_path=/job/code/resnet/resnet50_imagenet2012_config.yaml
+
 # 单节点训练场景
 if [[ "$server_count" == "1" ]]; then
     server_id=0
     if [ ${device_count} -eq 1 ]; then
-        bash main.sh /job/data/cf-10-batches-bin/
+        bash main.sh ${dataset_path} ${config_yaml_path}
     fi
     if [ ${device_count} -gt 1 ]; then
-        bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} /job/data/cf-10-batches-bin/
+        bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
     fi
 
 # 分布式训练场景
@@ -94,6 +98,5 @@ else
         exit 1
     fi
     echo "server id is: "${server_id}
-    bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} /job/data/cf-10-batches-bin/
+    bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
 fi
-
