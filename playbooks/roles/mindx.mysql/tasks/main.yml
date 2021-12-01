@@ -14,7 +14,7 @@
     path: "{{ item }}"
     state: directory
   with_items:
-    - "{{ mysql_data_path }}"
+    - "{{ data_path }}"
     - /var/log/atlas_dls/mysql
 
 - name: create random password
