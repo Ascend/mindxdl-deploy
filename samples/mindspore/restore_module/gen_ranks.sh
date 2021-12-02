@@ -123,5 +123,4 @@ else
     rank_start=$((${device_each_server} * ${server_id}))
     export RANK_ID=$rank_start
     python gen_restore_ranks.py
-fi 
-
+fi
