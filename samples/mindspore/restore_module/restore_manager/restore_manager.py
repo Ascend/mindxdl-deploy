@@ -74,13 +74,13 @@ class RestoreManager:
             restore_ranks = '-1'
             with open(restore_strategy_output_file_path, "w") as wfile:
                 wfile.write(f"export RESTORE_RANKS={restore_ranks}\n")
-            return restore_ranks
+            return restore_ranks, None
 
         if "-1" == fault_ranks:
             restore_ranks = '-1'
             with open(restore_strategy_output_file_path, "w") as wfile:
                 wfile.write(f"export RESTORE_RANKS={restore_ranks}\n")
-            return restore_ranks
+            return restore_ranks, None
 
         fault_ranks_list = []
         fault_ranks_splits = fault_ranks.split(",")
@@ -102,7 +102,7 @@ class RestoreManager:
                 with open(restore_strategy_output_file_path, "w") as wfile:
                     wfile.write(f"export RESTORE_RANKS={restore_ranks_str}\n")
 
-                return restore_ranks_str
+                return restore_ranks_str, None
 
             elements_str = ",".join(map(str, elements))
             restore_rank_dict[elements_str] = list(elements_for_use)[0]
@@ -117,19 +117,26 @@ class RestoreManager:
 
             restore_ranks_json = json.dumps(restore_rank_dict)
             wfile.write(f"export RESTORE_RANKS_MAP='{str(restore_ranks_json)}'\n")
-        return restore_ranks_str
+
+        os.environ["RESTORE_RANKS"] = restore_ranks_str
+        os.environ["RESTORE_RANKS_MAP"] = restore_ranks_json
+        return restore_ranks_str, restore_ranks_json
 
     def load_restore_strategy(self, restore_strategy_output_file_path):
         with open(restore_strategy_output_file_path, "r") as rfile:
-            restore_ranks_str = rfile.read()
+            contents = rfile.readlines()
 
-        restore_ranks_list = list(restore_ranks_str.split(","))
-        if -1 in restore_ranks_list:
-            os.environ["RESTORE_RANKS"] = ""
-            return None
-
-        os.environ["RESTORE_RANKS"] = restore_ranks_list
-        return restore_ranks_list
+            if len(contents) == 1:
+                restore_ranks_list = contents[0].split("RESTORE_RANKS=")[-1].split("\n")[0]
+                os.environ["RESTORE_RANKS"] = restore_ranks_list
+                os.environ["RESTORE_RANKS_MAP"] = ""
+            elif len(contents) == 2:
+                restore_ranks_list = contents[0].split("RESTORE_RANKS=")[-1].split("\n")[0]
+                os.environ["RESTORE_RANKS"] = restore_ranks_list
+                restore_ranks_map = contents[0].split("RESTORE_RANKS_MAP=")[-1].split("\n")[0]
+                os.environ["RESTORE_RANKS_MAP"] = restore_ranks_map
+            else:
+                raise ValueError("Invalid restore contents!")
 
     def get_exception_checkpoints(self, params):
         r"""
@@ -209,22 +216,22 @@ class RestoreManager:
             return False
 
         try:
-            print("whether run into load process")
+            print("whether run into load process", flush=True)
             restore_ranks_map_json = json.loads(restore_ranks_map)
             map_rank_id = D.get_rank()
             for key in restore_ranks_map_json.keys():
                 if str(D.get_rank()) in key:
                     map_rank_id = restore_ranks_map_json.get(key)
 
-            print(f"loading map rank id {map_rank_id}")
+            print(f"loading map rank id {map_rank_id}", flush=True)
             ckpt_pattern = os.path.join(args_param.save_checkpoint_path,
                                         f"rank_{map_rank_id}",
                                         f"{ckpt_name}*breakpoint.ckpt")
             ckpt_files = glob.glob(ckpt_pattern)
             ckpt_files.sort(key=os.path.getmtime, reverse=True)
-            print(f" checkpoint files {ckpt_files[0]}")
+            print(f" checkpoint files {ckpt_files[0]}", flush=True)
             param_dict = load_checkpoint(ckpt_files[0])
-            print(f" checkpoint param dict epoch num {param_dict.get('epoch_num')}")
+            print(f" checkpoint param dict epoch num {param_dict.get('epoch_num')}", flush=True)
             if param_dict.get("epoch_num") and param_dict.get("step_num"):
                 args_param.has_trained_epoches = int(
                     param_dict["epoch_num"].data.asnumpy())
