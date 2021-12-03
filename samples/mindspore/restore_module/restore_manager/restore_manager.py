@@ -50,8 +50,10 @@ class RestoreManager:
         strategy_name = "group_info.pb"
         if not strategy_input_file_path:
             tmp_strategy_input_file_path = self.strategy_input_file_path
-            path, strategy_name = os.path.split(tmp_strategy_input_file_path)
-            strategy_input_file_path, _ = os.path.split(path)
+        else:
+            tmp_strategy_input_file_path = strategy_input_file_path
+        path, strategy_name = os.path.split(tmp_strategy_input_file_path)
+        strategy_input_file_path, _ = os.path.split(path)
 
         D.init()
         device_num = D.get_group_size()
