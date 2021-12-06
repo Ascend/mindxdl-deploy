@@ -4,4 +4,6 @@
   roles:
     - role: mindx.nfs.server
       vars:
-        host_path: /mnt/data
+        nfs_exports:
+          - /data/platform
+          - /data/user

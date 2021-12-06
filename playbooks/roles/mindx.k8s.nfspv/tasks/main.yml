@@ -1,0 +1,14 @@
+- name: create yamls
+  template:
+    src: "pv.yaml"
+    dest: "{{ role_path }}/pv_{{ pv_name }}.yaml"
+    mode: 0644
+
+- name: create pv {{pv_name}}
+  shell: "kubectl apply -f {{ role_path }}/pv_{{pv_name}}.yaml"
+  delegate_to: "{{ groups['master'][0] }}"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""

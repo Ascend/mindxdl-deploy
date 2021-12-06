@@ -1,4 +1,5 @@
 ---
+# install softwares
 - hosts:
     - master
     - worker
@@ -10,12 +11,8 @@
     - role: mindx.k8s.install
     - role: mindx.nfs.client
 
-- hosts: nfs_server
-  roles:
-    - role: mindx.nfs.server
-      vars:
-        host_path: /data/atlas_dls
 
+# init k8s
 - hosts: master
   remote_user: root
   roles:
@@ -27,6 +24,32 @@
   roles:
     - role: mindx.k8s.worker
 
+# config nfs server
+- hosts: nfs_server
+  roles:
+    - role: mindx.nfs.server
+      vars:
+        nfs_exports:
+          - /data/platform
+          - /data/user
+
+- hosts: master
+  remote_user: root
+  roles:
+  - role: mindx.k8s.nfspv
+    vars:
+      pv_name: nfs-platform
+      nfs_capacity: 20Gi
+      nfs_server: "{{ groups['master'][0] }}"
+      nfs_path: /data/platform
+  - role: mindx.k8s.nfspv
+    vars:
+      pv_name: nfs-user
+      capacity: 20Gi
+      nfs_server: "{{ groups['master'][0] }}"
+      nfs_path: /data/user
+
+# mysql
 - hosts: mysql
   remote_user: root
   roles:
@@ -37,3 +60,5 @@
     - role: mindx.mysql
       vars:
         k8s_namespace: mindx-dl
+        capacity: 20Gi
+        data_path: /data/mysql

@@ -12,14 +12,16 @@
 
 - name: create nfs path
   file:
-    path: "{{ host_path }}"
+    path: "{{ item }}"
     state: directory
+  with_items: "{{ nfs_exports }}"
 
-- name: config nfs server
+- name: config nfs /etc/exports
   ansible.builtin.lineinfile:
     path: /etc/exports
-    line: "{{host_path}} *(rw,sync,no_root_squash)"
+    line: "{{item}} *(rw,sync,no_root_squash)"
     state: present
+  with_items: "{{ nfs_exports }}"
 
 - name: "restart nfs"
   systemd:
