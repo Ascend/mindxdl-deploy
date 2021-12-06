@@ -54,11 +54,8 @@ spec:
               fieldRef:
                 fieldPath: status.hostIP
           - name: INCLUSTER_FLAG                # IP address of the physical node, which is used to identify the node where the pod is running
-            value: "True"
-          command:
-          - "/bin/bash"
-          - "-c"
-          - "cd /job/code/pangu_alpha/scripts; chmod +x train_start.sh; ./train_start.sh;" # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
+            value: "False"
+          command: ["/bin/bash", "-c", "cd /job/code/pangu_alpha/scripts; chmod +x train_start.sh; ./train_start.sh;"] # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
           #args: [ "while true; do sleep 30000; done;"  ]                            # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                                                      # The command is 'kubectl exec -it -n {namespace} {podname} bash'
           lifecycle:
@@ -77,6 +74,8 @@ spec:
             mountPath: /job/code/
           - name: data
             mountPath: /job/data
+          - name: k8s-config
+            mountPath: /root/.kube
           - name: ascend-driver
             mountPath: /usr/local/Ascend/driver
           - name: ascend-add-ons
@@ -97,6 +96,10 @@ spec:
           nfs:
             server: 127.0.0.1
             path: "/data/atlas_dls/public/dataset/dataset_MS"  # Configure the path of the training set.
+        - name: k8s-config
+          nfs:
+            server: 127.0.0.1                                   # IP address of the NFS server. In this example, the shared path is /root/.kube
+            path: /root/.kube                                   # Configure the path of the k8s config path.
         - name: ascend-driver
           hostPath:
             path: /usr/local/Ascend/driver                     # Configure the NPU driver and mount it to Docker.

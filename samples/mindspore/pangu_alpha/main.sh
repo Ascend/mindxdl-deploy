@@ -37,6 +37,9 @@ if [ $# == 5 ]; then
         rm ${ROOT_PATH}/../device$rankid/ -rf
         mkdir ${ROOT_PATH}/../device$rankid
         cd ${ROOT_PATH}/../device$rankid || exit
+        group_info_dir=${ROOT_PATH}/../device$rankid/group_info.pb
+        group_info_file_tmp="$(dirname $(readlink -e $group_info_dir)) / $(basename $group_info_dir)"
+        export GROUP_INFO_FILE=${group_info_file_tmp}
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
 

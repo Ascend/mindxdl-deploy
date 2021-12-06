@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-source ~/.bashrc
+source /job/code/group_info_env
 
 if [ -z $GROUP_INFO_FILE_REFLECT ]; then
   echo "Group info file not corrected generated."
@@ -123,5 +123,4 @@ else
     rank_start=$((${device_each_server} * ${server_id}))
     export RANK_ID=$rank_start
     python gen_restore_ranks.py
-fi 
-
+fi
