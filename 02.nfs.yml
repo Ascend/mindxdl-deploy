@@ -1,6 +1,6 @@
 ---
+# config nfs server
 - hosts: nfs_server
-  remote_user: root
   roles:
     - role: mindx.nfs.server
       vars:

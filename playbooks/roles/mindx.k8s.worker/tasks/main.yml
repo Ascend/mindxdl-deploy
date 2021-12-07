@@ -1,3 +1,12 @@
+- debug:
+    msg: "******************************start join k8s on worker******************************"
+
+- name: message
+  debug:
+    msg: "There can only be one master in inventory_file, please check"
+  failed_when: true
+  when: "'master' not in groups or groups['master'] | length != 1"
+
 - name: get token
   shell: kubeadm token create --print-join-command
   delegate_to: "{{ groups['master'][0] }}"
@@ -15,3 +24,4 @@
   copy:
     src: /etc/kubernetes/kubelet.conf
     dest: "{{ ansible_env.HOME }}/.kube/config"
+    remote_src: yes

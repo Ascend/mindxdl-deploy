@@ -1,8 +1,10 @@
 ---
+# distribute resources
 - hosts:
     - master
     - worker
+    - nfs_server
   roles:
     - role: mindx.resource
       vars:
-        resource_dir: "{{ playbook_dir }}/resources"
+        base_dir: "{{ playbook_dir }}"

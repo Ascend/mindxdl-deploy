@@ -1,8 +1,8 @@
 [master]
-localhost ansible_connection='local'
+localhost ansible_connection=local
 
 [mysql]
-localhost ansible_connection='local'
+localhost ansible_connection=local
 
 [nfs_server]
-localhost ansible_connection='local'
+localhost ansible_connection=local

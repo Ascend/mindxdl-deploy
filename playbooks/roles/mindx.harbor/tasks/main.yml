@@ -1,0 +1,75 @@
+- debug:
+    msg: "******************************start install harbor******************************"
+
+- name: install docker-compose
+  copy:
+    src: "{{ resource_dir }}/linux_{{ ansible_architecture }}/docker-compose"
+    dest: "/usr/bin/docker-compose"
+    mode: "0750"
+    remote_src: yes
+
+- name: find harbor-offline-installer-*.tgz
+  find:
+    paths: "{{ resource_dir }}"
+    recurse: no
+    file_type: file
+    patterns: "harbor-offline-installer-{{ harbor_flag }}*.tgz"
+  register: harbor
+
+- name: unarchive harbor
+  ansible.builtin.unarchive:
+    src: "{{ harbor.files[0].path }}"
+    dest: "{{ resource_dir }}/linux_{{ ansible_architecture }}"
+    remote_src: yes
+
+- name: copy harbor.yml.tmpl
+  copy:
+    src: "{{ resource_dir }}/linux_{{ ansible_architecture }}/harbor/harbor.yml.tmpl"
+    dest: "{{ resource_dir }}/linux_{{ ansible_architecture }}/harbor/harbor.yml"
+    remote_src: yes
+
+- name: set hostname in harbor.yml
+  ansible.builtin.lineinfile:
+    path: "{{ resource_dir }}/linux_{{ ansible_architecture }}/harbor/harbor.yml"
+    regexp: '^hostname:.*'
+    line: "hostname: {{ host_ip }}"
+
+- name: set certificate in harbor.yml
+  ansible.builtin.lineinfile:
+    path: "{{ resource_dir }}/linux_{{ ansible_architecture }}/harbor/harbor.yml"
+    regexp: '^  certificate:.*'
+    line: "  certificate: {{ certificate_path }}"
+
+- name: set private_key in harbor.yml
+  ansible.builtin.lineinfile:
+    path: "{{ resource_dir }}/linux_{{ ansible_architecture }}/harbor/harbor.yml"
+    regexp: '^  private_key:.*'
+    line: "  private_key: {{ key_path }}"
+
+- name: set data_volume in harbor.yml
+  ansible.builtin.lineinfile:
+    path: "{{ resource_dir }}/linux_{{ ansible_architecture }}/harbor/harbor.yml"
+    regexp: '^data_volume:.*'
+    line: "data_volume: {{ data_path }}"
+
+- name: create https_config.sh
+  template:
+    src: https_config.sh
+    dest: "{{ resource_dir }}/roles/mindx.harbor/https_config.sh"
+    mode: 0640
+
+- name: execute https_config.sh
+  shell : "bash {{ resource_dir }}/roles/mindx.harbor/https_config.sh"
+
+- name: "restart docker"
+  systemd:
+    name: "docker"
+    enabled: true
+    state: restarted
+
+- name: execute harbor install.sh
+  shell: |
+    docker-compose down -v
+    bash install.sh
+  args:
+    chdir: "{{ resource_dir }}/linux_{{ ansible_architecture }}/harbor"

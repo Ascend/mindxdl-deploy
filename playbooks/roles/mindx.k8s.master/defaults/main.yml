@@ -10,3 +10,4 @@ calico_version: v3.20.2
 kubernetes_version: v1.19.16
 pod_network_cidr: "192.168.0.0/16"
 apiserver_advertise_address: ""
+k8s_namespace: "mindx-dl"

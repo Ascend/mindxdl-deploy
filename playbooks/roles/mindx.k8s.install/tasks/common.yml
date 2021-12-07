@@ -3,6 +3,7 @@
     src: "{{resource_dir}}/linux_{{ansible_architecture}}/k8s/{{ item }}"
     dest: "/usr/bin/{{ item }}"
     mode: "0750"
+    remote_src: yes
   with_items:
     - kubeadm
     - kubelet
@@ -34,16 +35,30 @@
     enabled: true
     state: started
 
-- name: install cni plugin
-  ansible.builtin.unarchive:
-    src: "{{ item }}"
-    dest: /opt/cni/bin
-  with_fileglob:
-    - "{{resource_dir}}/linux_{{ansible_architecture}}/cni-plugin*.tgz"
+- name: find cni-plugin*.tgz
+  find:
+    paths: "{{ resource_dir }}/linux_{{ ansible_architecture }}"
+    recurse: no
+    file_type: file
+    patterns: "cni-plugin*.tgz"
+  register: cni_plugin
 
-- name: install crictl
+- name: unarchive cni plugin
   ansible.builtin.unarchive:
-    src: "{{ item }}"
+    src: "{{ cni_plugin.files[0].path }}"
+    dest: /opt/cni/bin
+    remote_src: yes
+
+- name: find cni-plugin*.tgz
+  find:
+    paths: "{{ resource_dir }}/linux_{{ ansible_architecture }}"
+    recurse: no
+    file_type: file
+    patterns: "crictl*.tar.gz"
+  register: crictl
+
+- name: unarchive crictl
+  ansible.builtin.unarchive:
+    src: "{{ crictl.files[0].path }}"
     dest: /usr/bin
-  with_fileglob:
-    - "{{resource_dir}}/linux_{{ansible_architecture}}/crictl*.tgz"
+    remote_src: yes
