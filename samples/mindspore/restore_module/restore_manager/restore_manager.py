@@ -67,7 +67,7 @@ class RestoreManager:
                 sub_strategy_input_file_path, strategy_name)
             res = restore_group_info_list(sub_startegy_input_file_name)
             if res not in device_group_info_list:
-                device_group_info_list.append(res)
+                device_group_info_list.append(sorted(res))
 
         restore_ranks = set()
 
@@ -96,19 +96,14 @@ class RestoreManager:
         for elements in device_group_info_list:
             elements_for_use = set(elements) - set(fault_ranks_list)
             if not elements_for_use:
-                restore_ranks.add(-1)
-                restore_ranks_list = []
-                for idx in restore_ranks:
-                    restore_ranks_list.append(str(idx))
-                restore_ranks_str = ",".join(restore_ranks_list)
+                restore_ranks = '-1'
                 with open(restore_strategy_output_file_path, "w") as wfile:
-                    wfile.write(f"export RESTORE_RANKS={restore_ranks_str}\n")
-
-                return restore_ranks_str, None
+                    wfile.write(f"export RESTORE_RANKS={restore_ranks}\n")
+                return restore_ranks, None
 
             elements_str = ",".join(map(str, elements))
-            restore_rank_dict[elements_str] = list(elements_for_use)[0]
-            restore_ranks.add(list(elements_for_use)[0])
+            restore_rank_dict[elements_str] = sorted(list(elements_for_use))[0]
+            restore_ranks.add(sorted(list(elements_for_use))[0])
 
         with open(restore_strategy_output_file_path, "w") as wfile:
             restore_ranks_list = []
