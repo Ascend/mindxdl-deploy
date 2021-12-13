@@ -7,10 +7,10 @@
     - role: mindx.resource
       vars:
         resource_dir: "{{ playbook_dir }}/resources"
+    - role: mindx.basic
     - role: mindx.docker
     - role: mindx.k8s.install
     - role: mindx.nfs.client
-
 
 # init k8s
 - hosts: master
@@ -19,6 +19,11 @@
     - role: mindx.k8s.master
       vars:
         pod_network_cidr: "192.168.0.0/16"
+    - role: mindx.k8s.label
+      vars:
+        label_key: masterselector
+        label_value: dls-master-node
+    - role: mindx.k8s.prom
 
 - hosts: worker
   roles:
