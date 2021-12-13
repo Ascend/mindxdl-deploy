@@ -24,6 +24,7 @@
         label_key: masterselector
         label_value: dls-master-node
     - role: mindx.k8s.prom
+    - role: mindx.kubeedge
 
 - hosts: worker
   roles:

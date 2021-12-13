@@ -1,0 +1,60 @@
+- debug:
+    msg: "start install kubeedge"
+
+- name: copy cloudcore
+  copy:
+   src: "{{resource_dir}}/linux_{{ansible_architecture}}/{{ item }}"
+   dest: "/usr/local/bin/{{ item }}"
+   mode: "0750"
+  with_items:
+   - cloudcore
+
+- name: copy cloudcore.service
+  copy:
+   src: "{{role_path}}/files/{{ item }}"
+   dest: "/lib/systemd/system"
+  with_items:
+   - cloudcore.service
+
+- name: make directory
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/kubeedge/config
+    - /etc/kubeedge/ca
+    - /etc/kubeedge/certs
+    - /etc/kubeedge/yamls
+
+- name: copy k8s yamls
+  copy:
+   src: "{{role_path}}/files/{{ item }}"
+   dest: /etc/kubeedge/yamls
+  with_items:
+   - devices_v1alpha1_device.yaml
+   - devices_v1alpha1_devicemodel.yaml
+   - cluster_objectsync_v1alpha1.yaml
+   - objectsync_v1alpha1.yaml
+   - router_v1_rule.yaml
+   - router_v1_ruleEndpoint.yaml
+
+- name: generate cert and default config
+  shell: |
+    "bash {{role_path}}/files/certgen.sh genCertAndKey server"
+    /usr/local/bin/cloudcore --defaultconfig > /etc/kubeedge/config/cloudcore.yaml
+
+- name: apply kubeedge yamls
+  shell: "kubectl apply -f /etc/kubeedge/yamls/{{ item }}"
+  with_items:
+   - devices_v1alpha1_device.yaml
+   - devices_v1alpha1_devicemodel.yaml
+   - cluster_objectsync_v1alpha1.yaml
+   - objectsync_v1alpha1.yaml
+   - router_v1_rule.yaml
+   - router_v1_ruleEndpoint.yaml
+
+- name: start cloudcore
+  systemd:
+    name: cloudcore
+    enabled: true
+    state: started
