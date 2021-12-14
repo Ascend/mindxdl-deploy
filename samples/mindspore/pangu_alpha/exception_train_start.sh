@@ -31,7 +31,10 @@ if [ $? -eq 0 ]; then
     bash train_start.sh
   fi
 else
-  rm -f /job/code/restore_ranks.sh
+  file=/job/code/restore_ranks.sh
+  if [ -f $file ]; then
+    rm -f /job/code/restore_ranks.sh
+  fi
   cd ${ROOT_PATH} || exit
   bash train_start.sh
 fi
