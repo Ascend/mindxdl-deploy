@@ -1,3 +1,5 @@
+- debug: var=deb_dir
+
 - name: install docker-ce
   shell: dpkg --force-all -i {{ deb_dir }}/*.deb
   environment:

@@ -28,6 +28,7 @@
         label_key: masterselector
         label_value: dls-master-node
     - role: mindx.k8s.prom
+    - role: mindx.k8s.autolabel
     - role: mindx.kubeedge
 
 # worker join k8s
@@ -39,6 +40,7 @@
         label_key: node-role.kubernetes.io/worker
         label_value: worker
         delegate_to_master: "true"
+    - role: mindx.k8s.autolabel
 
 # config nfs server
 - hosts: nfs_server
