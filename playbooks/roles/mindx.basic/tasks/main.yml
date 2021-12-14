@@ -1,0 +1,41 @@
+- name: create group {{ DL_GRP }}
+  ansible.builtin.group:
+    name: "{{ DL_GRP }}"
+    state: present
+    gid: "{{ DL_GID }}"
+
+- name: create user {{ DL_USR }}
+  ansible.builtin.user:
+    name: "{{ DL_USR }}"
+    comment: "{{  DL_USR }}"
+    uid: "{{ DL_UID }}"
+    group: "{{ DL_GRP }}"
+    state: present
+
+- name: create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{DL_USR}}"
+    group: "{{DL_GRP}}"
+  with_items:
+    - /etc/mindx-dl
+    - /var/log/mindx-dl
+    - /var/log/mindx-dl/apigw
+    - /var/log/mindx-dl/access-manager
+    - /var/log/mindx-dl/cert-importer
+    - /var/log/mindx-dl/cluster-manager
+    - /var/log/mindx-dl/data-manager
+    - /var/log/mindx-dl/dataset-manager
+    - /var/log/mindx-dl/devicePlugin
+    - /var/log/mindx-dl/edge-manager
+    - /var/log/mindx-dl/hccl-controller
+    - /var/log/mindx-dl/image-manager
+    - /var/log/mindx-dl/license-manager
+    - /var/log/mindx-dl/model-manager
+    - /var/log/mindx-dl/npu-exporter
+    - /var/log/mindx-dl/task-exporter
+    - /var/log/mindx-dl/train-manager
+    - /var/log/mindx-dl/user-manager
+    - /var/log/mindx-dl/volcano-controller
+    - /var/log/mindx-dl/volcano-scheduler

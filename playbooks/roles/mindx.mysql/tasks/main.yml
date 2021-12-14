@@ -1,6 +1,18 @@
 - debug:
     msg: "******************************start deploy mysql******************************"
 
+- name: message
+  debug:
+    msg: "There can only be one mysql in inventory_file, please check"
+  failed_when: true
+  when: "'mysql' not in groups or groups['mysql'] | length != 1"
+
+- name: message
+  debug:
+    msg: "mysql must be the same with master in inventory_file, please check"
+  failed_when: true
+  when: groups['mysql'] != groups['master']
+
 - name: find mysql images tar
   find:
     paths: "{{ image_dir }}"

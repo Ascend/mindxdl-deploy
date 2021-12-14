@@ -1,0 +1,4 @@
+# defaults file for ascend.docker
+state: 'present'
+resource_dir: "~/resources"
+image_dir: "{{resource_dir}}/images/{{ansible_architecture}}"

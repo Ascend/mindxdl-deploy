@@ -1,0 +1,6 @@
+# defaults file for ascend.mysql
+state: "present"
+DL_USR: "hwMidnX"
+DL_GRP: "hwMidnX"
+DL_UID: 9000
+DL_GID: 9000

@@ -14,6 +14,7 @@
     - master
     - worker
   roles:
+    - role: mindx.basic
     - role: mindx.docker
     - role: mindx.k8s.install
     - role: mindx.nfs.client
@@ -22,6 +23,11 @@
 - hosts: master
   roles:
     - role: mindx.k8s.master
+    - role: mindx.k8s.label
+      vars:
+        label_key: masterselector
+        label_value: dls-master-node
+    - role: mindx.k8s.prom
 
 # worker join k8s
 - hosts: worker

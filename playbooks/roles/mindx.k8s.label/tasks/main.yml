@@ -1,18 +1,6 @@
 - debug:
     msg: "******************************start label mysql******************************"
 
-- name: message
-  debug:
-    msg: "There can only be one mysql in inventory_file, please check"
-  failed_when: true
-  when: "'mysql' not in groups or groups['mysql'] | length != 1"
-
-- name: message
-  debug:
-    msg: "mysql must be the same with master in inventory_file, please check"
-  failed_when: true
-  when: groups['mysql'] != groups['master']
-
 - name: label {{ ansible_hostname }} {{label_key}}={{label_value}}
   shell: kubectl label --overwrite node {{ ansible_hostname }} {{label_key}}={{label_value}}
   environment:
