@@ -1,5 +1,5 @@
 - debug:
-    msg: "start install k8s"
+    msg: "******************************start install k8s******************************"
 
 - name: disable swap
   shell: swapoff -a
@@ -17,19 +17,22 @@
 
 - include_tasks: common.yml
 
-- name: load k8s images
-  shell: docker load -i {{item}}
-  with_fileglob:
-    - "{{image_dir}}/kube*.tar"
-    - "{{image_dir}}/pause*.tar"
-    - "{{image_dir}}/etcd*.tar"
-    - "{{image_dir}}/coredns*.tar"
-  when: online == false
+- name: find k8s and calico images tar
+  find:
+    paths: "{{image_dir}}"
+    recurse: no
+    file_type: file
+    patterns:
+      - "kube*.tar"
+      - "pause*.tar"
+      - "etcd*.tar"
+      - "coredns*.tar"
+      - "calico*.tar"
+  register: kube_images_tar
 
-- name: load calico images
-  shell: docker load -i {{item}}
-  with_fileglob:
-    - "{{image_dir}}/calico*.tar"
+- name: load k8s and calico images
+  shell: docker load -i {{ item.path }}
+  loop: "{{ kube_images_tar.files }}"
   when: online == false
 
 - name: "restart kubelet"

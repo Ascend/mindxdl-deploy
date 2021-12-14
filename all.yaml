@@ -1,24 +1,28 @@
 ---
+# distribute resources
+- hosts:
+    - master
+    - worker
+    - nfs_server
+  roles:
+    - role: mindx.resource
+      vars:
+        base_dir: "{{ playbook_dir }}"
+
 # install softwares
 - hosts:
     - master
     - worker
   roles:
-    - role: mindx.resource
-      vars:
-        resource_dir: "{{ playbook_dir }}/resources"
     - role: mindx.basic
     - role: mindx.docker
     - role: mindx.k8s.install
     - role: mindx.nfs.client
 
-# init k8s
+# master init k8s
 - hosts: master
-  remote_user: root
   roles:
     - role: mindx.k8s.master
-      vars:
-        pod_network_cidr: "192.168.0.0/16"
     - role: mindx.k8s.label
       vars:
         label_key: masterselector
@@ -26,9 +30,15 @@
     - role: mindx.k8s.prom
     - role: mindx.kubeedge
 
+# worker join k8s
 - hosts: worker
   roles:
     - role: mindx.k8s.worker
+    - role: mindx.k8s.label
+      vars:
+        label_key: node-role.kubernetes.io/worker
+        label_value: worker
+        delegate_to_master: "true"
 
 # config nfs server
 - hosts: nfs_server
@@ -39,25 +49,8 @@
           - /data/platform
           - /data/user
 
-- hosts: master
-  remote_user: root
-  roles:
-  - role: mindx.k8s.nfspv
-    vars:
-      pv_name: nfs-platform
-      nfs_capacity: 20Gi
-      nfs_server: "{{ groups['master'][0] }}"
-      nfs_path: /data/platform
-  - role: mindx.k8s.nfspv
-    vars:
-      pv_name: nfs-user
-      capacity: 20Gi
-      nfs_server: "{{ groups['master'][0] }}"
-      nfs_path: /data/user
-
 # mysql
 - hosts: mysql
-  remote_user: root
   roles:
     - role: mindx.k8s.label
       vars:
@@ -65,6 +58,11 @@
         label_value: master
     - role: mindx.mysql
       vars:
-        k8s_namespace: mindx-dl
         capacity: 20Gi
         data_path: /data/mysql
+
+# install harbor
+- hosts:
+    - master
+  roles:
+    - role: mindx.harbor

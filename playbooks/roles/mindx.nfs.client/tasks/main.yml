@@ -1,6 +1,6 @@
----
-# tasks file for mindx.nfs.client
-#
+- debug:
+    msg: "******************************start install nfs client******************************"
+
 - name: install nfs client
   shell: dpkg --force-all -i {{ client_deb }}/*.deb
   environment:

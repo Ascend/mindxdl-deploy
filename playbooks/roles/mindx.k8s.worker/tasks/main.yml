@@ -1,10 +1,30 @@
+- debug:
+    msg: "******************************start join k8s on worker******************************"
+
+- name: message
+  debug:
+    msg: "There can only be one master in inventory_file, please check"
+  failed_when: true
+  when: "'master' not in groups or groups['master'] | length != 1"
+
 - name: get token
   shell: kubeadm token create --print-join-command
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
   delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
   register: register_cmd
 
 - name: join cluster
   shell: "{{ register_cmd.stdout }}"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
 
 - name: create kube directory
   file:
@@ -15,3 +35,4 @@
   copy:
     src: /etc/kubernetes/kubelet.conf
     dest: "{{ ansible_env.HOME }}/.kube/config"
+    remote_src: yes

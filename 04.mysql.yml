@@ -1,9 +1,12 @@
 ---
+# mysql
 - hosts: mysql
-  remote_user: root
   roles:
     - role: mindx.k8s.label
       vars:
         label_key: mysql
         label_value: master
     - role: mindx.mysql
+      vars:
+        capacity: 20Gi
+        data_path: /data/mysql

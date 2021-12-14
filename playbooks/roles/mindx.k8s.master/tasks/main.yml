@@ -1,4 +1,7 @@
-- name: no apiserver_advertise_address
+- debug:
+    msg: "******************************start init k8s on master******************************"
+
+- name: not apiserver_advertise_address
   set_fact:
     addr_cmd: ""
   when:
@@ -32,9 +35,10 @@
   copy:
     src: /etc/kubernetes/admin.conf
     dest: "{{ ansible_env.HOME }}/.kube/config"
+    remote_src: yes
 
 - name: apply calico
-  shell: "kubectl apply -f  {{ role_path }}/files/calico_{{calico_version}}.yaml"
+  shell: "kubectl apply -f {{ resource_dir }}/roles/mindx.k8s.master/files/calico_{{calico_version}}.yaml"
   environment:
     http_proxy: ""
     https_proxy: ""
@@ -50,7 +54,7 @@
     HTTPS_PROXY: ""
 
 - name: ceate namespace
-  shell: kubectl create namespace mindx-dl
+  shell: kubectl create namespace {{ k8s_namespace }}
   environment:
     http_proxy: ""
     https_proxy: ""

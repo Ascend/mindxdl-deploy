@@ -1,13 +1,31 @@
 - debug:
-    msg: "start deploy mysql"
+    msg: "******************************start deploy mysql******************************"
+
+- name: message
+  debug:
+    msg: "There can only be one mysql in inventory_file, please check"
+  failed_when: true
+  when: "'mysql' not in groups or groups['mysql'] | length != 1"
+
+- name: message
+  debug:
+    msg: "mysql must be the same with master in inventory_file, please check"
+  failed_when: true
+  when: groups['mysql'] != groups['master']
+
+- name: find mysql images tar
+  find:
+    paths: "{{ image_dir }}"
+    recurse: no
+    file_type: file
+    patterns: "mysql-server*.tar"
+  register: mysql_images_tar
 
 - name: load mysql image
-  shell: docker load -i {{item}}
-  with_fileglob:
-    - "{{image_dir}}/mysql*.tar"
+  shell: docker load -i {{ mysql_images_tar.files[0].path }}
 
 - name: build new docker image
-  shell: docker build {{ role_path }}/files/ -t mysql-dl:8.0.26
+  shell: docker build {{ resource_dir }}/roles/mindx.mysql/files/ -t mysql-dl:8.0.26
 
 - name: create directory on host
   file:
@@ -17,17 +35,24 @@
     - "{{ data_path }}"
     - /var/log/atlas_dls/mysql
 
-- name: create random password
-  set_fact:
-    pwd: "Huawei12#$"
-
-- name: create namespace
-  shell: kubectl create namespace {{ k8s_namespace }}
+- name: check namespace
+  shell: "kubectl get namespace | awk '$1 ~ /^{{ k8s_namespace }}$/ {print $1}'"
   environment:
     http_proxy: ""
     https_proxy: ""
     HTTP_PROXY: ""
-  ignore_errors: True
+    HTTPS_PROXY: ""
+  changed_when: false
+  register: get_namespace
+
+- name: create namespace
+  shell: "kubectl create namespace {{ k8s_namespace }}"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when: get_namespace.stdout != k8s_namespace
 
 - name: create secret for mysql
   shell: |
@@ -45,11 +70,12 @@
     kubectl create secret \
     --namespace={{ k8s_namespace }} \
     generic mysql-secret-{{item.service}} \
-    --from-literal='connecton-path={{item.user}}:{{pwd}}@mysql.mindxdl.svc.cluster.local/{{item.dbname}}?charset=utf8&parseTime=True&loc=Local'
+    --from-literal='connection-path={{item.user}}:{{pwd}}@mysql.mindxdl.svc.cluster.local/{{item.dbname}}?charset=utf8&parseTime=True&loc=Local'
   environment:
     http_proxy: ""
     https_proxy: ""
     HTTP_PROXY: ""
+    HTTPS_PROXY: ""
   with_items:
     - { "user":"user_user",    "dbname":"user_manager",    "service": "user-manager"}
     - { "user":"edge_user",    "dbname":"edge_manager",    "service": "edge-manager"}
@@ -64,11 +90,10 @@
     - { "user":"cluster_user", "dbname":"cluster_manager", "service": "cluster-manager"}
     - { "user":"access_user",  "dbname":"access_manager",  "service": "access-manager"}
 
-
 - name: create yamls
   template:
     src: "{{ item }}"
-    dest: "{{ role_path }}/files/{{ item }}"
+    dest: "{{ resource_dir }}/roles/mindx.mysql/files/{{ item }}"
     mode: 0644
   with_items:
     - mysql-pv.yaml
@@ -76,7 +101,7 @@
     - mysql-deployment.yaml
 
 - name: deploy mysql
-  shell: "kubectl apply -f {{ role_path }}/files/{{ item }}"
+  shell: "kubectl apply -f {{ resource_dir }}/roles/mindx.mysql/files/{{ item }}"
   environment:
     http_proxy: ""
     https_proxy: ""

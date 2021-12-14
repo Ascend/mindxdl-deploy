@@ -1,5 +1,5 @@
 - debug:
-    msg: "start install docker"
+    msg: "******************************start install docker******************************"
 
 - include_tasks: ubuntu_18.04.yml
   when:

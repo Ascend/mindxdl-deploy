@@ -1,16 +1,35 @@
----
+- debug:
+    msg: "******************************check resources******************************"
+
+- name: copy roles to resources
+  local_action:
+    module: copy
+    src: "{{ base_dir }}/playbooks/roles"
+    dest: "{{ resource_dir }}"
+    remote_src: yes
+  changed_when: false
+
 - name: check if resource tar exist
   local_action: stat path=~/resources.tar.gz
   register: resource_tar
+  when:
+    - not (host_count == "1" and first_host == "localhost")
 
 - name: archive
-  archive:
+  local_action:
+    module: archive
     path: "{{ resource_dir }}"
     dest: ~/resources.tar.gz
   when:
-    - ansible_connection == "local"
-    - not resource_tar.stat.exists
     - not (host_count == "1" and first_host == "localhost")
+    - not resource_tar.stat.exists
+
+- name: clean resources
+  file:
+    state: absent
+    path: ~/resources
+  when:
+    - ansible_connection == "local"
 
 - name: local host link
   file:
@@ -23,17 +42,23 @@
   copy:
     src: ~/resources.tar.gz
     dest: ~/
-  when: ansible_connection != "local"
+  when:
+    - ansible_connection != "local"
+    - no_copy_flag != "true"
 
 - name: clean remote resources
   file:
     state: absent
     path: ~/resources
-  when: ansible_connection != "local"
+  when:
+    - ansible_connection != "local"
+    - no_copy_flag != "true"
 
 - name: uncompress on remote
-  unarchive:
+  ansible.builtin.unarchive:
     src: ~/resources.tar.gz
     dest: ~/
-    copy: no
-  when: ansible_connection != "local"
+    remote_src: yes
+  when:
+    - ansible_connection != "local"
+    - no_copy_flag != "true"
