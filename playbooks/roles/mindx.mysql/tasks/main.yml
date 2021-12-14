@@ -36,7 +36,7 @@
     - /var/log/atlas_dls/mysql
 
 - name: check namespace
-  shell: kubectl get namespace | awk '$1 ~ /^mindx-dl$/ {print $1}'
+  shell: "kubectl get namespace | awk '$1 ~ /^{{ k8s_namespace }}$/ {print $1}'"
   environment:
     http_proxy: ""
     https_proxy: ""
@@ -46,7 +46,7 @@
   register: get_namespace
 
 - name: create namespace
-  shell: kubectl create namespace {{ k8s_namespace }}
+  shell: "kubectl create namespace {{ k8s_namespace }}"
   environment:
     http_proxy: ""
     https_proxy: ""

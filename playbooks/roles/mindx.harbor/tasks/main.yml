@@ -73,3 +73,35 @@
     bash install.sh
   args:
     chdir: "{{ resource_dir }}/linux_{{ ansible_architecture }}/harbor"
+
+- name: check namespace
+  shell: "kubectl get namespace | awk '$1 ~ /^{{ k8s_namespace }}$/ {print $1}'"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  changed_when: false
+  register: get_namespace
+
+- name: create namespace
+  shell: "kubectl create namespace {{ k8s_namespace }}"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when: get_namespace.stdout != k8s_namespace
+
+- name: create secret for harbor
+  shell: |
+    kubectl delete secret --namespace={{ k8s_namespace }} harbor-secret
+    kubectl create secret \
+    --namespace={{ k8s_namespace }} \
+    generic harbor-secret \
+    --from-literal='connection-path=admin:Harbor12345@tcp({{ host_ip }}:443)'
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
