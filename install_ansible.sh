@@ -26,10 +26,22 @@ function install_ansible()
     if [[ ${have_ansible_cmd} == 0 ]];then
         export DEBIAN_FRONTEND=noninteractive
         export DEBIAN_PRIORITY=critical
-        echo "dpkg -i --force-all resources/${os_name}_${os_version}_${arch}/python/*.deb"
-        dpkg -i --force-all resources/${os_name}_${os_version}_${arch}/python/*.deb
-        python3 -m pip install --upgrade pip --no-index --find-links resources/pylibs
-        python3 -m pip install ansible --no-index --find-links resources/pylibs
+        RESOURCE_DIR=$(pwd)/resources
+        if [ ! -d $RESOURCE_DIR ];then
+            RESOURCE_DIR=~/resources
+        fi
+        if [ ! -d $RESOURCE_DIR ];then
+            echo "no resource dir $RESOURCE_DIR"
+	    return
+        fi
+        echo "resource dir=$RESOURCE_DIR"
+
+        echo "dpkg -i --force-all $RESOURCE_DIR/${os_name}_${os_version}_${arch}/python/*.deb"
+        dpkg -i --force-all $RESOURCE_DIR/${os_name}_${os_version}_${arch}/python/*.deb
+        python3 -m pip install --upgrade pip --no-index --find-links $RESOURCE_DIR/pylibs
+        python3 -m pip install ansible --no-index --find-links $RESOURCE_DIR/pylibs
+    else
+        echo "ansible is already installed"
     fi
 }
 
@@ -37,8 +49,8 @@ function main()
 {
     local os_name=$(get_os_name)
     local os_version=$(get_os_version)
-    echo "OS=${os_name}"
-    echo "OS=${os_version}"
+    echo "OS NAME=${os_name}"
+    echo "OS VERSION=${os_version}"
     install_ansible
     if [ ! -d ~/.ansible/roles ];then
         mkdir -p ~/.ansible/roles

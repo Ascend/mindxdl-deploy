@@ -1,5 +1,0 @@
-# install harbor
-- hosts:
-    - master
-  roles:
-    - role: mindx.harbor
