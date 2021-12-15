@@ -34,11 +34,10 @@ if [ $# == 5 ]; then
         rankid=$((rank_start + i))
         export DEVICE_ID=${i}
         export RANK_ID=${rankid}
-        rm ${ROOT_PATH}/../device$rankid/ -rf
-        mkdir ${ROOT_PATH}/../device$rankid
+        mkdir -p ${ROOT_PATH}/../device$rankid
         cd ${ROOT_PATH}/../device$rankid || exit
-        group_info_dir=${ROOT_PATH}/../device$rankid/group_info.pb
-        group_info_file_tmp="$(dirname $(readlink -e $group_info_dir)) / $(basename $group_info_dir)"
+        group_info_dir=./group_info.pb
+        group_info_file_tmp=$(realpath $group_info_dir)
         export GROUP_INFO_FILE=${group_info_file_tmp}
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
