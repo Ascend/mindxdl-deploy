@@ -56,7 +56,7 @@ spec:
                 fieldPath: status.hostIP
           - name: INCLUSTER_FLAG                # whether training task run on multi nodes. If yes, set value to True, otherwise False
             value: "True"
-          command: ["/bin/bash", "-c", "cd /job/code/pangu_alpha/scripts; chmod +x train_start.sh; ./exception_train_start.sh;"] # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
+          command: ["/bin/bash", "-c", "cd /job/code/pangu_alpha/scripts; bash exception_train_start.sh;"] # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
           #args: [ "while true; do sleep 30000; done;"  ]                            # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                                                      # The command is 'kubectl exec -it -n {namespace} {podname} bash'
           lifecycle:
