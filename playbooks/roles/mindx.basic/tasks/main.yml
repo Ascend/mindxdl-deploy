@@ -1,6 +1,3 @@
-- name: set hostname
-  shell: "hostnamectl set-hostname node-{{ ansible_default_ipv4.address | replace('.', '-') }}"
-
 - name: create group {{ DL_GRP }}
   ansible.builtin.group:
     name: "{{ DL_GRP }}"
@@ -42,3 +39,20 @@
     - /var/log/mindx-dl/user-manager
     - /var/log/mindx-dl/volcano-controller
     - /var/log/mindx-dl/volcano-scheduler
+
+- name: delete old hostname in /etc/hosts
+  lineinfile:
+    dest: /etc/hosts
+    regex: "127.0.*{{ansible_hostname}}"
+    state: absent
+
+- name: set hostname
+  ansible.builtin.hostname:
+    name: "{{set_hostname}}"
+  when: set_hostname is defined
+
+- name: add new hostname in /etc/hosts
+  lineinfile:
+    dest: /etc/hosts
+    line: "127.0.1.1 {{ set_hostname }}"
+  when: set_hostname is defined

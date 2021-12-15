@@ -1,0 +1,51 @@
+- name: label huawei-x86
+  shell: kubectl label --overwrite node {{ ansible_hostname }} host-arch=huawei-x86
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when: ansible_architecture == "x86_64"
+
+- name: label huawei-arm
+  shell: kubectl label --overwrite node {{ ansible_hostname }} host-arch=huawei-arm
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when: ansible_architecture == "aarch64"
+
+- name: check device
+  shell: lspci | grep "Device d100" | wc -l
+  register: a310
+
+- name: label ascend310
+  shell: kubectl label --overwrite node {{ ansible_hostname }} acceletrator=huawei-Ascend310
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when: a310.stdout != "0"
+
+- name: check device
+  shell: lspci | grep "Device d801" | wc -l
+  register: a910
+
+- name: label ascend910
+  shell: kubectl label --overwrite node {{ ansible_hostname }} acceletrator=huawei-Ascend910
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when: a910.stdout != "0"

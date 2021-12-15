@@ -18,6 +18,15 @@
   run_once: true
   register: register_cmd
 
+- name: kubeadm reset
+  shell: kubeadm reset hard -f
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  ignore_errors: true
+
 - name: join cluster
   shell: "{{ register_cmd.stdout }}"
   environment:
@@ -36,3 +45,8 @@
     src: /etc/kubernetes/kubelet.conf
     dest: "{{ ansible_env.HOME }}/.kube/config"
     remote_src: yes
+
+- name: label worker
+  shell: kubectl label node {{ansible_hostname}} node-role.kubernetes.io/worker=worker
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
