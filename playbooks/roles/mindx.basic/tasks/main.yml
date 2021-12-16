@@ -12,14 +12,22 @@
     group: "{{ DL_GRP }}"
     state: present
 
+- name: create /etc/mindx-dl
+  file:
+    path: /etc/mindx-dl
+    state: directory
+    owner: "{{DL_USR}}"
+    group: "{{DL_GRP}}"
+    mode: 0700
+
 - name: create directories
   file:
     path: "{{ item }}"
     state: directory
     owner: "{{DL_USR}}"
     group: "{{DL_GRP}}"
+    mode: 0750
   with_items:
-    - /etc/mindx-dl
     - /var/log/mindx-dl
     - /var/log/mindx-dl/apigw
     - /var/log/mindx-dl/access-manager
@@ -56,3 +64,8 @@
     dest: /etc/hosts
     line: "127.0.1.1 {{ set_hostname }}"
   when: set_hostname is defined
+
+- include_tasks: ubuntu_18.04.yml
+  when:
+    - OS_ID == 'ubuntu'
+    - OS_VERSION_ID == '18.04'

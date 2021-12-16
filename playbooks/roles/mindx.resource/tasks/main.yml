@@ -12,6 +12,7 @@
     module: archive
     path: "{{ resource_dir }}"
     dest: ~/resources.tar.gz
+    mode: 0640
   when:
     - not (host_count == "1" and first_host == "localhost")
     - not resource_tar.stat.exists
@@ -20,6 +21,7 @@
   copy:
     src: ~/.ansible/roles
     dest: ~/.ansible/
+    mode: 0750
   when:
     - ansible_connection != "local"
     - no_copy_flag != "true"
@@ -28,6 +30,7 @@
   copy:
     src: ~/resources.tar.gz
     dest: ~/
+    mode: 0640
   when:
     - ansible_connection != "local"
     - no_copy_flag != "true"
@@ -44,6 +47,7 @@
   ansible.builtin.unarchive:
     src: ~/resources.tar.gz
     dest: ~/
+    mode: 0750
     remote_src: yes
   when:
     - ansible_connection != "local"

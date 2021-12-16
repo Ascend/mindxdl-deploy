@@ -1,6 +1,12 @@
 # defaults file for ascend.mysql
 state: "present"
-DL_USR: "hwMidnX"
-DL_GRP: "hwMidnX"
+DL_USR: "hwMindX"
+DL_GRP: "hwMindX"
 DL_UID: 9000
 DL_GID: 9000
+
+resource_dir: "~/resources"
+OS_ID: "{{ lookup('ini', 'ID type=properties section=global file=/etc/os-release') }}"
+OS_VERSION_ID: "{{ lookup('ini', 'VERSION_ID type=properties section=global file=/etc/os-release') | replace('\"', '') }}"
+
+haveged_dir: "{{resource_dir}}/{{OS_ID}}_{{OS_VERSION_ID}}_{{ansible_architecture}}/haveged"

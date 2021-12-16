@@ -5,14 +5,3 @@
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
-  when: to_master_flag == "false"
-
-- name: label {{ ansible_hostname }} {{label_key}}={{label_value}}
-  shell: kubectl label --overwrite node {{ ansible_hostname }} {{label_key}}={{label_value}}
-  environment:
-    http_proxy: ""
-    https_proxy: ""
-    HTTP_PROXY: ""
-    HTTPS_PROXY: ""
-  delegate_to: "{{ groups['master'][0] }}"
-  when: to_master_flag == "true"

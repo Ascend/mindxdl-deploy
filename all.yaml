@@ -33,11 +33,6 @@
 - hosts: worker
   roles:
     - role: mindx.k8s.worker
-    - role: mindx.k8s.label
-      vars:
-        label_key: node-role.kubernetes.io/worker
-        label_value: worker
-        delegate_to_master: "true"
     - role: mindx.k8s.autolabel
 
 # config nfs server

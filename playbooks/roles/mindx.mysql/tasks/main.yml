@@ -31,6 +31,7 @@
   file:
     path: "{{ item }}"
     state: directory
+    mode: 0750
   with_items:
     - "{{ data_path }}"
     - /var/log/atlas_dls/mysql
@@ -70,7 +71,7 @@
     kubectl create secret \
     --namespace={{ k8s_namespace }} \
     generic mysql-secret-{{item.service}} \
-    --from-literal='connection-path={{item.user}}:{{pwd}}@mysql.mindxdl.svc.cluster.local/{{item.dbname}}?charset=utf8&parseTime=True&loc=Local'
+    --from-literal='connection-path={{item.user}}:{{pwd}}@tcp(mysql.{{ k8s_namespace }}.svc.cluster.local:3306)/{{item.dbname}}?charset=utf8&parseTime=True&loc=Local'
   environment:
     http_proxy: ""
     https_proxy: ""

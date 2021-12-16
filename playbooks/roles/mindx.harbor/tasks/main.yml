@@ -20,12 +20,14 @@
   ansible.builtin.unarchive:
     src: "{{ harbor.files[0].path }}"
     dest: "{{ resource_dir }}/linux_{{ ansible_architecture }}"
+    mode: 0750
     remote_src: yes
 
 - name: copy harbor.yml.tmpl
   copy:
     src: "{{ resource_dir }}/linux_{{ ansible_architecture }}/harbor/harbor.yml.tmpl"
     dest: "{{ resource_dir }}/linux_{{ ansible_architecture }}/harbor/harbor.yml"
+    mode: 0640
     remote_src: yes
 
 - name: set hostname in harbor.yml
