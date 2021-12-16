@@ -55,11 +55,11 @@
 - name: create https_config.sh
   template:
     src: https_config.sh
-    dest: "{{ resource_dir }}/roles/mindx.harbor/https_config.sh"
+    dest: "{{ role_path }}/https_config.sh"
     mode: 0640
 
 - name: execute https_config.sh
-  shell : "bash {{ resource_dir }}/roles/mindx.harbor/https_config.sh"
+  shell : "bash {{ role_path }}/https_config.sh"
 
 - name: "restart docker"
   systemd:
