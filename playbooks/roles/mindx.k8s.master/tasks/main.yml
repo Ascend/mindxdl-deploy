@@ -38,7 +38,7 @@
     remote_src: yes
 
 - name: apply calico
-  shell: "kubectl apply -f {{ resource_dir }}/roles/mindx.k8s.master/files/calico_{{calico_version}}.yaml"
+  shell: "kubectl apply -f {{ role_path }}/files/calico_{{calico_version}}.yaml"
   environment:
     http_proxy: ""
     https_proxy: ""

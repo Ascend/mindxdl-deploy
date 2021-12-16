@@ -24,7 +24,14 @@
    
    
 
-然后联系工程师取得开源软件的离线安装包。将本工具解压后放在HOME目录下。再将离线安装包解压放在工具目录中
+然后联系工程师取得开源软件的离线安装包。将本工具解压后放在HOME目录下。再将离线安装包解压放在工具目录中。按如下方式放置
+
+```bash
+root@master:~# ls
+mindxdl-deploy
+resources             //resources目录，由resources.tar.gz解压得到
+resources.tar.gz
+```
 
 ## 安装步骤
 
@@ -90,7 +97,7 @@ localhost ansible_connection=local
 
 注意：k8s要求所有设备的hostname不一样，因此建议执行安装前设置所有设备使用不同的hostname。如果未统一设置且存在相同hostname的设备，那么可在inventory文件中设置set_hostname变量，安装过程将自动设置设备的hostname。例如：
 
-```bash
+```ini
 [master]
 localhost ansible_connection=local
 

@@ -25,7 +25,7 @@
   shell: docker load -i {{ mysql_images_tar.files[0].path }}
 
 - name: build new docker image
-  shell: docker build {{ resource_dir }}/roles/mindx.mysql/files/ -t mysql-dl:8.0.26
+  shell: docker build {{ role_path }}/files/ -t mysql-dl:8.0.26
 
 - name: create directory on host
   file:
@@ -93,7 +93,7 @@
 - name: create yamls
   template:
     src: "{{ item }}"
-    dest: "{{ resource_dir }}/roles/mindx.mysql/files/{{ item }}"
+    dest: "{{ role_path }}/files/{{ item }}"
     mode: 0644
   with_items:
     - mysql-pv.yaml
@@ -101,7 +101,7 @@
     - mysql-deployment.yaml
 
 - name: deploy mysql
-  shell: "kubectl apply -f {{ resource_dir }}/roles/mindx.mysql/files/{{ item }}"
+  shell: "kubectl apply -f {{ role_path }}/files/{{ item }}"
   environment:
     http_proxy: ""
     https_proxy: ""

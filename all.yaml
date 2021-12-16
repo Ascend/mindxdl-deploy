@@ -6,8 +6,6 @@
     - nfs_server
   roles:
     - role: mindx.resource
-      vars:
-        base_dir: "{{ playbook_dir }}"
 
 # install softwares
 - hosts:

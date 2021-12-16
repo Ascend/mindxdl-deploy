@@ -1,14 +1,6 @@
 - debug:
     msg: "******************************check resources******************************"
 
-- name: copy roles to resources
-  local_action:
-    module: copy
-    src: "{{ base_dir }}/playbooks/roles"
-    dest: "{{ resource_dir }}"
-    remote_src: yes
-  changed_when: false
-
 - name: check if resource tar exist
   local_action: stat path=~/resources.tar.gz
   register: resource_tar
@@ -24,19 +16,13 @@
     - not (host_count == "1" and first_host == "localhost")
     - not resource_tar.stat.exists
 
-- name: clean resources
-  file:
-    state: absent
-    path: ~/resources
+- name: copy to roles remote hosts
+  copy:
+    src: ~/.ansible/roles
+    dest: ~/.ansible/
   when:
-    - ansible_connection == "local"
-
-- name: local host link
-  file:
-    src: "{{ resource_dir }}"
-    dest: ~/resources
-    state: link
-  when: ansible_connection == "local"
+    - ansible_connection != "local"
+    - no_copy_flag != "true"
 
 - name: copy to resources remote hosts
   copy:
