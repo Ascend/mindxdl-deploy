@@ -1,0 +1,90 @@
+- name: message
+  debug:
+    msg: "******************************start install harbor******************************"
+
+- name: create HARBOR_PATH
+  file:
+    path: "{{HARBOR_PATH}}"
+    state: directory
+    mode: 750
+
+- name: set password
+  shell: "echo {{ HARBOR_PASSWORD }} > {{ HARBOR_PATH }}/harbor.pwd"
+
+- name: find harbor-offline-installer-*.tgz
+  find:
+    paths: "{{ resource_dir }}"
+    recurse: no
+    file_type: file
+    patterns: "harbor-offline-installer-{{ harbor_flag }}*.tgz"
+  register: harbor
+
+- name: unarchive harbor
+  ansible.builtin.unarchive:
+    src: "{{ harbor.files[0].path }}"
+    dest: "{{ HARBOR_PATH }}"
+    remote_src: yes
+
+- name: set harbor.yml
+  template:
+    src: harbor.yml.j2
+    dest: "{{ HARBOR_PATH }}/harbor/harbor.yml"
+    remote_src: yes
+
+- name: create https_config.sh
+  template:
+    src: https_config.sh
+    dest: "{{ role_path }}/https_config.sh"
+    mode: 0640
+
+- name: execute https_config.sh
+  shell : "bash {{ role_path }}/https_config.sh"
+
+- name: execute harbor install.sh
+  shell: bash install.sh
+  args:
+    chdir: "{{ HARBOR_PATH }}/harbor"
+
+- name: check namespace
+  shell: "kubectl get namespace | awk '$1 ~ /^{{ k8s_namespace }}$/ {print $1}'"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  changed_when: false
+  register: get_namespace
+  ignore_errors: true
+
+- name: create namespace
+  shell: "kubectl create namespace {{ k8s_namespace }}"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when: get_namespace.stdout != k8s_namespace
+  ignore_errors: true
+
+- name: create secret for harbor
+  shell: |
+    kubectl delete secret --namespace={{ k8s_namespace }} harbor-secret
+    kubectl create secret \
+    --namespace={{ k8s_namespace }} \
+    generic harbor-secret \
+    --from-literal='connection-path=admin:Harbor12345@tcp({{ HARBOR_HOSTNAME }}:{{HARBOR_HTTPS_PORT}})'
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  ignore_errors: true
+
+- name: set harbor service
+  template:
+    src: harbor.service.j2
+    dest: /etc/systemd/system/harbor.service
+    mode: 0640
+
+- name: enable harbor service
+  shell: systemctl enable harbor

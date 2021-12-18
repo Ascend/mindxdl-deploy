@@ -1,0 +1,10 @@
+# harbor host name. ip address
+HARBOR_HOSTNAME: ""
+# harbor https port
+HARBOR_HTTPS_PORT: 7443
+# harbor install path
+HARBOR_PATH: /data/harbor
+# password for harbor
+HARBOR_PASSWORD: ""
+# ip address for api-server
+K8S_API_SERVER_IP: ""

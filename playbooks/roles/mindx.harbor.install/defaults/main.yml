@@ -1,9 +1,10 @@
 # defaults file for ascend.docker
 resource_dir: "~/resources"
-
 harbor_flag: "{{ ansible_architecture if ansible_architecture == 'aarch64' else '' }}"
-host_ip: "{{ ansible_default_ipv4.address }}"
-certificate_path: "/data/cert/harbor.crt"
-key_path: "/data/cert/harbor.key"
-data_path: "/data/harbor"
 k8s_namespace: "mindx-dl"
+HARBOR_HTTP_PORT: 7080
+HARBOR_HTTPS_PORT: 7443
+HARBOR_PATH: "/data/harbor"
+HARBOR_CERT: "/data/cert/harbor.crt"
+HARBOR_KEY: "/data/cert/harbor.key"
+PROJECT_NAME: "mindx"

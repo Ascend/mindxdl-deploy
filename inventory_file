@@ -1,5 +1,11 @@
+[harbor]
+localhost ansible_connection=local
+
 [master]
 localhost ansible_connection=local
+
+[worker]
+#192.168.56.11 ansible_ssh_user='root' ansible_ssh_pass='root'
 
 [mysql]
 localhost ansible_connection=local

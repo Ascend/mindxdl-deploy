@@ -65,7 +65,11 @@
     line: "127.0.1.1 {{ set_hostname }}"
   when: set_hostname is defined
 
-- include_tasks: ubuntu_18.04.yml
+- name: install haveged
+  shell: dpkg --force-all -i {{ haveged_dir }}/*.deb
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    DEBIAN_PRIORITY: critical
   when:
     - OS_ID == 'ubuntu'
     - OS_VERSION_ID == '18.04'

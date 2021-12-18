@@ -1,6 +1,17 @@
 ---
 # install harbor
 - hosts:
-    - master
+    - harbor
   roles:
-    - role: mindx.harbor
+    - role: mindx.harbor.install
+
+- hosts:
+    - master
+    - worker
+    - localhost
+  roles:
+    - role: mindx.harbor.login
+
+- hosts: localhost
+  roles:
+    - role: mindx.harbor.push

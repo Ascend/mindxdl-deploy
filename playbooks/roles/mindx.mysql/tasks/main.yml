@@ -13,16 +13,13 @@
   failed_when: true
   when: groups['mysql'] != groups['master']
 
-- name: find mysql images tar
-  find:
-    paths: "{{ image_dir }}"
-    recurse: no
-    file_type: file
-    patterns: "mysql-server*.tar"
-  register: mysql_images_tar
-
-- name: load mysql image
-  shell: docker load -i {{ mysql_images_tar.files[0].path }}
+- name: create Dockerfile
+  template:
+    src: "{{ item }}"
+    dest: "{{ role_path }}/files/{{ item }}"
+    mode: 0644
+  with_items:
+    - Dockerfile
 
 - name: build new docker image
   shell: docker build {{ role_path }}/files/ -t mysql-dl:8.0.26

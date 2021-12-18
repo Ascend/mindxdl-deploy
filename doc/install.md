@@ -81,15 +81,22 @@ libyaml = True
 
 需要提前规划好如下集群信息：
 
-1. master节点ip，只能为本机localhost
+1. 安装harbor的服务器IP
 
-2. work节点ip（默认无，请根据需要添加，不可包括master节点，即不可包括localhost）
+2. master节点ip，只能为本机localhost
 
-3. mysql安装的节点ip，只能为本机localhost
+3. work节点ip（默认无，请根据需要添加，不可包括master节点，即不可包括localhost）
 
-4. nfs服务器ip。nfs可使用已有nfs服务器，如不需要安装，去掉nfs_server配置即可
+4. mysql安装的节点ip，只能为本机localhost
+
+5. nfs服务器信息。nfs可使用已有nfs服务器。如不需要安装nfsserver，去掉nfs_server配置即可
 
 ```bash
+
+[harbor]
+localhost ansible_connection=local
+
+
 [master]
 localhost ansible_connection=local
 
@@ -117,9 +124,40 @@ worker2_ipaddress  set_hostname="worker-2"
 worker3_ipaddress
 ```
 
+<<<<<<< HEAD
 inventory文件配置详细可参考[[How to build your inventory &mdash; Ansible Documentation](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)]
+如果只有1个节点，可不配置worker信息
 
-### 步骤3：检查集群状态
+### 步骤3：配置安装信息
+
+在group_vars目录中的all.yaml文件
+
+```yaml
+# harbor host name. ip address
+HARBOR_HOSTNAME: ""
+# harbor https port
+HARBOR_HTTPS_PORT: 7443
+# harbor install path
+HARBOR_PATH: /data/harbor
+# password for harbor
+HARBOR_PASSWORD: ""
+# ip address for api-server
+K8S_API_SERVER_IP: ""
+```
+
+其中中配置项详细为：
+
+| 配置项               | 说明                                |
+| ----------------- | --------------------------------- |
+| HARBOR_HOSTNAME   | 配置harbor的监听ip，必须配置                |
+| HARBOR_HTTPS_PORT | harbor的https监听端口，默认为7443，必须配置     |
+| HARBOR_PATH       | Harbor的安装路径                       |
+| HARBOR_PASSWORD   | harbor的登录密码。 安装完成后应立即删除           |
+| K8S_API_SERVER_IP | K8s的api server监听地址，必须配置。特别是多网卡场景下 |
+
+
+
+### 步骤4：检查集群状态
 
 在目录中执行：
 
