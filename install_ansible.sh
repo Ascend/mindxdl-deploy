@@ -43,6 +43,10 @@ function install_ansible()
     else
         echo "ansible is already installed"
     fi
+    ansible --version >/dev/null 2>&1
+    if [[ $? != 0 ]];then
+        echo "error: ansible is not available, check it by run 'ansible --version'"
+    fi
 }
 
 function main()

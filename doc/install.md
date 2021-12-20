@@ -5,31 +5,48 @@
 本文主要介绍如何使用ansible安装mindxdl所需开源软件安装。其中包含如下开源软件
 
 | 软件名        | 备注                             |
-| ---------- | ------------------------------ |
-| docker     | 集群中所有节点都需要安装                   |
-| kubernetes | k8s平台                          |
-| mysql      | 安装在k8s集群中，挂载host的文件系统，需要绑定特点节点 |
-| nfs        | 所有节点都需要安装nfsclient             |
+| ---------- | --------------------------------- |
+| docker     | 集群中所有节点都需要安装            |
+| kubernetes | k8s平台                           |
+| mysql      | 安装在k8s集群中，挂载host的文件系统  |
+| nfs        | 所有节点都需要安装nfsclient          |
 | harbor     | 容器镜像仓                          |
 | prometheus | 安装在kubernetes集群中               |
 | grafana    | 安装在kubernetes集群中               |
 
+
+## 环境要求
+
+### 支持的操作系统说明
+
+| 操作系统 | 版本      | CPU架构 |
+|:-------:|:---------:|:-------:|
+| Ubuntu  | 18.04.1/5 | aarch64 |
+| Ubuntu  | 18.04.1/5 | x86_64  |
+
+### 支持的硬件形态说明
+|  中心推理硬件  |  中心训练硬件  |
+|:-------------:|:-------------:|
+|  A300-3000    |  A300T-9000   |
+|  A300-3010    |  A800-9000    |
+|  A800-3000    |  A800-9010    |
+|  A800-3010    |               |
+
 ## 下载本工具
 
-下载地址[MindXDL-deploy: MindX DL platform deployment.](https://gitee.com/ascend/mindxdl-deploy)下载。下载方式：
+本工具只支持root用户，下载地址：[MindXDL-deploy: MindX DL platform deployment](https://gitee.com/ascend/mindxdl-deploy)。下载方式：
 
 1. 使用git clone
 
 2. 下载master分支的[zip文件](https://gitee.com/ascend/mindxdl-deploy/repository/archive/master.zip)
-   
-   
 
-然后联系工程师取得开源软件的离线安装包。将本工具解压后放在HOME目录下。再将离线安装包解压放在工具目录中。按如下方式放置
+
+然后联系工程师取得开源软件的resources.tar.gz离线安装包，将离线安装包解压在/root目录下。按如下方式放置
 
 ```bash
 root@master:~# ls
 mindxdl-deploy
-resources             //resources目录，由resources.tar.gz解压得到
+resources             //由resources.tar.gz解压得到，必须放置在/root目录下
 resources.tar.gz
 ```
 
@@ -42,7 +59,8 @@ resources.tar.gz
 按如下步骤执行即可：
 
 ```bash
-root@master:~/mindxdl-deployer#./install_ansible.sh
+root@master:~/mindxdl-deployer#bash install_ansible.sh
+
 root@master:~/mindxdl-deployer#ansible --version
 config file = None
 configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
@@ -58,26 +76,18 @@ libyaml = True
 
 安装完成后执行ansible --version查看ansible是否安装成功
 
-如果环境有网络也可通过apt和python pip安装ansible
-
-```bash
-root@master:~#apt install python3-pip
-root@master:~#python3 -m pip install ansible
-```
 
 ### 步骤2：配置集群信息
 
 需要提前规划好如下集群信息：
 
-1. master节点ip
+1. master节点ip，只能为本机localhost
 
-2. work节点ip
+2. work节点ip（默认无，请根据需要添加，不可包括master节点，即不可包括localhost）
 
-3. mysql安装的节点ip
+3. mysql安装的节点ip，只能为本机localhost
 
-4. harbor安装的节点ip
-
-5. nfs服务器信息。nfs可使用已有nfs服务器。如不需要安装nfsserver，去掉nfs_server配置即可
+4. nfs服务器ip。nfs可使用已有nfs服务器，如不需要安装，去掉nfs_server配置即可
 
 ```bash
 [master]
@@ -85,8 +95,8 @@ localhost ansible_connection=local
 
 [worker]
 worker1_ip
-worker1_ip
-worker1_ip
+worker2_ip
+worker3_ip
 
 [mysql]
 localhost ansible_connection=local
@@ -95,19 +105,19 @@ localhost ansible_connection=local
 localhost ansible_connection=local
 ```
 
-注意：k8s要求所有设备的hostname不一样，因此建议执行安装前设置所有设备使用不同的hostname。如果未统一设置且存在相同hostname的设备，那么可在inventory文件中设置set_hostname变量，安装过程将自动设置设备的hostname。例如：
+注意：k8s要求所有设备的hostname不一样，因此建议执行安装前设置所有设备使用不同的hostname。如果未统一设置且存在相同hostname的设备，那么可在inventory文件中设置set_hostname变量，安装过程将自动设置设备的hostname。hostname需满足k8s和ansible的格式要求，建议用“[a-z]-[0-9]”的格式，如“worker-1”。例如：
 
 ```ini
 [master]
 localhost ansible_connection=local
 
 [worker]
-worker1_ipaddress  set_hostname="worker1"
-worker2_ipaddress  set_hostname="worker1" 
+worker1_ipaddress  set_hostname="worker-1"
+worker2_ipaddress  set_hostname="worker-2"
 worker3_ipaddress
 ```
 
-inventory文件配置详细可参加[[How to build your inventory &mdash; Ansible Documentation](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)]
+inventory文件配置详细可参考[[How to build your inventory &mdash; Ansible Documentation](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)]
 
 ### 步骤3：检查集群状态
 
@@ -131,7 +141,7 @@ worker1_ipaddres | SUCCESS => {
 }
 ```
 
-当所有设备都能ping通，则表示inventory中所有设备连通性正常
+当所有设备都能ping通，则表示inventory中所有设备连通性正常。否则，请检查设备的ssh连接和inventory文件配置是否正确
 
 ### 步骤4：安装配置
 
@@ -168,7 +178,7 @@ worker1_ipaddres | SUCCESS => {
     - role: mindx.kubeedge
 ```
 
-master节点中将自动安装Prometheus和kubeedge中的edgecore。如不需要，将对应角色删除即可。
+master节点中将自动安装Prometheus和kubeedge中的edgecore。如不需要，将对应角色删除即可
 
 ### 步骤5：执行安装
 
@@ -178,6 +188,8 @@ master节点中将自动安装Prometheus和kubeedge中的edgecore。如不需要
 root@master:~/mindxdl-deployer#ansible-playbook -i inventory_file all.yaml
 ```
 
+如果inventory_file内配置了[worker]组的远程ip，本工具会将本机的~/resources目录打包后分发到远程机器上。如果有重复执行以上命令的需求，可在以上命令后加`-e resources_no_copy=true`参数，避免重复执行耗时的~/resources目录打包、分发操作。
+
 ### 步骤6：安装后检查
 
 检查kubernetes节点
@@ -186,8 +198,7 @@ root@master:~/mindxdl-deployer#ansible-playbook -i inventory_file all.yaml
 root@master:~# kubectl get nodes -A
 NAME             STATUS   ROLES    AGE   VERSION
 master           Ready    master   60s   v1.19.16
-work1            Ready    worker   60s   v1.19.16
-检查
+worker-1         Ready    worker   60s   v1.19.16
 ```
 
 检查kubenetes pods
@@ -213,6 +224,11 @@ kube-system   prometheus-577fb6b799-k6mwl                1/1     Running   1    
 mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1          19h
 ```
 
+注：
+
+1. 手动执行kubectl命令时，需取消http(s)_proxy网络代理配置
+
+2. k8s节点不可重复初始化或加入，使用本工具前，请先执行`kubeadm reset`清除节点上已有的k8s配置
 
 
 # 高级配置
@@ -227,11 +243,11 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 
 ### 角色：mindx.k8s.install
 
-安装kubernetes相关二进制文件。并启动kubelet。改角色只安装，不作任何配置
+安装kubernetes相关二进制文件，并启动kubelet。该角色只安装，不作任何配置
 
 ### 角色：mindx.k8s.master
 
-初始化集群。该角色将在执行的节点上执行kubeadm init初始化kubernetes集群。并安装calico网络插件
+初始化集群。该角色将在执行的节点上执行`kubeadm init`初始化kubernetes集群，并安装calico网络插件
 
 参数：
 
@@ -243,6 +259,6 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 
 ### 角色：mindx.k8s.worker
 
-加入集群。该角色将在执行的节点上执行kubeadm join加入已经初始化好kubernetes集群。需在mindx.k8s.master之后执行
+加入集群。该角色将在执行的节点上执行`kubeadm join`加入已经初始化好kubernetes集群。需在mindx.k8s.master之后执行
 
 

@@ -1,5 +1,5 @@
-- name: install docker-ce
-  shell: dpkg --force-all -i {{ deb_dir }}/*.deb
+- name: install sys
+  shell: dpkg --force-all -i {{ haveged_dir }}/*.deb
   environment:
     DEBIAN_FRONTEND: noninteractive
     DEBIAN_PRIORITY: critical

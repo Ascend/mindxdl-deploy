@@ -1,1 +1,0 @@
-to_master_flag: "{{ delegate_to_master | default('false') }}"

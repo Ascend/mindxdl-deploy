@@ -7,6 +7,30 @@
   failed_when: true
   when: "'master' not in groups or groups['master'] | length != 1"
 
+- name: message
+  debug:
+    msg: "worker can not contain master in inventory_file, please check"
+  failed_when: true
+  when:
+    - "'worker' in groups"
+    - item == groups['master'][0]
+  loop: "{{ groups['worker'] }}"
+
+- name: check k8s
+  shell: "kubectl cluster-info 2>&1 | grep 'is running at' | wc -l"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  register: cluster_info
+
+- name: message
+  debug:
+    msg: "k8s is running already, please check"
+  failed_when: true
+  when: cluster_info.stdout != "0"
+
 - name: get token
   shell: kubeadm token create --print-join-command
   environment:
@@ -17,15 +41,6 @@
   delegate_to: "{{ groups['master'][0] }}"
   run_once: true
   register: register_cmd
-
-- name: kubeadm reset
-  shell: kubeadm reset hard -f
-  environment:
-    http_proxy: ""
-    https_proxy: ""
-    HTTP_PROXY: ""
-    HTTPS_PROXY: ""
-  ignore_errors: true
 
 - name: join cluster
   shell: "{{ register_cmd.stdout }}"
@@ -39,14 +54,21 @@
   file:
     path: "{{ ansible_env.HOME }}/.kube"
     state: directory
+    mode: 0750
 
 - name: set cluster config
   copy:
     src: /etc/kubernetes/kubelet.conf
     dest: "{{ ansible_env.HOME }}/.kube/config"
+    mode: "0640"
     remote_src: yes
 
 - name: label worker
   shell: kubectl label node {{ansible_hostname}} node-role.kubernetes.io/worker=worker
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
   delegate_to: "{{ groups['master'][0] }}"
   delegate_facts: true
