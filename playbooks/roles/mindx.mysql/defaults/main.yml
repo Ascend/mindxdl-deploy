@@ -5,6 +5,7 @@ OS_VERSION_ID: "{{ lookup('ini', 'VERSION_ID type=properties section=global file
 
 image_dir: "{{resource_dir}}/images/{{ansible_architecture}}"
 capacity: 20Gi
-data_path: "/data/mysql"
-k8s_namespace: "mindx-dl"
-pwd: "Huawei12#$"
+data_path: "{{MYSQL_DATAPATH}}"
+k8s_namespace: "{{K8S_NAMESPACE}}"
+pwd: "{{MYSQL_PASSWORD}}"
+MYSQL_YAML_DIR: "~/deploy_yamls/mysql"

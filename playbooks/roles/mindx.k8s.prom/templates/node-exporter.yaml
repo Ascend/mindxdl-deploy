@@ -2,6 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
+  namespace: {{ PROM_NAMESPACE }}
   name: node-exporter
   labels:
     k8s-app: node-exporter
@@ -17,6 +18,7 @@ spec:
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
+  namespace: {{ PROM_NAMESPACE }}
   name: node-exporter
   labels:
     k8s-app: node-exporter
@@ -31,7 +33,7 @@ spec:
     spec:
       containers:
       - name: node-exporter
-        image: prom/node-exporter:v1.2.2
+        image: "{{REPO_URL}}prom/node-exporter:v1.2.2"
         ports:
         - name: metrics
           containerPort: 9100

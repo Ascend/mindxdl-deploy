@@ -1,5 +1,5 @@
 galaxy_info:
-  role_name: mysql
+  role_name: mindx.mysql
   author: ascend
   description: developer
   company: none

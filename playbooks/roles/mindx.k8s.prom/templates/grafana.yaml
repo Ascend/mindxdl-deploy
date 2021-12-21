@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana-core
-  namespace: kube-system
+  namespace: {{ PROM_NAMESPACE }}
   labels:
     app: grafana
     component: core
@@ -22,7 +22,7 @@ spec:
         masterselector: dls-master-node
       containers:
         - name: grafana
-          image: grafana/grafana:7.5.5
+          image: "{{ REPO_URL }}grafana/grafana:7.5.5"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -63,13 +63,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: grafananodeport
-  namespace: kube-system
+  name: grafana
+  namespace: {{ PROM_NAMESPACE }}
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - port: 3000
-      nodePort: 30588
+      targetPort: 3000
   selector:
     app: grafana
     component: core
