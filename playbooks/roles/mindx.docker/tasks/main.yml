@@ -1,19 +1,12 @@
-- debug:
-    msg: "******************************start install docker******************************"
+- name: message
+  debug:
+    msg: "*************************start install docker***************************"
 
-- include_tasks: ubuntu_18.04.yml
-  when:
-    - OS_ID == 'ubuntu'
-    - OS_VERSION_ID == '18.04'
+- name: check docker service
+  shell: systemctl is-active docker
+  register: docker_status
+  changed_when: false
+  ignore_errors: true
 
-- name: config docker
-  template:
-    src: daemon.json.j2
-    dest: "/etc/docker/daemon.json"
-    mode: 0644
-
-- name: "restart docker"
-  systemd:
-    name: "docker"
-    enabled: true
-    state: restarted
+- include_tasks: install.yml
+  when: docker_status.stdout != "active"

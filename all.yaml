@@ -17,6 +17,22 @@
     - role: mindx.k8s.install
     - role: mindx.nfs.client
 
+# install harbor
+- hosts:
+    - harbor
+  roles:
+    - role: mindx.harbor.install
+- hosts:
+    - master
+    - worker
+    - localhost
+  roles:
+    - role: mindx.harbor.login
+
+- hosts: localhost
+  roles:
+    - role: mindx.harbor.push
+
 # master init k8s
 - hosts: master
   roles:
@@ -55,9 +71,3 @@
       vars:
         capacity: 20Gi
         data_path: /data/mysql
-
-# install harbor
-- hosts:
-    - master
-  roles:
-    - role: mindx.harbor
