@@ -1,4 +1,5 @@
-- debug:
+- name: message
+  debug:
     msg: "******************************start init k8s on master******************************"
 
 - name: check k8s
@@ -77,3 +78,13 @@
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
+
+- name: label dls master
+  shell: kubectl label --overwrite node {{ansible_hostname}} masterselector=dls-master-node
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true

@@ -29,12 +29,13 @@
 |:-------------:|:-------------:|
 |  A300-3000    |  A300T-9000   |
 |  A300-3010    |  A800-9000    |
-|  A800-3000    |  A800-9010    |
+| Atlas 300I Pro|  A800-9010    |
+|  A800-3000    |               |
 |  A800-3010    |               |
 
 ## 下载本工具
 
-本工具只支持root用户，下载地址：[MindXDL-deploy: MindX DL platform deployment](https://gitee.com/ascend/mindxdl-deploy)。下载方式：
+本工具只支持root用户，下载地址：[MindXDL-deploy: MindX DL platform deployment](https://gitee.com/ascend/mindxdl-deploy)。2种下载方式：
 
 1. 使用git clone
 
@@ -74,7 +75,7 @@ libyaml = True
 
 ```
 
-安装完成后执行ansible --version查看ansible是否安装成功
+ansible默认安装在系统自带python3中，安装完成后执行ansible --version查看ansible是否安装成功
 
 
 ### 步骤2：配置集群信息

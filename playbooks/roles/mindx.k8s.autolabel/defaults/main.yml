@@ -1,0 +1,2 @@
+# defaults file for ascend.mysql
+product_name: "{{ lookup('pipe', 'dmidecode -t 1 | grep \"Product Name\"') }}"
