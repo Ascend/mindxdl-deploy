@@ -70,4 +70,4 @@
     - role: mindx.mysql
       vars:
         capacity: 20Gi
-        data_path: /data/mysql
+        data_path: "{{ MYSQL_DATAPATH }}"

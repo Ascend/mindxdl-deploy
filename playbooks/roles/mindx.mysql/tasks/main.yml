@@ -13,16 +13,23 @@
   failed_when: true
   when: groups['mysql'] != groups['master']
 
+- name: create deploy directory on host
+  file:
+    path: "{{ MYSQL_YAML_DIR }}"
+    state: directory
+    mode: 0700
+
 - name: create Dockerfile
   template:
     src: "{{ item }}"
-    dest: "{{ role_path }}/files/{{ item }}"
+    dest: "{{ MYSQL_YAML_DIR }}/{{ item }}"
     mode: 0644
   with_items:
+    - init.sql
     - Dockerfile
 
 - name: build new docker image
-  shell: docker build {{ role_path }}/files/ -t mysql-dl:8.0.26
+  shell: docker build {{ MYSQL_YAML_DIR }} -t mysql-dl:8.0.26
 
 - name: create directory on host
   file:
@@ -91,7 +98,7 @@
 - name: create yamls
   template:
     src: "{{ item }}"
-    dest: "{{ role_path }}/files/{{ item }}"
+    dest: "{{ MYSQL_YAML_DIR }}/{{ item }}"
     mode: 0644
   with_items:
     - mysql-pv.yaml
@@ -99,7 +106,7 @@
     - mysql-deployment.yaml
 
 - name: deploy mysql
-  shell: "kubectl apply -f {{ role_path }}/files/{{ item }}"
+  shell: "kubectl apply -f {{ MYSQL_YAML_DIR }}/{{ item }}"
   environment:
     http_proxy: ""
     https_proxy: ""

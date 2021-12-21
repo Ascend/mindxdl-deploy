@@ -1,12 +1,20 @@
-- name: load images
-  shell: docker load -i {{item}}
-  with_fileglob:
-    - "{{image_dir}}/prometheus*.tar"
-    - "{{image_dir}}/node-exporter*.tar"
-    - "{{image_dir}}/grafana*.tar"
+- name: create yaml directory
+  file:
+    path: "{{ PROM_YAML_DIR }}"
+    state: directory
+
+- name: create prometheus node-exporter grafana yamls
+  template:
+    src: "{{ item }}"
+    dest: "{{ PROM_YAML_DIR }}/{{ item }}"
+    mode: 0644
+  with_items:
+    - prometheus.yaml
+    - node-exporter.yaml
+    - grafana.yaml
 
 - name: create secret for service
-  shell: kubectl apply -f {{role_path}}/files/{{item}}
+  shell: kubectl apply -f {{ PROM_YAML_DIR }}/{{ item }}
   environment:
     http_proxy: ""
     https_proxy: ""
