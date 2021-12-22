@@ -29,7 +29,6 @@
   template:
     src: harbor.yml.j2
     dest: "{{ HARBOR_PATH }}/harbor/harbor.yml"
-    remote_src: yes
 
 - name: create https_config.sh
   template:

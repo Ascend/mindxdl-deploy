@@ -1,0 +1,44 @@
+- name: message
+  debug:
+    msg: "**********************copy resources************************"
+
+- name: create resource directory
+  file:
+    path: "{{resource_dir}}"
+    state: directory
+
+- name: archive on localhost
+  local_action:
+    module: archive
+    path: "{{resource_dir}}/{{ item }}"
+    dest: "{{resource_dir}}/{{ item }}.tar.gz"
+    mode: 0640
+  loop: "{{resource_list}}"
+  when:
+    - not item.endswith("tgz")
+    - no_copy_flag != "true"
+    - ansible_play_hosts | length > 1
+  run_once: true
+
+- name: unarchive on remote
+  ansible.builtin.unarchive:
+    src: "{{resource_dir}}/{{item}}.tar.gz"
+    dest: "{{resource_dir}}"
+    mode: 0750
+    copy: yes
+  loop: "{{resource_list}}"
+  when:
+    - not item.endswith("tgz")
+    - ansible_connection != "local"
+    - no_copy_flag != "true"
+
+- name: copy archive to remote
+  copy:
+    src: "{{resource_dir}}/{{ item }}"
+    dest: "{{resource_dir}}/{{ item }}"
+    mode: 0640
+  loop: "{{resource_list}}"
+  when:
+    - item.endswith("tgz")
+    - no_copy_flag != "true"
+    - ansible_play_hosts | length > 1
