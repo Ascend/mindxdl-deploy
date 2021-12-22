@@ -1,0 +1,5 @@
+---
+# master init k8s
+- hosts: master
+  roles:
+    - role: mindx.k8s.prom

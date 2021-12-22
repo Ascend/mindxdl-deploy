@@ -1,5 +1,11 @@
 ---
 # master init k8s
+- hosts:
+   - master
+   - worker
+  roles:
+    - role: mindx.k8s.install
+
 - hosts: master
   roles:
     - role: mindx.k8s.master

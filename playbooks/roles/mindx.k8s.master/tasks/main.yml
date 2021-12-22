@@ -20,8 +20,7 @@
 - name: not apiserver_advertise_address
   set_fact:
     addr_cmd: ""
-  when:
-    - apiserver_advertise_address == ""
+    repo_cmd: ""
 
 - name: set apiserver_advertise_address
   set_fact:
@@ -29,13 +28,19 @@
   when:
     - apiserver_advertise_address != ""
 
+- name: set repository
+  set_fact:
+    repo_cmd: "--image-repository {{ K8S_REPO }}"
+  when:
+    - K8S_REPO != ""
+
 - name: init cluster by kubeadm init
   shell: >
     kubeadm init
     --kubernetes-version={{ kubernetes_version }}
     --node-name={{ ansible_hostname }}
     --pod-network-cidr={{ pod_network_cidr }}
-    {{ addr_cmd }}
+    {{ addr_cmd }} {{ repo_cmd }}
   environment:
     http_proxy: ""
     https_proxy: ""
@@ -55,8 +60,13 @@
     mode: "0640"
     remote_src: yes
 
+- name: set calico yaml
+  template:
+    src: "calico_{{calico_version}}.yaml"
+    dest: "{{ role_path }}/calico_{{calico_version}}.yaml"
+
 - name: apply calico
-  shell: "kubectl apply -f {{ role_path }}/files/calico_{{calico_version}}.yaml"
+  shell: "kubectl apply -f {{ role_path }}/calico_{{calico_version}}.yaml"
   environment:
     http_proxy: ""
     https_proxy: ""

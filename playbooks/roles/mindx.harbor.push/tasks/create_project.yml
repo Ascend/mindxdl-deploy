@@ -1,0 +1,13 @@
+- name: create habor project
+  uri:
+    url: https://{{ HARBOR_HOSTNAME }}:{{ HARBOR_HTTPS_PORT }}/api/v2.0/projects
+    method: POST
+    validate_certs: false
+    return_content: yes
+    user: "admin"
+    password: "{{ lookup('file', '{{HARBOR_PATH}}/harbor.pwd') }}"
+    force_basic_auth: yes
+    status_code: [200, 201, 409]
+    body: '{"project_name": "{{PROJECT_NAME}}", "metadata": {"public": "true"},"storage_limit":-1}'
+    body_format: json
+  ignore_errors: true

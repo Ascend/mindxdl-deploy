@@ -1,0 +1,22 @@
+- debug:
+    msg: "******************************start install harbor******************************"
+
+- name: install docker-compose
+  copy:
+    src: "{{ resource_dir }}/linux_{{ ansible_architecture }}/docker-compose"
+    dest: "/usr/bin/docker-compose"
+    mode: "0750"
+    remote_src: yes
+
+- name: check harbor service
+  shell: docker-compose ls | grep harbor | grep running | wc -l
+  register: harbor_service
+
+- name: install harbor
+  include_tasks: install.yml
+  when: harbor_service.stdout == "0"
+
+- name: message
+  debug:
+    msg: "harbor is running"
+  when: harbor_service.stdout == "1"
