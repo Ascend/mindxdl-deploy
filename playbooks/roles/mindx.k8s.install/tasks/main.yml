@@ -17,24 +17,6 @@
 
 - include_tasks: common.yml
 
-- name: find k8s and calico images tar
-  find:
-    paths: "{{image_dir}}"
-    recurse: no
-    file_type: file
-    patterns:
-      - "kube*.tar"
-      - "pause*.tar"
-      - "etcd*.tar"
-      - "coredns*.tar"
-      - "calico*.tar"
-  register: kube_images_tar
-
-- name: load k8s and calico images
-  shell: docker load -i {{ item.path }}
-  loop: "{{ kube_images_tar.files }}"
-  when: online == false
-
 - name: "restart kubelet"
   systemd:
     name: "kubelet"

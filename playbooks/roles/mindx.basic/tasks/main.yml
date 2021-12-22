@@ -3,6 +3,7 @@
     name: "{{ DL_GRP }}"
     state: present
     gid: "{{ DL_GID }}"
+  ignore_errors: true
 
 - name: create user {{ DL_USR }}
   ansible.builtin.user:
@@ -11,6 +12,7 @@
     uid: "{{ DL_UID }}"
     group: "{{ DL_GRP }}"
     state: present
+  ignore_errors: true
 
 - name: create /etc/mindx-dl
   file:
@@ -19,6 +21,7 @@
     owner: "{{DL_USR}}"
     group: "{{DL_GRP}}"
     mode: 0700
+  ignore_errors: true
 
 - name: create directories
   file:
