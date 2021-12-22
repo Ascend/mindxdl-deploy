@@ -45,7 +45,7 @@
     - /var/log/mindx-dl/license-manager
     - /var/log/mindx-dl/model-manager
     - /var/log/mindx-dl/npu-exporter
-    - /var/log/mindx-dl/task-exporter
+    - /var/log/mindx-dl/task-manager
     - /var/log/mindx-dl/train-manager
     - /var/log/mindx-dl/user-manager
     - /var/log/mindx-dl/volcano-controller

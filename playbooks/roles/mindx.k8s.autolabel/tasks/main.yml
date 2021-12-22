@@ -30,11 +30,6 @@
     msg: "can not find npu card, please check"
   when: processing_accelerator.rc != 0
 
-- debug:
-    msg:
-      - "{{ processing_accelerator }}"
-      - "{{ product_name }}"
-
 - name: label ascend310
   shell: kubectl label --overwrite node {{ ansible_hostname }} accelerator=huawei-Ascend310
   delegate_to: "{{ groups['master'][0] }}"

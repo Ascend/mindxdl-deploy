@@ -1,4 +1,5 @@
-- debug:
+- name: message
+  debug:
     msg: "******************************start install k8s******************************"
 
 - name: disable swap

@@ -1,35 +1,41 @@
-- debug:
+- name: message
+  debug:
     msg: "******************************start install harbor******************************"
 
-- name: install docker-compose
-  copy:
-    src: "{{ resource_dir }}/linux_{{ ansible_architecture }}/docker-compose"
-    dest: "/usr/bin/docker-compose"
-    mode: "0750"
-    remote_src: yes
+- name: message
+  debug:
+    msg: "There can only be one harbor in inventory_file, please check"
+  failed_when: true
+  when: "'harbor' not in groups or groups['harbor'] | length != 1"
+
+- name: set HARBOR_IP
+  set_fact:
+    HARBOR_IP: "{{ ansible_default_ipv4.address if HARBOR_HOST_IP == '' else HARBOR_HOST_IP }}"
+    cacheable: yes
 
 - name: check harbor service
-  shell: docker-compose ls | grep harbor | grep running | wc -l
-  register: harbor_service
+  shell: systemctl is-active harbor | grep '^active$' | wc -l
+  register: harbor_status
+  changed_when: false
 
 - name: install harbor
   include_tasks: install.yml
-  when: harbor_service.stdout == "0"
+  when: harbor_status.stdout == "0"
 
 - name: create certificate directory on controller
   local_action:
     module: file
-    path: "/etc/docker/certs.d/{{HARBOR_HOSTNAME}}:{{HARBOR_HTTPS_PORT}}/"
+    path: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/"
     state: directory
-    mode: 700
+    mode: 0700
 
 - name: copy harbor certs from remote to controller
   ansible.builtin.fetch:
-    src: "/etc/docker/certs.d/{{HARBOR_HOSTNAME}}:{{HARBOR_HTTPS_PORT}}/ca.crt"
-    dest: "/etc/docker/certs.d/{{HARBOR_HOSTNAME}}:{{HARBOR_HTTPS_PORT}}/"
+    src: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/ca.crt"
+    dest: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/"
     flat: yes
 
 - name: message
   debug:
-    msg: "harbor is running"
-  when: harbor_service.stdout == "1"
+    msg: "harbor is running already"
+  when: harbor_status.stdout == "1"

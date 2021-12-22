@@ -89,6 +89,19 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
 
+- name: create secret for harbor
+  shell: |
+    kubectl delete secret --namespace={{ k8s_namespace }} harbor-secret
+    kubectl create secret \
+    --namespace={{ k8s_namespace }} \
+    generic harbor-secret \
+    --from-literal='connection-path=admin:{{ HARBOR_PASSWORD }}@tcp({{ HARBOR_IP }}:{{HARBOR_HTTPS_PORT}})'
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+
 - name: label dls master
   shell: kubectl label --overwrite node {{ansible_hostname}} masterselector=dls-master-node
   environment:
@@ -96,5 +109,3 @@
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
-  delegate_to: "{{ groups['master'][0] }}"
-  delegate_facts: true

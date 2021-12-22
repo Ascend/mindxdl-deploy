@@ -1,11 +1,17 @@
-- name: message
+- name: check HARBOR_PASSWORD and MYSQL_PASSWORD
   debug:
-    msg: "**********************copy resources************************"
+    msg: "HARBOR_PASSWORD and MYSQL_PASSWORD can not be empty in group_vars/all.yaml, please check"
+  failed_when: true
+  when: HARBOR_PASSWORD == "" or MYSQL_PASSWORD == ""
 
 - name: create resource directory
   file:
     path: "{{resource_dir}}"
     state: directory
+    mode: 0750
+  when:
+    - ansible_connection != "local"
+    - no_copy_flag != "true"
 
 - name: archive on localhost
   local_action:
@@ -17,7 +23,7 @@
   when:
     - not item.endswith("tgz")
     - no_copy_flag != "true"
-    - ansible_play_hosts | length > 1
+    - not (host_count == "1" and first_host == "localhost")
   run_once: true
 
 - name: unarchive on remote
@@ -40,5 +46,5 @@
   loop: "{{resource_list}}"
   when:
     - item.endswith("tgz")
+    - ansible_connection != "local"
     - no_copy_flag != "true"
-    - ansible_play_hosts | length > 1

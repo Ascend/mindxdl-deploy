@@ -18,7 +18,7 @@ extendedKeyUsage = serverAuth
 subjectAltName = @alt_names
 
 [alt_names]
-IP={{ HARBOR_HOSTNAME }}
+IP={{ HARBOR_IP }}
 EOF
 
 openssl x509 -req -sha512 -days 3650 -extfile v3.ext -CA ca.crt -CAkey ca.key -CAcreateserial -in harbor.csr -out harbor.crt
@@ -31,7 +31,7 @@ chmod 600 /data/cert/harbor.*
 
 openssl x509 -inform PEM -in harbor.crt -out harbor.cert
 
-docker_harbor=/etc/docker/certs.d/{{ HARBOR_HOSTNAME }}:{{HARBOR_HTTPS_PORT}}
+docker_harbor=/etc/docker/certs.d/{{ HARBOR_IP }}:{{HARBOR_HTTPS_PORT}}
 mkdir -p -m 700 ${docker_harbor}
 rm ${docker_harbor}/harbor.cert ${docker_harbor}/harbor.key ${docker_harbor}/ca.crt
 cp harbor.cert ${docker_harbor}

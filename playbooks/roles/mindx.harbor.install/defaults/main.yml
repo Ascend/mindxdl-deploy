@@ -2,7 +2,5 @@
 resource_dir: "~/resources"
 harbor_flag: "{{ ansible_architecture if ansible_architecture == 'aarch64' else '' }}"
 k8s_namespace: "mindx-dl"
-HARBOR_HTTP_PORT: 7080
-HARBOR_HTTPS_PORT: 7443
 HARBOR_CERT: "/data/cert/harbor.crt"
 HARBOR_KEY: "/data/cert/harbor.key"

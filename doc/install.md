@@ -133,29 +133,48 @@ inventory文件配置详细可参考[[How to build your inventory &mdash; Ansibl
 在group_vars目录中的all.yaml文件
 
 ```yaml
-# harbor host name. ip address
-HARBOR_HOSTNAME: ""
+# harbor ip address
+HARBOR_HOST_IP: ""
 # harbor https port
 HARBOR_HTTPS_PORT: 7443
 # harbor install path
 HARBOR_PATH: /data/harbor
-# password for harbor
+# password for harbor, can not be empty, delete immediately after finished
 HARBOR_PASSWORD: ""
+
+# mindx k8s namespace
+K8S_NAMESPACE: "mindx-dl"
 # ip address for api-server
 K8S_API_SERVER_IP: ""
+
+# mysql install path
+MYSQL_DATAPATH: /data/mysql
+# password for mysql, can not be empty, delete immediately after finished
+MYSQL_PASSWORD: ""
+
+#mindx user
+MINDX_USER: hwMindX
+MINDX_USER_ID: 9000
+MINDX_GROUP: hwMindX
+MINDX_GROUP_ID: 9000
 ```
 
 其中中配置项详细为：
 
 | 配置项               | 说明                                |
 | ----------------- | --------------------------------- |
-| HARBOR_HOSTNAME   | 配置harbor的监听ip，必须配置                |
-| HARBOR_HTTPS_PORT | harbor的https监听端口，默认为7443，必须配置     |
-| HARBOR_PATH       | Harbor的安装路径                       |
-| HARBOR_PASSWORD   | harbor的登录密码。 安装完成后应立即删除           |
-| K8S_API_SERVER_IP | K8s的api server监听地址，必须配置。特别是多网卡场景下 |
-
-
+| HARBOR_HOST_IP    | 配置harbor的监听ip，多网卡场景下**必须配置**       |
+| HARBOR_HTTPS_PORT | harbor的https监听端口，默认为7443             |
+| HARBOR_PATH       | Harbor的安装路径                             |
+| HARBOR_PASSWORD   | harbor的登录密码，不可为空，**必须配置**。安装完成后应立即删除|
+| K8S_NAMESPACE     | mindx dl组件默认k8s命名空间                  |
+| K8S_API_SERVER_IP | K8s的api server监听地址，多网卡场景下**必须配置**  |
+| MYSQL_DATAPATH    | mysql的安装路径                              |
+| MYSQL_PASSWORD    | mysql的登录密码，不可为空，**必须配置**。安装完成后应立即删除 |
+| MINDX_USER        | mindx dl组件默认运行用户                      |
+| MINDX_USER_ID     | mindx dl组件默认运行用户id                    |
+| MINDX_GROUP       | mindx dl组件默认运行用户组                    |
+| MINDX_GROUP_ID    | mindx dl组件默认运行用户组id                  |
 
 ### 步骤4：检查集群状态
 
@@ -226,7 +245,7 @@ master节点中将自动安装Prometheus和kubeedge中的edgecore。如不需要
 root@master:~/mindxdl-deployer#ansible-playbook -i inventory_file all.yaml
 ```
 
-如果inventory_file内配置了[worker]组的远程ip，本工具会将本机的~/resources目录打包后分发到远程机器上。如果有重复执行以上命令的需求，可在以上命令后加`-e resources_no_copy=true`参数，避免重复执行耗时的~/resources目录打包、分发操作。
+如果inventory_file内配置了非localhost的远程ip，本工具会将本机的~/resources目录分发到远程机器上。如果有重复执行以上命令的需求，可在以上命令后加`-e resources_no_copy=true`参数，避免重复执行耗时的~/resources目录打包、分发操作。
 
 ### 步骤6：安装后检查
 
