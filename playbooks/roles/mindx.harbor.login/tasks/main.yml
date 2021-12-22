@@ -12,7 +12,7 @@
     src: "/etc/docker/certs.d/{{HARBOR_HOSTNAME}}:{{HARBOR_HTTPS_PORT}}/ca.crt"
     dest: "/etc/docker/certs.d/{{HARBOR_HOSTNAME}}:{{HARBOR_HTTPS_PORT}}/"
     mode: "0750"
-    remote_src: no
+    remote_src: true
 
 - name: docker login harbor
   shell: "docker login {{HARBOR_HOSTNAME}}:{{HARBOR_HTTPS_PORT}} -u admin -p {{ HARBOR_PASSWORD }}"
