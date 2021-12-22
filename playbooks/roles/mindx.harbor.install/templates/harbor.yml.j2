@@ -12,7 +12,7 @@ http:
 # https related config
 https:
   # https port for harbor, default is 443
-  port: {{ 7443 if (HARBOR_HTTPS_PORT_ is not defined) else HARBOR_HTTPS_PORT }}
+  port: {{ 7443 if (HARBOR_HTTPS_PORT is not defined) else HARBOR_HTTPS_PORT }}
   # The path of cert and key files for nginx
   certificate: {{ HARBOR_CERT }}
   private_key: {{ HARBOR_KEY }}

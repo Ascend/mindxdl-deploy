@@ -82,7 +82,7 @@ ansible默认安装在系统自带python3中，安装完成后执行ansible --ve
 
 需要提前规划好如下集群信息：
 
-1. 安装harbor的服务器IP
+1. 安装harbor的服务器ip
 
 2. master节点ip，只能为本机localhost
 
@@ -96,7 +96,6 @@ ansible默认安装在系统自带python3中，安装完成后执行ansible --ve
 
 [harbor]
 localhost ansible_connection=local
-
 
 [master]
 localhost ansible_connection=local
@@ -125,8 +124,8 @@ worker2_ipaddress  set_hostname="worker-2"
 worker3_ipaddress
 ```
 
-<<<<<<< HEAD
 inventory文件配置详细可参考[[How to build your inventory &mdash; Ansible Documentation](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)]
+
 如果只有1个节点，可不配置worker信息
 
 ### 步骤3：配置安装信息

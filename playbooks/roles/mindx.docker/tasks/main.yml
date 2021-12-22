@@ -3,10 +3,9 @@
     msg: "*************************start install docker***************************"
 
 - name: check docker service
-  shell: systemctl is-active docker
+  shell: systemctl is-active docker | grep inactive | wc -l
   register: docker_status
   changed_when: false
-  ignore_errors: true
 
 - include_tasks: install.yml
-  when: docker_status.stdout != "active"
+  when: docker_status.stdout == "1"
