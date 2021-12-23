@@ -12,11 +12,12 @@
           - pylibs
           - linux_aarch64
           - linux_x86_64
-            ubuntu_18.04_aarch64
+          - ubuntu_18.04_aarch64
           - ubuntu_18.04_x86_64
 
 # copy harbor install package to harbor host
 - hosts: harbor
+  gather_facts: False
   roles:
     - role: mindx.resource
       vars:
@@ -29,6 +30,7 @@
     - master
     - worker
     - harbor
+  gather_facts: False
   roles:
     - role: mindx.basic
     - role: mindx.docker
@@ -38,21 +40,25 @@
 # install harbor
 - hosts:
     - harbor
+  gather_facts: False
   roles:
     - role: mindx.harbor.install
+
 - hosts:
     - master
     - worker
-    - localhost
+  gather_facts: False
   roles:
     - role: mindx.harbor.login
 
-- hosts: localhost
+- hosts: master
+  gather_facts: False
   roles:
     - role: mindx.harbor.push
 
 # master init k8s
 - hosts: master
+  gather_facts: False
   roles:
     - role: mindx.k8s.master
     - role: mindx.k8s.label
@@ -65,12 +71,14 @@
 
 # worker join k8s
 - hosts: worker
+  gather_facts: False
   roles:
     - role: mindx.k8s.worker
     - role: mindx.k8s.autolabel
 
 # config nfs server
 - hosts: nfs_server
+  gather_facts: False
   roles:
     - role: mindx.nfs.server
       vars:

@@ -39,6 +39,12 @@ spec:
               value: "true"
             - name: GF_AUTH_ANONYMOUS_ORG_ROLE
               value: Viewer
+            - name: GF_SECURITY_ALLOW_EMBEDDING
+              value: "true"
+            - name: GF_SERVER_ROOT_URL
+              value: "http://localhost:%(http_port)s/grafana"
+            - name: GF_SERVER_SERVE_FROM_SUB_PATH
+              value: "true"
           volumeMounts:
             - name: grafana-persistent-storage
               mountPath: /var
@@ -70,6 +76,7 @@ spec:
   ports:
     - port: 3000
       targetPort: 3000
+      protocol: TCP
   selector:
     app: grafana
     component: core

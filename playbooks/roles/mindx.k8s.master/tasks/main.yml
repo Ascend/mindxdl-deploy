@@ -1,4 +1,5 @@
-- debug:
+- name: message
+  debug:
     msg: "******************************start init k8s on master******************************"
 
 - name: check k8s
@@ -82,6 +83,27 @@
 
 - name: ceate namespace
   shell: kubectl create namespace {{ k8s_namespace }}
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+
+- name: create secret for harbor
+  shell: |
+    kubectl delete secret --namespace={{ k8s_namespace }} harbor-secret
+    kubectl create secret \
+    --namespace={{ k8s_namespace }} \
+    generic harbor-secret \
+    --from-literal='connection-path=admin:{{ HARBOR_PASSWORD }}@tcp({{ HARBOR_IP }}:{{HARBOR_HTTPS_PORT}})'
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+
+- name: label dls master
+  shell: kubectl label --overwrite node {{ansible_hostname}} masterselector=dls-master-node
   environment:
     http_proxy: ""
     https_proxy: ""

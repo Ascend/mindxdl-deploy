@@ -1,15 +1,21 @@
-- name: message
-  debug:
-    msg: "******************************start install harbor******************************"
+- name: install docker-compose
+  copy:
+    src: "{{ resource_dir }}/linux_{{ ansible_architecture }}/docker-compose"
+    dest: "/usr/bin/docker-compose"
+    mode: "0750"
+    remote_src: yes
 
 - name: create HARBOR_PATH
   file:
     path: "{{HARBOR_PATH}}"
     state: directory
-    mode: 750
+    mode: 0750
 
-- name: set password
-  shell: "echo {{ HARBOR_PASSWORD }} > {{ HARBOR_PATH }}/harbor.pwd"
+- name: set harbor.pwd
+  template:
+    src: harbor.pwd.j2
+    dest: "{{ HARBOR_PATH }}/harbor.pwd"
+    mode: 0400
 
 - name: find harbor-offline-installer-*.tgz
   find:
@@ -29,55 +35,21 @@
   template:
     src: harbor.yml.j2
     dest: "{{ HARBOR_PATH }}/harbor/harbor.yml"
+    mode: 0640
 
 - name: create https_config.sh
   template:
     src: https_config.sh
-    dest: "{{ role_path }}/https_config.sh"
+    dest: "{{ HARBOR_PATH }}/https_config.sh"
     mode: 0640
 
 - name: execute https_config.sh
-  shell : "bash {{ role_path }}/https_config.sh"
+  shell : "bash {{ HARBOR_PATH }}/https_config.sh"
 
 - name: execute harbor install.sh
   shell: bash install.sh
   args:
     chdir: "{{ HARBOR_PATH }}/harbor"
-
-- name: check namespace
-  shell: "kubectl get namespace | awk '$1 ~ /^{{ k8s_namespace }}$/ {print $1}'"
-  environment:
-    http_proxy: ""
-    https_proxy: ""
-    HTTP_PROXY: ""
-    HTTPS_PROXY: ""
-  changed_when: false
-  register: get_namespace
-  ignore_errors: true
-
-- name: create namespace
-  shell: "kubectl create namespace {{ k8s_namespace }}"
-  environment:
-    http_proxy: ""
-    https_proxy: ""
-    HTTP_PROXY: ""
-    HTTPS_PROXY: ""
-  when: get_namespace.stdout != k8s_namespace
-  ignore_errors: true
-
-- name: create secret for harbor
-  shell: |
-    kubectl delete secret --namespace={{ k8s_namespace }} harbor-secret
-    kubectl create secret \
-    --namespace={{ k8s_namespace }} \
-    generic harbor-secret \
-    --from-literal='connection-path=admin:Harbor12345@tcp({{ HARBOR_HOSTNAME }}:{{HARBOR_HTTPS_PORT}})'
-  environment:
-    http_proxy: ""
-    https_proxy: ""
-    HTTP_PROXY: ""
-    HTTPS_PROXY: ""
-  ignore_errors: true
 
 - name: set harbor service
   template:
@@ -85,5 +57,8 @@
     dest: /etc/systemd/system/harbor.service
     mode: 0640
 
-- name: enable harbor service
-  shell: systemctl enable harbor
+- name: enable harbor
+  systemd:
+    name: "harbor"
+    enabled: true
+    state: started

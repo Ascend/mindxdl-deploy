@@ -1,17 +1,22 @@
-K8S_NAMESPACE: "mindx-dl"
-# harbor host name. ip address
-HARBOR_HOSTNAME: ""
+# harbor ip address
+HARBOR_HOST_IP: ""
 # harbor https port
 HARBOR_HTTPS_PORT: 7443
 # harbor install path
 HARBOR_PATH: /data/harbor
-# password for harbor
+# password for harbor, can not be empty, delete immediately after finished
 HARBOR_PASSWORD: ""
+
+# mindx k8s namespace
+K8S_NAMESPACE: "mindx-dl"
 # ip address for api-server
 K8S_API_SERVER_IP: ""
-# mysql config
-MYSQL_PASSWORD: ""
+
+# mysql install path
 MYSQL_DATAPATH: /data/mysql
+# password for mysql, can not be empty, delete immediately after finished
+MYSQL_PASSWORD: ""
+
 #mindx user
 MINDX_USER: hwMindX
 MINDX_USER_ID: 9000

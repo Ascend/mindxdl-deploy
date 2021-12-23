@@ -1,4 +1,5 @@
-- debug:
+- name: message
+  debug:
     msg: "******************************start install nfs client******************************"
 
 - name: install nfs client

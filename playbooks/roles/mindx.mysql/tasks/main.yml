@@ -1,4 +1,5 @@
-- debug:
+- name: message
+  debug:
     msg: "******************************start deploy mysql******************************"
 
 - name: message
@@ -17,16 +18,17 @@
   file:
     path: "{{ MYSQL_YAML_DIR }}"
     state: directory
-    mode: 0700
+    mode: 0750
 
 - name: create Dockerfile
   template:
     src: "{{ item }}"
     dest: "{{ MYSQL_YAML_DIR }}/{{ item }}"
-    mode: 0644
+    mode: 0640
   with_items:
     - init.sql
     - Dockerfile
+    - my.cnf
 
 - name: build new docker image
   shell: docker build {{ MYSQL_YAML_DIR }} -t mysql-dl:8.0.26
@@ -99,7 +101,7 @@
   template:
     src: "{{ item }}"
     dest: "{{ MYSQL_YAML_DIR }}/{{ item }}"
-    mode: 0644
+    mode: 0640
   with_items:
     - mysql-pv.yaml
     - mysql-pvc.yaml

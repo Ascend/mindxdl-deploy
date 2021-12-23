@@ -2,12 +2,12 @@
 
 # The IP address or hostname to access admin UI and registry service.
 # DO NOT use localhost or 127.0.0.1, because Harbor needs to be accessed by external clients.
-hostname: {{ HARBOR_HOSTNAME }}
+hostname: {{ HARBOR_IP }}
 
 # http related config
-http:
+# http:
   # port for http, default is 80. If https enabled, this port will redirect to https port
-  port: {{ 7080 if (HARBOR_HTTP_PORT is not defined) else HARBOR_HTTP_PORT }}
+  # port: 80
 
 # https related config
 https:

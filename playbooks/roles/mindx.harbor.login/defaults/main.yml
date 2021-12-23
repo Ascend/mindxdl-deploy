@@ -1,3 +1,0 @@
-# defaults file for ascend.docker
-HARBOR_HTTP_PORT: 7080
-HARBOR_HTTPS_PORT: 7443
