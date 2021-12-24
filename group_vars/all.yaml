@@ -12,6 +12,9 @@ K8S_NAMESPACE: "mindx-dl"
 # ip address for api-server
 K8S_API_SERVER_IP: ""
 
+# nfs shared path, can be multiple configurations
+NFS_PATH: ["/data/atlas_dls"]
+
 # mysql install path
 MYSQL_DATAPATH: /data/mysql
 # password for mysql, can not be empty, delete immediately after finished

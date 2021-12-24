@@ -26,10 +26,7 @@ function install_ansible()
     if [[ ${have_ansible_cmd} == 0 ]];then
         export DEBIAN_FRONTEND=noninteractive
         export DEBIAN_PRIORITY=critical
-        RESOURCE_DIR=$(pwd)/resources
-        if [ ! -d $RESOURCE_DIR ];then
-            RESOURCE_DIR=~/resources
-        fi
+        RESOURCE_DIR=~/resources
         if [ ! -d $RESOURCE_DIR ];then
             echo "no resource dir $RESOURCE_DIR"
 	    return

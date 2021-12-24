@@ -15,14 +15,14 @@
     path: "{{ item }}"
     state: directory
     mode: 0750
-  with_items: "{{ nfs_exports }}"
+  loop: "{{ NFS_PATH }}"
 
 - name: config nfs /etc/exports
   ansible.builtin.lineinfile:
     path: /etc/exports
     line: "{{item}} *(rw,sync,no_root_squash)"
     state: present
-  with_items: "{{ nfs_exports }}"
+  loop: "{{ NFS_PATH }}"
 
 - name: "restart nfs"
   systemd:

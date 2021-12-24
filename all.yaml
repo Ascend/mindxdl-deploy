@@ -81,10 +81,6 @@
   gather_facts: False
   roles:
     - role: mindx.nfs.server
-      vars:
-        nfs_exports:
-          - /data/platform
-          - /data/user
 
 # mysql
 - hosts: mysql

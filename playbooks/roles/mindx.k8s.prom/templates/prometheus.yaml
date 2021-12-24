@@ -43,24 +43,8 @@ apiVersion: v1
 metadata:
   labels:
     app: prometheus
-  name: prometheusnodeport
-  namespace: kube-system
-spec:
-  type: NodePort
-  ports:
-  - port: 9090
-    targetPort: 9090
-    nodePort: 30003
-  selector:
-    app: prometheus
----
-kind: Service
-apiVersion: v1
-metadata:
   name: prometheus
   namespace: {{ PROM_NAMESPACE }}
-  labels:
-    app: prometheus
 spec:
   type: ClusterIP
   ports:
@@ -142,19 +126,6 @@ data:
       scrape_interval:     15s
       evaluation_interval: 15s
     scrape_configs:
-
-    - job_name: 'kubernetes-apiservers'
-      kubernetes_sd_configs:
-      - role: endpoints
-      scheme: https
-      tls_config:
-        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-        action: keep
-        regex: default;kubernetes;https
-
     - job_name: 'kubernetes-nodes'
       kubernetes_sd_configs:
       - role: node
@@ -173,16 +144,37 @@ data:
         replacement: /api/v1/nodes/${1}/proxy/metrics
 
     - job_name: 'kubernetes-cadvisor'
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
       kubernetes_sd_configs:
-      - role: pod
-      scheme: http
+      - role: node
       relabel_configs:
-      - action: keep
-        source_labels: [__meta_kubernetes_namespace]
-        regex: cadvisor
-      - source_labels: [__meta_kubernetes_pod_node_name]
-        target_label: job
-        replacement: ${1}
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+        target_label: __metrics_path__
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - source_labels: [__meta_kubernetes_node_name]
+        action: replace
+        target_label: node
+      - source_labels: [__meta_kubernetes_node_label_node]
+        action: replace
+        target_label: node_name
+
+    - job_name: 'node-exporter'
+      kubernetes_sd_configs:
+      - role: node
+      relabel_configs:
+      - action: replace
+        source_labels: [__address__]
+        regex: '(.*):10250'
+        replacement: '${1}:9100'
+        target_label: __address__
 
     - job_name: 'kubernetes-npu-exporter'
       kubernetes_sd_configs:
