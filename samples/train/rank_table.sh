@@ -54,12 +54,6 @@ function get_server_id()
 function get_server_id_0_ip()
 {
     local key="server_id"
-    local srv_id=$(cat ${RANK_TABLE_FILE} | awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'${key}'\042/){print $(i+1)}}}' |
-                   awk '{print FNR ":" $1}' | grep ${XDL_IP} | awk -F ":" '{print $1}')
-
-    srv_id=$(($srv_id-1))
-    if [ ${srv_id} -eq 0 ];then
-      first_server_ip=${XDL_IP}
-      echo "${first_server_ip}"
-    fi
+    local first_server_ip=$(cat ${RANK_TABLE_FILE} |awk -F ":" '{print $29}'|awk -F "\"" '{print $2}')
+    echo $first_server_ip
 }
