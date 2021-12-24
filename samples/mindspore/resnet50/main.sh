@@ -31,6 +31,13 @@ if [ $# == 2 ]; then
 
     # 保持前台输出
     python ${ROOT_PATH}/../train.py --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
+    if [ $? -eq 0 ]; then
+      echo "run training job complete." | tee log
+      exit 0
+    else
+      echo "run training job failed." | tee log
+      exit 1
+    fi
 fi
 
 # 单机多卡和分布式
@@ -66,6 +73,14 @@ if [ $# == 6 ]; then
             python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} | tee log
         else
             python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${device_each_server} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} &> log &
+        fi
+
+        if [ $? -eq 0 ]; then
+          echo "run training job complete." | tee log
+          exit 0
+        else
+          echo "run training job failed." | tee log
+          exit 1
         fi
     done
 else
