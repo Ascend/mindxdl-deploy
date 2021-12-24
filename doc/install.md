@@ -147,6 +147,9 @@ K8S_NAMESPACE: "mindx-dl"
 # ip address for api-server
 K8S_API_SERVER_IP: ""
 
+# nfs shared path, can be multiple configurations
+NFS_PATH: ["/data/atlas_dls"]
+
 # mysql install path
 MYSQL_DATAPATH: /data/mysql
 # password for mysql, can not be empty, delete immediately after finished
@@ -169,6 +172,7 @@ MINDX_GROUP_ID: 9000
 | HARBOR_PASSWORD   | harbor的登录密码，不可为空，**必须配置**。安装完成后应立即删除|
 | K8S_NAMESPACE     | mindx dl组件默认k8s命名空间                  |
 | K8S_API_SERVER_IP | K8s的api server监听地址，多网卡场景下**必须配置**  |
+| NFS_PATH          | nfs服务器的共享路径，可配置多个路径                    |
 | MYSQL_DATAPATH    | mysql的安装路径                              |
 | MYSQL_PASSWORD    | mysql的登录密码，不可为空，**必须配置**。安装完成后应立即删除 |
 | MINDX_USER        | mindx dl组件默认运行用户                      |

@@ -3,7 +3,3 @@
 - hosts: nfs_server
   roles:
     - role: mindx.nfs.server
-      vars:
-        nfs_exports:
-          - /data/platform
-          - /data/user
