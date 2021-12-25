@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-
 # default start shell path
 DLS_USER_HOME_DIR="$(
   cd "$(dirname "$0")" || exit 1
@@ -20,8 +19,8 @@ source utils.sh
 
 # training job input parameters
 app_url="$1"
-boot_file="$2"
-log_url="$3"
+log_url="$2"
+boot_file="$3"
 shift 3
 
 function show_help() {
@@ -58,7 +57,7 @@ logger "pwd: $PWD"
 logger "app_url: ${app_url}"
 logger "boot_file: ${boot_file}"
 logger "log_url: $log_url"
-logger "command: $(${boot_file} "$@")"
+logger "command: ${boot_file} $@"
 logger "local_code_dir: ${local_code_dir}"
 
 start_time=$(date +%Y-%m-%d-%H:%M:%S)
@@ -114,11 +113,23 @@ function get_env_for_multi_card_job() {
 }
 
 function get_env_for_pytorch_multi_node_job() {
+  export JOB_ID=123456789
+  export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
+  #将Host日志输出到串口,0-关闭/1-开启
+  export ASCEND_SLOG_PRINT_TO_STDOUT=0
+  #设置默认日志级别,0-debug/1-info/2-warning/3-error
+  export ASCEND_GLOBAL_LOG_LEVEL=3
+  #设置Event日志开启标志,0-关闭/1-开启
+  export ASCEND_GLOBAL_EVENT_ENABLE=0
+  #设置是否开启taskque,0-关闭/1-开启
+  export TASK_QUEUE_ENABLE=1
   export HCCL_WHITELIST_DISABLE=1
   export HCCL_IF_IP=${XDL_IP}
-  first_server_ip=get_server_id_0_ip
+  first_server_ip=$(get_server_id_0_ip)
   export MASTER_ADDR=${first_server_ip}
-  export MASTER_PORT=29561
+  export WORLD_SIZE=$server_count
+  export RANK=$server_id
+  set_env
 }
 
 DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
@@ -132,18 +143,6 @@ if [[ $server_count -eq 1 ]]; then
   fi
 fi
 
-# 单节点多卡场景
-if [[ $server_count -eq 1 ]]; then
-  server_id=0
-  if [ "${device_count}" -gt 1 ]; then
-    rank_start=0
-    for ((i = $((device_count - 1)); i >= 0; i--)); do
-      get_env_for_multi_card_job
-      ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" | dls_logger "$log_url" append
-    done
-  fi
-fi
-
 # 多节点场景
 if [[ $server_count -gt 1 ]]; then
   server_id=$(get_server_id)
@@ -151,21 +150,43 @@ if [[ $server_count -gt 1 ]]; then
     echo "get server id failed."
     exit 1
   fi
+  if [ -z $framework ]; then
+    echo "framework is null."
+    exit 1
+  fi
+
   logger "server id is: ""${server_id}"
   if [ ${framework} == "PyTorch" ]; then
+    get_env_for_pytorch_multi_node_job
+    ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" --addr=$MASTER_ADDR --world-size=$WORLD_SIZE --rank=$RANK| tee $log_url
+  elif [ ${framework} == "Tensorflow" ]; then
+    # CPU核心数
+    core_num=`cat /proc/cpuinfo | grep "processor" | wc -l`
     device_each_server=$((device_count / server_count))
     rank_start=$((device_each_server * server_id))
     for ((i = $((device_each_server - 1)); i >= 0; i--)); do
-      get_env_for_pytorch_multi_node_job
-      ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" | dls_logger "$log_url" append
+      get_env_for_multi_card_job
+      export DEVICE_INDEX=${RANK_ID}
+      logger "start training for rank $RANK_ID, device $DEVICE_ID"
+      # 设置绑定范围，如:0-11
+      core_range="$((i*${core_num}/8))-$(((i+1)*${core_num}/8-1))"
+      if [ $i -eq 0 ]; then
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" | tee $log_url
+      else
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" &>> $log_url &
+      fi
     done
   else
     device_each_server=$((device_count / server_count))
     rank_start=$((device_each_server * server_id))
     for ((i = $((device_each_server - 1)); i >= 0; i--)); do
       get_env_for_multi_card_job
-      get_env_for_multi_card_job
-      ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" | dls_logger "$log_url" append
+      echo "start training for rank $RANK_ID, device $DEVICE_ID"
+      if [ $i -eq 0 ]; then
+          ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" | tee $log_url
+      else
+          ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" &>> $log_url &
+      fi
     done
   fi
 fi
