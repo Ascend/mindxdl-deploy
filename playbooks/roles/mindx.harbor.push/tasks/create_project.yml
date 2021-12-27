@@ -8,7 +8,7 @@
     password: "{{ HARBOR_PASSWORD }}"
     force_basic_auth: yes
     status_code: [200, 201, 409]
-    body: '{"project_name": "{{PROJECT_NAME}}", "metadata": {"public": "true"},"storage_limit":-1}'
+    body: '{"project_name": "{{PROJECT_NAME}}", "metadata": {"public": "{{ project_public }}"},"storage_limit":-1}'
     body_format: json
   environment:
     http_proxy: ""
@@ -16,3 +16,4 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
   ignore_errors: true
+  no_log: true

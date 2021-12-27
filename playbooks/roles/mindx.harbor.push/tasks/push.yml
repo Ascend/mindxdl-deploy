@@ -26,3 +26,33 @@
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
+
+- name: query mysql pod
+  shell: "kubectl get pod -n {{ k8s_namespace }} -l app=mysql | awk 'END {print $1}'"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  register: mysql_pod
+  when: (images_dir == "mindx-images" and stat_mindx_images.stat.exists)
+
+- name: query image size
+  shell: docker image ls | awk '$1 ~ /^{{ manifest_name | replace("/", "\/") }}_{{arch}}$/ && $2 ~ /^{{tag}}$/ {print $NF}'
+  register: image_size
+  when: (images_dir == "mindx-images" and stat_mindx_images.stat.exists)
+
+- name: insert image info to mysql
+  shell: |
+    kubectl exec {{ mysql_pod.stdout }} -n {{ k8s_namespace }} -- \
+    mysql -u image_user -p{{ MYSQL_PASSWORD }} -e \
+    "USE image_manager; \
+    INSERT IGNORE INTO image_configs(ImageName, ImageTag, ImageSize, HarborPath, CreateTime) \
+    VALUES('{{manifest_name.split('/')[-1]}}', '{{tag}}', {{ (image_size.stdout | replace('GB', '') | float) * 1024 }}, '{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/{{manifest_name}}:{{tag}}', NOW());"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when: (images_dir == "mindx-images" and stat_mindx_images.stat.exists)
+  register: insert_result

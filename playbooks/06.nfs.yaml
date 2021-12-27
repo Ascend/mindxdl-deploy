@@ -1,4 +1,11 @@
 ---
+# install softwares
+- hosts:
+    - master
+    - worker
+  roles:
+    - role: mindx.nfs.client
+
 # config nfs server
 - hosts: nfs_server
   roles:

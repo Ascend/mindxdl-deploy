@@ -36,3 +36,21 @@ GRANT ALL PRIVILEGES ON *.* TO 'image_user'@'%';
 GRANT ALL PRIVILEGES ON *.* TO 'data_user'@'%';
 GRANT ALL PRIVILEGES ON *.* TO 'cluster_user'@'%';
 GRANT ALL PRIVILEGES ON *.* TO 'access_user'@'%';
+
+USE image_manager;
+CREATE TABLE IF NOT EXISTS image_configs(
+    ID BIGINT AUTO_INCREMENT,
+    UserID BIGINT NOT NULL DEFAULT 0,
+    GroupID BIGINT NOT NULL DEFAULT 0,
+    ImageName VARCHAR(256),
+    ImageTag VARCHAR(32),
+    ImageSize DOUBLE NOT NULL,
+    HarborPath VARCHAR(256),
+    Prefabricated tinyint(1) NOT NULL DEFAULT 1,
+    ImageArch VARCHAR(32) NOT NULL DEFAULT 'noarch',
+    CreateTime DATETIME NOT NULL,
+    Status tinyint(1) NOT NULL DEFAULT 0,
+    ExtraParam VARCHAR(256) DEFAULT '',
+    PRIMARY KEY ( ID ),
+    UNIQUE (HarborPath)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;

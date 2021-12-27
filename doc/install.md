@@ -51,6 +51,8 @@ resources             //由resources.tar.gz解压得到，必须放置在/root�
 resources.tar.gz
 ```
 
+在/root/resources目录下新建mindx-images目录，然后联系工程师取得mindx的预置镜像包，放置到/root/resources/mindx-images目录里
+
 ## 安装步骤
 
 ### 步骤1：安装ansible
