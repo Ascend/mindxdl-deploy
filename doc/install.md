@@ -4,34 +4,34 @@
 
 本文主要介绍如何使用ansible安装mindxdl所需开源软件安装。其中包含如下开源软件
 
-| 软件名        | 备注                             |
-| ---------- | --------------------------------- |
-| docker     | 集群中所有节点都需要安装            |
-| kubernetes | k8s平台                           |
-| mysql      | 安装在k8s集群中，挂载host的文件系统  |
-| nfs        | 所有节点都需要安装nfsclient          |
-| harbor     | 容器镜像仓                          |
-| prometheus | 安装在kubernetes集群中               |
-| grafana    | 安装在kubernetes集群中               |
-
+| 软件名        | 备注                    |
+| ---------- | --------------------- |
+| docker     | 集群中所有节点都需要安装          |
+| kubernetes | k8s平台                 |
+| mysql      | 安装在k8s集群中，挂载host的文件系统 |
+| nfs        | 所有节点都需要安装nfsclient    |
+| harbor     | 容器镜像仓                 |
+| prometheus | 安装在kubernetes集群中      |
+| grafana    | 安装在kubernetes集群中      |
 
 ## 环境要求
 
 ### 支持的操作系统说明
 
-| 操作系统 | 版本      | CPU架构 |
-|:-------:|:---------:|:-------:|
-| Ubuntu  | 18.04.1/5 | aarch64 |
-| Ubuntu  | 18.04.1/5 | x86_64  |
+| 操作系统   | 版本        | CPU架构   |
+|:------:|:---------:|:-------:|
+| Ubuntu | 18.04.1/5 | aarch64 |
+| Ubuntu | 18.04.1/5 | x86_64  |
 
 ### 支持的硬件形态说明
-|  中心推理硬件  |  中心训练硬件  |
-|:-------------:|:-------------:|
-|  A300-3000    |  A300T-9000   |
-|  A300-3010    |  A800-9000    |
-| Atlas 300I Pro|  A800-9010    |
-|  A800-3000    |               |
-|  A800-3010    |               |
+
+| 中心推理硬件         | 中心训练硬件     |
+|:--------------:|:----------:|
+| A300-3000      | A300T-9000 |
+| A300-3010      | A800-9000  |
+| Atlas 300I Pro | A800-9010  |
+| A800-3000      |            |
+| A800-3010      |            |
 
 ## 下载本工具
 
@@ -40,7 +40,6 @@
 1. 使用git clone
 
 2. 下载master分支的[zip文件](https://gitee.com/ascend/mindxdl-deploy/repository/archive/master.zip)
-
 
 然后联系工程师取得开源软件的resources.tar.gz离线安装包，将离线安装包解压在/root目录下。按如下方式放置
 
@@ -71,12 +70,9 @@ executable location = /usr/local/bin/ansible
 python version = 3.6.9 (default, Jan 26 2021, 15:33:00) [GCC 8.4.0]
 jinja version = 3.0.1
 libyaml = True
-
-
 ```
 
 ansible默认安装在系统自带python3中，安装完成后执行ansible --version查看ansible是否安装成功
-
 
 ### 步骤2：配置集群信息
 
@@ -93,7 +89,6 @@ ansible默认安装在系统自带python3中，安装完成后执行ansible --ve
 5. nfs服务器信息。nfs可使用已有nfs服务器。如不需要安装nfsserver，去掉nfs_server配置即可
 
 ```bash
-
 [harbor]
 localhost ansible_connection=local
 
@@ -164,19 +159,19 @@ MINDX_GROUP_ID: 9000
 
 其中中配置项详细为：
 
-| 配置项               | 说明                                |
-| ----------------- | --------------------------------- |
-| HARBOR_HOST_IP    | 配置harbor的监听ip，多网卡场景下**必须配置**       |
+| 配置项               | 说明                                   |
+| ----------------- | ------------------------------------ |
+| HARBOR_HOST_IP    | 配置harbor的监听ip，多网卡场景下**必须配置**         |
 | HARBOR_HTTPS_PORT | harbor的https监听端口，默认为7443             |
-| HARBOR_PATH       | Harbor的安装路径                             |
-| HARBOR_PASSWORD   | harbor的登录密码，不可为空，**必须配置**。安装完成后应立即删除|
+| HARBOR_PATH       | Harbor的安装路径                          |
+| HARBOR_PASSWORD   | harbor的登录密码，不可为空，**必须配置**。安装完成后应立即删除 |
 | K8S_NAMESPACE     | mindx dl组件默认k8s命名空间                  |
-| K8S_API_SERVER_IP | K8s的api server监听地址，多网卡场景下**必须配置**  |
-| NFS_PATH          | nfs服务器的共享路径，可配置多个路径                    |
-| MYSQL_DATAPATH    | mysql的安装路径                              |
-| MYSQL_PASSWORD    | mysql的登录密码，不可为空，**必须配置**。安装完成后应立即删除 |
-| MINDX_USER        | mindx dl组件默认运行用户                      |
-| MINDX_USER_ID     | mindx dl组件默认运行用户id                    |
+| K8S_API_SERVER_IP | K8s的api server监听地址，多网卡场景下**必须配置**    |
+| NFS_PATH          | nfs服务器的共享路径，可配置多个路径                  |
+| MYSQL_DATAPATH    | mysql的安装路径                           |
+| MYSQL_PASSWORD    | mysql的登录密码，不可为空，**必须配置**。安装完成后应立即删除  |
+| MINDX_USER        | mindx dl组件默认运行用户                     |
+| MINDX_USER_ID     | mindx dl组件默认运行用户id                   |
 | MINDX_GROUP       | mindx dl组件默认运行用户组                    |
 | MINDX_GROUP_ID    | mindx dl组件默认运行用户组id                  |
 
@@ -220,7 +215,6 @@ worker1_ipaddres | SUCCESS => {
         label_value: dls-master-node
     - role: mindx.k8s.prom
     - role: mindx.kubeedge
-
 ```
 
 在mindx.k8s.master角色下增加apiserver_advertise_address参数，用于指定k8s apiserver绑定的ip地址
@@ -291,6 +285,69 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 
 2. k8s节点不可重复初始化或加入，使用本工具前，请先执行`kubeadm reset`清除节点上已有的k8s配置
 
+### 步骤7：安装MindX DL组件
+
+1. 在~/resource/目录下创建mindxdl目录
+   
+   ```bash
+      mkdir -p ~/resources/mindxdl
+   ```
+
+2. 将MindX DL组件放到~/resource/mindxdl目录中
+   
+   ```bash
+   ~/resources/
+    `── mindxdl
+        ├── Ascend-mindxdl-volcano_{version}-{arch}.zip
+        ├── Ascend-mindxdl-hccl-controller_{version}-{arch}.zip
+         ....
+   ```
+
+3. 执行安装命令
+   
+   ```bash
+   ansible-playbooks -i inventory_file playbooks 08.mindxdl.yaml
+   ```
+
+注：
+
+1. MindX DL相关组件安装时依赖harbor。安装过程会制作镜像并上传到harbor中
+
+# 详细说明
+
+## 分步骤安装
+
+playbooks目录下有很多文件，其中每个yaml文件对应一个组件，可以实现只安装某个组件
+
+```bash
+playbooks/
+├── 01.resource.yaml
+├── 02.docker.yaml
+├── 03.harbor.yaml
+├── 04.k8s.yaml
+├── 05.mysql.yaml
+├── 06.nfs.yaml
+├── 07.prometheus.yaml
+├── 08.mindxdl.yaml
+```
+
+例如:
+
+1. 分发软件包
+   
+   ```bash
+   ansible-playbook -i inventory_file playbooks/01.resource.yaml
+   ```
+
+2. 只安装docker，则执行
+   
+   ```bash
+   ansible-playbook -i inventory_file playbooks/02.docker.yaml
+   ```
+
+## 安装过程配置
+
+工具跟目录下的all.yaml为全量安装。 实际安装时可根据需要对组件灵活删减
 
 # 高级配置
 
@@ -316,10 +373,6 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 | --------------------------- | -------------------------------------------------------------- |
 | apiserver_advertise_address | 指定kubenetes的apiserver绑定的ip地址，默认空。在多网卡时建议配置，防止apiserver监听到其他网卡上 |
 
-
-
 ### 角色：mindx.k8s.worker
 
 加入集群。该角色将在执行的节点上执行`kubeadm join`加入已经初始化好kubernetes集群。需在mindx.k8s.master之后执行
-
-

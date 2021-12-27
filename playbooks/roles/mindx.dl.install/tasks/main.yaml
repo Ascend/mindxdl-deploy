@@ -1,0 +1,15 @@
+- name: message
+  debug:
+    msg: "**********start install MindX DL********************"
+
+- name: copy dlinstall script
+  copy:
+    src: "{{role_path}}/files/dlinstall"
+    dest: /usr/bin/
+    mode: 0700
+
+- name: install MinX DL
+  shell: "/usr/bin/dlinstall {{ item }}"
+  ignore_errors: true
+  with_fileglob:
+    - "{{ resource_dir }}/mindxdl/*.zip"

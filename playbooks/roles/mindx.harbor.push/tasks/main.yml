@@ -12,6 +12,7 @@
     - mysql
     - openresty
     - calico
+    - volcanosh
 
 - include: push.yml image="{{item}}"
   with_fileglob:

@@ -1,0 +1,284 @@
+#!/bin/bash
+
+APP_PATH=""
+DEPLOY_PATH=""
+APP=""
+TAG=""
+ARCH=""
+HARBOR_HOST=""
+HARBOR_PORT=""
+YML_PATH=""
+YML_FILE=""
+YML_DIR=""
+IMAGE=""
+DEBUG="n"
+DRYRUN="n"
+PROJECT="mindx"
+LOCAL_ARCH=$(uname -m)
+
+function print_usage()
+{
+    echo "Usage:"
+    echo "$0 [options] file"
+    echo "$0 [options] directory"
+    echo "options:"
+    echo "    --help   print this message"
+    echo "    --debug  enable debug"
+    echo "    --dryrun not running, just test process"
+    echo "    --harbor set harbor ip or domain"
+    echo "    --harbor-port set harbor port default 443"
+}
+
+function parse_args()
+{
+    if [ $# = 0 ];then
+        print_usage
+        exit 1
+    fi
+    while true; do
+        case "$1" in
+        --help | -h)
+            print_usage
+            exit 0
+            ;;
+        --debug)
+            DEBUG="y"
+            shift
+            ;;
+        --dryrun)
+            DRYRUN="y"
+            shift
+            ;;
+        --harbor)
+            HARBOR_HOST=$2
+            shift
+            shift
+            ;;
+        --harbor-port)
+            HARBOR_PORT=":$2"
+            shift
+            shift
+            ;;
+        *)
+            if [ "x$1" != "x" ]; then
+                APP_PATH=$1
+                return 0
+            fi
+            break
+            ;;
+        esac
+    done
+    if [ $DEBUG == "y" ]; then
+        echo "DEBUG: DEBUG=$DEBUG"
+        echo "DEBUG: DRYRUN=$DRYRUN"
+        echo "DEBUG: APP_PATH=$APP_PATH"
+        echo "DEBUG: HARBOR_HOST=$HARBOR_HOST"
+        echo "DEBUG: HARBOR_PORT=$HARBOR_PORT"
+    fi
+}
+
+function get_app_info()
+{
+    YML_PATH=$(find ${APP_PATH} -maxdepth 1 -name '*-v*.yaml')
+    if [ -z ${YML_PATH} ];then
+        YML_PATH=$(find ${APP_PATH} -maxdepth 1 -name '*-v*.yml')
+    fi
+    if [ -z $YML_PATH ];then
+        echo "FATAL: no yaml file found!!!"
+        exit 1
+    fi
+    YML_DIR=$(dirname $YML_PATH)
+    YML_FILE=$(basename $YML_PATH)
+    APP=$(echo $YML_FILE | cut -d"-" -f1)
+    TAG=$(grep "image: " $YML_PATH  | head -n1 | cut -d":" -f3)
+    local tmp=$(grep "image: " $YML_PATH  | head -n1 | cut -d":" -f2)
+    IMAGE=$(echo ${tmp} | xargs echo -n)
+    ## get executable arch
+    local exe_file=$(find ${APP_PATH} -maxdepth 1 -type f -executable | head -n1)
+    local arch_flag=$(file ${exe_file} | grep x86 | wc -l)
+    if [ ${arch_flag} == "1" ];then
+        ARCH="amd64"
+    else
+        ARCH="arm64"
+    fi
+    echo "YML_FILE=${YML_FILE}"
+    echo "APP=${APP}"
+    echo "TAG=${TAG}"
+    echo "ARCH=${ARCH}"
+    local arch_check=$(file ${exe_file} | grep ${LOCAL_ARCH} | wc -l)
+    if [ ${arch_check} == "0" ];then
+        echo "FATAL: cpu arch is ${LOCAL_ARCH} but package is ${ARCH}"
+        exit 1
+    fi
+}
+
+function modify_dockerfile()
+{
+    local docker_file=$1
+    local from_line=$(grep "FROM " ${docker_file})
+    local base_img=$(echo ${from_line} | cut -d " " -f2)
+    local image=$(echo ${base_img} | cut -d ":" -f1)
+    local tag=$(echo ${base_img} | cut -d ":" -f2)
+    if [[ "${base_img}" == "${HARBOR_HOST}"* ]];then
+        return
+    fi
+    if [[ "${base_img}" == "alpine"* ]] || [[ "${base_img}" == "ubuntu"* ]];then
+        sed -i "s#^FROM.*#FROM ${HARBOR_HOST}${HARBOR_PORT}/dockerhub/${image}_${ARCH}:${tag}#g" ${docker_file}
+    else
+        sed -i "s#^FROM.*#FROM ${HARBOR_HOST}${HARBOR_PORT}/${image}_${ARCH}:${tag}#g" ${docker_file}
+    fi
+}
+
+function build_image()
+{
+    local docker_file=$1
+    local name=$2
+    local arch=$3
+    local tag=$4
+    local build_dir=$(dirname $docker_file)
+
+    if [ ${DEBUG} == "y" ];then
+        echo "DEBUG: docker build . -f ${docker_file} -t ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}"
+        echo "DEBUG: docker push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}"
+        echo "DEBUG: docker manifest create ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} -a"
+        echo "DEBUG: docker manifest annotate ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} --os linux --arch ${arch}"
+        echo "DEBUG: docker manifest push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag}"
+    fi
+
+    if [ ${DRYRUN} == "y" ];then
+        return
+    fi
+
+    cd ${DEPLOY_PATH}
+    docker build . -f ${docker_file} -t ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}
+    docker push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}
+    if [ $? != 0 ];then
+        echo "push to harbor failed"
+        exit 1
+    fi
+    docker manifest create ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} -a
+    if [ $? != 0 ];then
+        echo "create manifest failed"
+        exit 1
+    fi
+    docker manifest annotate ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} --os linux --arch ${arch}
+    if [ $? != 0 ];then
+        echo "manifest annotate failed"
+        exit 1
+    fi
+    docker manifest push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag}
+    if [ $? != 0 ];then
+        echo "push manifest failed"
+        exit 1
+    fi
+    cd -
+}
+
+function build_images()
+{
+    for docker_file in `find ${DEPLOY_PATH} -type f -name "Docker*"`
+    do
+        modify_dockerfile ${docker_file}
+    done
+    for docker_file in `find ${DEPLOY_PATH} -type f -name "Docker*"`
+    do
+        local file_name=$(basename $docker_file)
+        echo "build image for $file_name:"
+        if [ ${file_name} == "Dockerfile" ];then
+            build_image ${docker_file} ${IMAGE} ${ARCH} ${TAG}
+        elif [ ${file_name} == "Dockerfile-controller" ];then
+            build_image ${docker_file} "volcanosh/vc-controller-manager" ${ARCH} ${TAG}
+        elif [ ${file_name} == "Dockerfile-scheduler" ];then
+            build_image ${docker_file} "volcanosh/vc-scheduler" ${ARCH} ${TAG}
+        fi
+    done
+}
+
+function do_install()
+{
+    export DOCKER_CLI_EXPERIMENTAL=enabled
+    if [ ! -d ${DEPLOY_PATH} ];then
+        mkdir -p  ${DEPLOY_PATH}
+    fi
+    cp -rf ${APP_PATH}/* ${DEPLOY_PATH}/
+    sed -i "s#image: #image: ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/#g" ${DEPLOY_PATH}/${YML_FILE}
+    sed -i "s#imagePullPolicy: Never#imagePullPolicy: IfNotPresent#g" ${DEPLOY_PATH}/${YML_FILE}
+    build_images
+    if [ ${DEBUG} == "y" ];then
+        echo "sed -i \"s#image: #image: ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/#g\" ${DEPLOY_PATH}/${YML_FILE}"
+        echo "kubectl apply -f ${DEPLOY_PATH}/${YML_FILE}"
+    fi
+    if [ ${DRYRUN} == "y" ];then
+        return
+    fi
+    kubectl apply -f ${DEPLOY_PATH}/${YML_FILE}
+}
+
+function unarchive_app()
+{
+    local base_dir=$(dirname $APP_PATH)
+    local tmp=${APP_PATH%.zip}
+    local dir_name=${tmp##*/}
+    echo "unarchive to ${base_dir}/${dir_name}"
+    unzip ${APP_PATH} -d ${base_dir}/${dir_name}
+    APP_PATH=$base_dir/$dir_name
+}
+
+function pre_check()
+{
+    local have_docker=$(command -v docker | wc -l)
+    if [ ${have_docker} -eq 0 ]; then
+        echo "can not find docker"
+        exit 1
+    fi
+    local have_kubectl=$(command -v kubectl | wc -l)
+    if [ ${have_kubectl} -eq 0 ]; then
+        echo "can not find kubectl"
+        exit 1
+    fi
+    if [ -z ${APP_PATH} ];then
+        echo "no app apth set"
+        exit 1
+    fi
+    if [ -z ${HARBOR_HOST} ];then
+        echo "no harbor set, please set harbor by --harbor"
+        exit 1
+    fi
+}
+
+function detector_harbor_args()
+{
+    if [ ! -d /etc/docker/certs.d ];then
+        if [ $DEBUG == "y" ];then
+            echo "DEBUG: auto detect harbor no /etc/docker/cert.d"
+        fi
+        return
+    fi
+    local certd_path=$(find /etc/docker/certs.d -mindepth 1 -type d | head -n1)
+    echo "certd_path=[$certd_path]"
+    if [ -z $certd_path ];then
+        if [ $DEBUG == "y" ];then
+            echo "DEBUG: auto detect harbor no harbor path found"
+        fi
+        return
+    fi
+    local host_and_port=$(basename $certd_path)
+    HARBOR_HOST=$(echo $host_and_port | cut -d":" -f1)
+    local port=$(echo $host_and_port | cut -d":" -f2)
+    HARBOR_PORT=":${port}"
+}
+
+function main()
+{
+    detector_harbor_args
+    parse_args $*
+    pre_check
+    if [ -f ${APP_PATH} ];then
+        unarchive_app
+    fi
+    get_app_info
+    DEPLOY_PATH=~/deploy_yamls/${APP}
+    do_install
+}
+
+main $*
