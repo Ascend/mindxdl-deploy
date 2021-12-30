@@ -55,4 +55,3 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
   when: (images_dir == "mindx-images" and stat_mindx_images.stat.exists)
-  register: insert_result
