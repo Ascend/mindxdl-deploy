@@ -289,7 +289,7 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 
 ### 步骤7：安装MindX DL组件
 
-1. 在~/resource/目录下创建mindxdl目录
+1. 在~/resources/目录下创建mindxdl目录
    
    ```bash
       mkdir -p ~/resources/mindxdl
@@ -308,12 +308,14 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 3. 执行安装命令
    
    ```bash
-   ansible-playbooks -i inventory_file playbooks 08.mindxdl.yaml
+   ansible-playbooks -i inventory_file playbooks 10.mindxdl.yaml
    ```
 
 注：
 
 1. MindX DL相关组件安装时依赖harbor。安装过程会制作镜像并上传到harbor中
+
+2. 安装MindX DL组件当前仅支持在k8s为master单机节点的情况
 
 # 详细说明
 
@@ -330,7 +332,9 @@ playbooks/
 ├── 05.mysql.yaml
 ├── 06.nfs.yaml
 ├── 07.prometheus.yaml
-├── 08.mindxdl.yaml
+├── 08.kubeedge.yaml
+├── 09.pre-image.yaml
+├── 10.mindxdl.yaml
 ```
 
 例如:

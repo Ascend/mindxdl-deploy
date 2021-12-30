@@ -1,5 +1,0 @@
----
-# master init k8s
-- hosts: master
-  roles:
-    - role: mindx.dl.install

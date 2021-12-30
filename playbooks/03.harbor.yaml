@@ -25,5 +25,5 @@
           - mysql
           - openresty
           - calico
-        images_dir: images
         project_public: "true"
+        images_dir: images

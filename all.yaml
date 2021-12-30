@@ -57,7 +57,6 @@
     - role: mindx.harbor.push
       vars:
         project_list:
-          - mindx
           - k8s.gcr.io
           - dockerhub
           - prom
@@ -65,9 +64,8 @@
           - mysql
           - openresty
           - calico
-          - volcanosh
-        images_dir: images
         project_public: "true"
+        images_dir: images
 
 # master init k8s
 - hosts: master
@@ -115,5 +113,5 @@
       vars:
         project_list:
           - mindx
-        images_dir: mindx-images
         project_public: "false"
+        images_dir: mindx-images
