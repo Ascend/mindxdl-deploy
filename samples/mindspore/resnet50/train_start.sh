@@ -85,9 +85,17 @@ if [[ "$server_count" == "1" ]]; then
     server_id=0
     if [ ${device_count} -eq 1 ]; then
         bash main.sh ${dataset_path} ${config_yaml_path}
+        if [[ $? -eq 1 ]]; then
+            echo "running job failed." | tee log
+            exit 1
+        fi
     fi
     if [ ${device_count} -gt 1 ]; then
         bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
+        if [[ $? -eq 1 ]]; then
+            echo "running job failed." | tee log
+            exit 1
+        fi
     fi
 
 # 分布式训练场景
@@ -99,4 +107,8 @@ else
     fi
     echo "server id is: "${server_id}
     bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
+    if [[ $? -eq 1 ]]; then
+        echo "running job failed." | tee log
+        exit 1
+    fi
 fi

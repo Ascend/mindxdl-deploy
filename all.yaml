@@ -65,6 +65,7 @@
           - mysql
           - openresty
           - calico
+          - volcanosh
         images_dir: images
         project_public: "true"
 

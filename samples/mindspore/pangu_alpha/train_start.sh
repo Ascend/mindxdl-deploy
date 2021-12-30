@@ -97,9 +97,14 @@ if [[ "$server_count" == "1" ]]; then
     server_id=0
     if [ ${device_count} -lt 8 ]; then
         echo "Less than 8 card training is not supported for pangu alpha model." | tee log
+        exit 1
     fi
     if [ ${device_count} -eq 8 ]; then
         bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset}
+        if [[ $? -eq 1 ]]; then
+            echo "running job failed." | tee log
+            exit 1
+        fi
     fi
 
 # 分布式训练场景
@@ -111,4 +116,8 @@ else
     fi
     echo "server id is: "${server_id}
     bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset}
+    if [[ $? -eq 1 ]]; then
+        echo "running job failed." | tee log
+        exit 1
+    fi
 fi
