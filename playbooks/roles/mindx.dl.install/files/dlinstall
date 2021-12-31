@@ -86,7 +86,7 @@ function get_app_info()
         elif [[ ${accelerator} =~ "Device d500" ]];then
             local acc_flag="710"
         elif [[ ${accelerator} =~ "Device d801" ]];then
-            local acc_flag=""
+            local acc_flag="device-plugin"
         else
             echo "FATAL: can not find npu card, device-plugin install failed"
             exit 1
@@ -217,9 +217,8 @@ function do_install()
 {
     export DOCKER_CLI_EXPERIMENTAL=enabled
     unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
-    if [ ! -d ${DEPLOY_PATH} ];then
-        mkdir -p  ${DEPLOY_PATH}
-    fi
+    [[ -d ${DEPLOY_PATH} ]] && rm -rf ${DEPLOY_PATH}
+    mkdir -p -m 750 ${DEPLOY_PATH}
     cp -rf ${APP_PATH}/* ${DEPLOY_PATH}/
     sed -i "s#image: #image: ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/#g" ${DEPLOY_PATH}/${YML_FILE}
     sed -i "s#imagePullPolicy: Never#imagePullPolicy: IfNotPresent#g" ${DEPLOY_PATH}/${YML_FILE}
@@ -231,6 +230,7 @@ function do_install()
     if [ ${DRYRUN} == "y" ];then
         return
     fi
+
     kubectl apply -f ${DEPLOY_PATH}/${YML_FILE}
 }
 
@@ -267,31 +267,8 @@ function pre_check()
     fi
 }
 
-function detector_harbor_args()
-{
-    if [ ! -d /etc/docker/certs.d ];then
-        if [ $DEBUG == "y" ];then
-            echo "DEBUG: auto detect harbor no /etc/docker/certs.d"
-        fi
-        return
-    fi
-    local certd_path=$(find /etc/docker/certs.d -mindepth 1 -type d | head -n1)
-    echo "certd_path=[$certd_path]"
-    if [ -z $certd_path ];then
-        if [ $DEBUG == "y" ];then
-            echo "DEBUG: auto detect harbor no harbor path found"
-        fi
-        return
-    fi
-    local host_and_port=$(basename $certd_path)
-    HARBOR_HOST=$(echo $host_and_port | cut -d":" -f1)
-    local port=$(echo $host_and_port | cut -d":" -f2)
-    HARBOR_PORT=":${port}"
-}
-
 function main()
 {
-    # detector_harbor_args
     parse_args $*
     pre_check
     if [ -f ${APP_PATH} ];then

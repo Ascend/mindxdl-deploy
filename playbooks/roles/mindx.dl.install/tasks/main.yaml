@@ -2,6 +2,23 @@
   debug:
     msg: "**********start install MindX DL********************"
 
+- name: create image-pull-secret
+  shell: |
+    kubectl delete secret --namespace={{ item }} image-pull-secret
+    kubectl create secret docker-registry image-pull-secret \
+    --namespace={{ item }} \
+    --docker-server={{ HARBOR_IP }}:{{ HARBOR_HTTPS_PORT }} --docker-username=admin --docker-password={{ HARBOR_PASSWORD }}
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  loop:
+    - default
+    - kube-system
+    - mindx-dl
+    - volcano-system
+
 - name: copy dlinstall script
   copy:
     src: "{{role_path}}/files/dlinstall"

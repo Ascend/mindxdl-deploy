@@ -287,6 +287,8 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 
 2. k8s节点不可重复初始化或加入，使用本工具前，请先执行`kubeadm reset`清除节点上已有的k8s配置
 
+3. 如果docker.service配置了代理，则可能无法访问harbor。请在`/etc/systemd/system/docker.service.d/proxy.conf`中NO_PROXY添加harbor host的ip，然后执行`systemctl daemon-reload && systemctl restart docker`生效
+
 ### 步骤7：安装MindX DL组件
 
 1. 在~/resources/目录下创建mindxdl目录
