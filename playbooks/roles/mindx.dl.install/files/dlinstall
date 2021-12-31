@@ -79,7 +79,22 @@ function parse_args()
 
 function get_app_info()
 {
-    YML_PATH=$(find ${APP_PATH} -maxdepth 1 -name '*-v*.yaml')
+    if [[ ${APP_PATH} =~ "device-plugin" ]];then
+        local accelerator=$(lspci | grep "Processing accelerators")
+        if [[ ${accelerator} =~ "Device d100" ]];then
+            local acc_flag="310"
+        elif [[ ${accelerator} =~ "Device d500" ]];then
+            local acc_flag="710"
+        elif [[ ${accelerator} =~ "Device d801" ]];then
+            local acc_flag=""
+        else
+            echo "FATAL: can not find npu card, device-plugin install failed"
+            exit 1
+        fi
+        YML_PATH=$(find ${APP_PATH} -maxdepth 1 -name '*-v*.yaml' | grep "${acc_flag}-volcano")
+    else
+        YML_PATH=$(find ${APP_PATH} -maxdepth 1 -name '*-v*.yaml')
+    fi
     if [ -z ${YML_PATH} ];then
         YML_PATH=$(find ${APP_PATH} -maxdepth 1 -name '*-v*.yml')
     fi
@@ -151,6 +166,10 @@ function build_image()
 
     cd ${DEPLOY_PATH}
     docker build . -f ${docker_file} -t ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}
+    if [ $? != 0 ];then
+        echo "docker build failed"
+        exit 1
+    fi
     docker push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}
     if [ $? != 0 ];then
         echo "push to harbor failed"
@@ -197,6 +216,7 @@ function build_images()
 function do_install()
 {
     export DOCKER_CLI_EXPERIMENTAL=enabled
+    unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
     if [ ! -d ${DEPLOY_PATH} ];then
         mkdir -p  ${DEPLOY_PATH}
     fi
@@ -220,6 +240,7 @@ function unarchive_app()
     local tmp=${APP_PATH%.zip}
     local dir_name=${tmp##*/}
     echo "unarchive to ${base_dir}/${dir_name}"
+    rm -rf ${base_dir}/${dir_name}
     unzip ${APP_PATH} -d ${base_dir}/${dir_name}
     APP_PATH=$base_dir/$dir_name
 }
@@ -250,7 +271,7 @@ function detector_harbor_args()
 {
     if [ ! -d /etc/docker/certs.d ];then
         if [ $DEBUG == "y" ];then
-            echo "DEBUG: auto detect harbor no /etc/docker/cert.d"
+            echo "DEBUG: auto detect harbor no /etc/docker/certs.d"
         fi
         return
     fi
@@ -270,7 +291,7 @@ function detector_harbor_args()
 
 function main()
 {
-    detector_harbor_args
+    # detector_harbor_args
     parse_args $*
     pre_check
     if [ -f ${APP_PATH} ];then

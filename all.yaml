@@ -29,7 +29,6 @@
 - hosts:
     - master
     - worker
-    - harbor
   gather_facts: False
   roles:
     - role: mindx.basic
@@ -42,6 +41,7 @@
     - harbor
   gather_facts: False
   roles:
+    - role: mindx.docker
     - role: mindx.harbor.install
 
 - hosts:
@@ -55,6 +55,17 @@
   gather_facts: False
   roles:
     - role: mindx.harbor.push
+      vars:
+        project_list:
+          - k8s.gcr.io
+          - dockerhub
+          - prom
+          - grafana
+          - mysql
+          - openresty
+          - calico
+        project_public: "true"
+        images_dir: images
 
 # master init k8s
 - hosts: master
@@ -93,3 +104,14 @@
       vars:
         capacity: 20Gi
         data_path: "{{ MYSQL_DATAPATH }}"
+
+# push pre-images to harbor
+- hosts: master
+  gather_facts: False
+  roles:
+    - role: mindx.harbor.push
+      vars:
+        project_list:
+          - mindx
+        project_public: "false"
+        images_dir: mindx-images
