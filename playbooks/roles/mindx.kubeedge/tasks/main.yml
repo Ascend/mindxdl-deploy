@@ -2,6 +2,10 @@
   debug:
     msg: "******************************start install kubeedge******************************"
 
+- name: set MASTER_IP
+  set_fact:
+    MASTER_IP: "{{ hostvars[groups['master'][0]]['ansible_default_ipv4']['address'] }}"
+
 - name: copy cloudcore
   copy:
    src: "{{resource_dir}}/linux_{{ansible_architecture}}/{{ item }}"
@@ -25,8 +29,6 @@
     mode: 0750
   with_items:
     - /etc/kubeedge/config
-    - /etc/kubeedge/ca
-    - /etc/kubeedge/certs
     - /etc/kubeedge/yamls
 
 - name: copy k8s yamls
@@ -44,7 +46,7 @@
 
 - name: generate cert and default config
   shell: |
-    "bash {{role_path}}/files/certgen.sh genCertAndKey server"
+    bash {{role_path}}/files/certgen.sh genCertAndKey server /etc/kubeedge/certs {{ MASTER_IP }}
     /usr/local/bin/cloudcore --defaultconfig > /etc/kubeedge/config/cloudcore.yaml
 
 - name: apply kubeedge yamls

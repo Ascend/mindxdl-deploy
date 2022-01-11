@@ -39,18 +39,18 @@ GRANT ALL PRIVILEGES ON *.* TO 'access_user'@'%';
 
 USE image_manager;
 CREATE TABLE IF NOT EXISTS image_configs(
-    ID BIGINT AUTO_INCREMENT,
-    UserID BIGINT NOT NULL DEFAULT 0,
-    GroupID BIGINT NOT NULL DEFAULT 0,
-    ImageName VARCHAR(256),
-    ImageTag VARCHAR(32),
-    ImageSize DOUBLE NOT NULL,
-    HarborPath VARCHAR(256),
-    Prefabricated tinyint(1) NOT NULL DEFAULT 1,
-    ImageArch VARCHAR(32) NOT NULL DEFAULT 'noarch',
-    CreateTime DATETIME NOT NULL,
-    Status tinyint(1) NOT NULL DEFAULT 0,
-    ExtraParam VARCHAR(256) DEFAULT '',
-    PRIMARY KEY ( ID ),
-    UNIQUE (HarborPath)
+    id BIGINT AUTO_INCREMENT,
+    user_id BIGINT NOT NULL DEFAULT 0,
+    group_id BIGINT NOT NULL DEFAULT 0,
+    image_name VARCHAR(256),
+    image_tag VARCHAR(32),
+    image_size DOUBLE NOT NULL,
+    harbor_path VARCHAR(256),
+    prefabricated tinyint(1) NOT NULL DEFAULT 0,
+    image_arch VARCHAR(32) NOT NULL DEFAULT 'noarch',
+    status tinyint(1) NOT NULL DEFAULT 0,
+    extra_param VARCHAR(256) DEFAULT '',
+    create_time DATETIME NOT NULL,
+    PRIMARY KEY ( id ),
+    UNIQUE (harbor_path)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;

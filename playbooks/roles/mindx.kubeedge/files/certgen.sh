@@ -3,49 +3,63 @@
 set -o errexit
 
 readonly caPath=${CA_PATH:-/etc/kubeedge/ca}
-readonly caSubject=${CA_SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge/CN=kubeedge.io}
-readonly certPath=${CERT_PATH:-/etc/kubeedge/certs}
-readonly subject=${SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge/CN=kubeedge.io}
+readonly subject=${SUBJECT:-/C=CN/ST=Sichuan/L=Chengdu/O=Huawei/OU=Ascend/CN=Mindx}
 
 genCA() {
-    openssl genrsa -des3 -out ${caPath}/rootCA.key -passout pass:kubeedge.io 4096
-    openssl req -x509 -new -nodes -key ${caPath}/rootCA.key -sha256 -days 3650 \
-    -subj ${subject} -passin pass:kubeedge.io -out ${caPath}/rootCA.crt
+    openssl genrsa -out ${caPath}/rootCA.key 4096
+    openssl req -x509 -new -nodes -sha512 -days 3650 -subj ${subject} -key ${caPath}/rootCA.key -out ${caPath}/rootCA.crt
+    chmod 600 ${caPath}/rootCA.*
 }
 
 ensureCA() {
-    if [ ! -e ${caPath}/rootCA.key ] || [ ! -e ${caPath}/rootCA.crt ]; then
+    if [ ! -e ${caPath}/rootCA.crt ]; then
         genCA
     fi
 }
 
 ensureFolder() {
     if [ ! -d ${caPath} ]; then
-        mkdir -p ${caPath}
+        mkdir -p -m 700 ${caPath}
     fi
     if [ ! -d ${certPath} ]; then
-        mkdir -p ${certPath}
+        mkdir -p -m 700 ${certPath}
     fi
 }
 
 genCsr() {
     local name=$1
-    openssl genrsa -out ${certPath}/${name}.key 2048
-    openssl req -new -key ${certPath}/${name}.key -subj ${subject} -out ${certPath}/${name}.csr
+    openssl genrsa -out ${certPath}/${name}.key 4096
+    openssl req -sha512 -new -subj ${subject} -key ${certPath}/${name}.key -out ${certPath}/${name}.csr
 }
 
 genCert() {
     local name=$1
-    openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
-    -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
+    local master_ip=$2
+    cat > ${certPath}/v3.ext <<-EOF
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[alt_names]
+IP=${master_ip}
+EOF
+
+    openssl x509 -req -sha512 -days 3650 -extfile ${certPath}/v3.ext -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
+    -CAcreateserial -in ${certPath}/${name}.csr -out ${certPath}/${name}.crt
+    chmod 600 ${certPath}/${name}.* ${certPath}/v3.ext
+    chmod 600 ${caPath}/rootCA.srl
 }
 
 genCertAndKey() {
+    local name=$1
+    certPath=$2
+    local master_ip=$3
     ensureFolder
     ensureCA
-    local name=$1
     genCsr $name
-    genCert $name
+    genCert $name $master_ip
 }
 
 stream() {
@@ -107,4 +121,4 @@ $(pr -T -o 4 ${certPath}/${name}.key)
 EOF
 }
 
-$1 $2
+$1 $2 $3 $4

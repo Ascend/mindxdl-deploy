@@ -25,14 +25,23 @@
 - name: create certificate directory on controller
   local_action:
     module: file
-    path: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/"
+    path: "{{ item }}"
     state: directory
     mode: 0700
+  loop:
+    - "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/"
+    - /etc/kubeedge/ca/
 
 - name: copy harbor certs from remote to controller
   ansible.builtin.fetch:
-    src: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/ca.crt"
+    src: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/rootCA.crt"
     dest: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/"
+    flat: yes
+
+- name: copy harbor certs from remote to controller
+  ansible.builtin.fetch:
+    src: "/etc/kubeedge/ca/rootCA.crt"
+    dest: "/etc/kubeedge/ca/"
     flat: yes
 
 - name: message

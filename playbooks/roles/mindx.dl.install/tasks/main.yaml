@@ -2,6 +2,25 @@
   debug:
     msg: "**********start install MindX DL********************"
 
+- name: check namespace
+  shell: "kubectl get namespace | awk '$1 ~ /^volcano-system$/ {print $1}'"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  changed_when: false
+  register: get_namespace
+
+- name: create namespace
+  shell: "kubectl create namespace volcano-system"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when: get_namespace.stdout != "volcano-system"
+
 - name: create image-pull-secret
   shell: |
     kubectl delete secret --namespace={{ item }} image-pull-secret
@@ -26,7 +45,7 @@
     mode: 0700
 
 - name: install MinX DL
-  shell: "/usr/bin/dlinstall --harbor {{ HARBOR_IP }} --harbor-port {{ HARBOR_HTTPS_PORT }} {{ item }}"
+  shell: "/usr/bin/dlinstall --harbor {{ HARBOR_IP }} --harbor-port {{ HARBOR_HTTPS_PORT }} --nfs {{ NFS_IP }} {{ item }}"
   ignore_errors: true
   when: "ansible_architecture in item"
   with_fileglob:
