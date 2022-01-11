@@ -37,19 +37,17 @@
     dest: "{{ HARBOR_PATH }}/harbor/harbor.yml"
     mode: 0640
 
-- name: create https_config.sh
+- name: create certgen_harbor.sh
   template:
-    src: https_config.sh
-    dest: "{{ HARBOR_PATH }}/https_config.sh"
+    src: certgen_harbor.sh
+    dest: "{{ HARBOR_PATH }}/certgen_harbor.sh"
     mode: 0640
 
-- name: execute https_config.sh
-  shell : "bash {{ HARBOR_PATH }}/https_config.sh"
+- name: execute certgen_harbor.sh
+  shell : "bash {{ HARBOR_PATH }}/certgen_harbor.sh genCertAndKey harbor /data/cert"
 
 - name: execute harbor install.sh
-  shell: bash install.sh
-  args:
-    chdir: "{{ HARBOR_PATH }}/harbor"
+  shell: bash {{ HARBOR_PATH }}/harbor/install.sh
 
 - name: set harbor service
   template:

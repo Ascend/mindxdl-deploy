@@ -16,7 +16,7 @@
 
 - name: copy harbor certs
   copy:
-    src: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/ca.crt"
+    src: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/rootCA.crt"
     dest: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/"
     mode: 0600
 

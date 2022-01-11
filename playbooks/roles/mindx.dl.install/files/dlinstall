@@ -7,6 +7,7 @@ TAG=""
 ARCH=""
 HARBOR_HOST=""
 HARBOR_PORT=""
+NFS_HOST=""
 YML_PATH=""
 YML_FILE=""
 YML_DIR=""
@@ -22,11 +23,12 @@ function print_usage()
     echo "$0 [options] file"
     echo "$0 [options] directory"
     echo "options:"
-    echo "    --help   print this message"
-    echo "    --debug  enable debug"
-    echo "    --dryrun not running, just test process"
-    echo "    --harbor set harbor ip or domain"
-    echo "    --harbor-port set harbor port default 443"
+    echo "    --help         print this message"
+    echo "    --debug        enable debug"
+    echo "    --dryrun       not running, just test process"
+    echo "    --harbor       set harbor ip or domain"
+    echo "    --harbor-port  set harbor port, default 443"
+    echo "    --nfs          set nfs ip"
 }
 
 function parse_args()
@@ -59,6 +61,11 @@ function parse_args()
             shift
             shift
             ;;
+        --nfs)
+            NFS_HOST=$2
+            shift
+            shift
+            ;;
         *)
             if [ "x$1" != "x" ]; then
                 APP_PATH=$1
@@ -74,6 +81,7 @@ function parse_args()
         echo "DEBUG: APP_PATH=$APP_PATH"
         echo "DEBUG: HARBOR_HOST=$HARBOR_HOST"
         echo "DEBUG: HARBOR_PORT=$HARBOR_PORT"
+        echo "DEBUG: NFS_HOST=$NFS_HOST"
     fi
 }
 
@@ -151,9 +159,14 @@ function build_image()
     local arch=$3
     local tag=$4
     local build_dir=$(dirname $docker_file)
+    local image_manager_arg=""
+
+    if [ ${name} == "image-manager" ];then
+        image_manager_arg="--build-arg DOCKER_API_VERSION=${DOCKER_API_VERSION}"
+    fi
 
     if [ ${DEBUG} == "y" ];then
-        echo "DEBUG: docker build . -f ${docker_file} -t ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}"
+        echo "DEBUG: docker build . -f ${docker_file} -t ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} ${image_manager_arg}"
         echo "DEBUG: docker push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}"
         echo "DEBUG: docker manifest create ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} -a"
         echo "DEBUG: docker manifest annotate ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} --os linux --arch ${arch}"
@@ -165,7 +178,7 @@ function build_image()
     fi
 
     cd ${DEPLOY_PATH}
-    docker build . -f ${docker_file} -t ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}
+    docker build . -f ${docker_file} -t ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} ${image_manager_arg}
     if [ $? != 0 ];then
         echo "docker build failed"
         exit 1
@@ -222,6 +235,7 @@ function do_install()
     cp -rf ${APP_PATH}/* ${DEPLOY_PATH}/
     sed -i "s#image: #image: ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/#g" ${DEPLOY_PATH}/${YML_FILE}
     sed -i "s#imagePullPolicy: Never#imagePullPolicy: IfNotPresent#g" ${DEPLOY_PATH}/${YML_FILE}
+    sed -i "s#server: 127.0.0.1#server: ${NFS_HOST}#g" ${DEPLOY_PATH}/${YML_FILE}
     build_images
     if [ ${DEBUG} == "y" ];then
         echo "sed -i \"s#image: #image: ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/#g\" ${DEPLOY_PATH}/${YML_FILE}"
@@ -263,6 +277,10 @@ function pre_check()
     fi
     if [ -z ${HARBOR_HOST} ];then
         echo "no harbor set, please set harbor by --harbor"
+        exit 1
+    fi
+    if [ -z ${NFS_HOST} ];then
+        echo "no nfs set, please set nfs by --nfs"
         exit 1
     fi
 }

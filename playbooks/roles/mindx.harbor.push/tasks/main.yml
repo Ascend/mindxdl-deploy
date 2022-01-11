@@ -5,20 +5,6 @@
 - include: create_project.yml PROJECT_NAME="{{item}}"
   loop: "{{ project_list }}"
 
-- name: stat mindx-images dir
-  stat:
-    path: "{{ resource_dir }}/{{ images_dir }}"
-  register: stat_mindx_images
-  when: images_dir == "mindx-images"
-
-- name: message
-  debug:
-    msg: "can not find {{ resource_dir }}/{{ images_dir }}, pre-images push skip"
-  when:
-    - images_dir == "mindx-images"
-    - not stat_mindx_images.stat.exists
-
 - include: push.yml image="{{item}}"
   with_fileglob:
     - "{{ resource_dir }}/{{ images_dir }}/*.tar.gz"
-  when: images_dir != "mindx-images" or (images_dir == "mindx-images" and stat_mindx_images.stat.exists)
