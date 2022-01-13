@@ -170,7 +170,7 @@ function build_image()
         echo "DEBUG: docker push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}"
         echo "DEBUG: docker manifest create ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} -a"
         echo "DEBUG: docker manifest annotate ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} --os linux --arch ${arch}"
-        echo "DEBUG: docker manifest push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag}"
+        echo "DEBUG: docker manifest push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} -p"
     fi
 
     if [ ${DRYRUN} == "y" ];then
@@ -198,7 +198,7 @@ function build_image()
         echo "manifest annotate failed"
         exit 1
     fi
-    docker manifest push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag}
+    docker manifest push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} -p
     if [ $? != 0 ];then
         echo "push manifest failed"
         exit 1
@@ -234,7 +234,8 @@ function do_install()
     mkdir -p -m 750 ${DEPLOY_PATH}
     cp -rf ${APP_PATH}/* ${DEPLOY_PATH}/
     sed -i "s#image: #image: ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/#g" ${DEPLOY_PATH}/${YML_FILE}
-    sed -i "s#imagePullPolicy: Never#imagePullPolicy: IfNotPresent#g" ${DEPLOY_PATH}/${YML_FILE}
+    sed -i "s#imagePullPolicy: Never#imagePullPolicy: Always#g" ${DEPLOY_PATH}/${YML_FILE}
+    sed -i "s#imagePullPolicy: IfNotPresent#imagePullPolicy: Always#g" ${DEPLOY_PATH}/${YML_FILE}
     sed -i "s#server: 127.0.0.1#server: ${NFS_HOST}#g" ${DEPLOY_PATH}/${YML_FILE}
     build_images
     if [ ${DEBUG} == "y" ];then
