@@ -168,6 +168,7 @@ if [[ $server_count -ge 1 ]]; then
     ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --addr=$MASTER_ADDR --world-size=$WORLD_SIZE --rank=$RANK| tee $log_url
     if [[ $@ =~ need_freeze ]]; then
       ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=$MASTER_ADDR --world-size=$WORLD_SIZE --rank=$RANK| tee $log_url
+    fi
   elif [ ${framework} == "Tensorflow" ]; then
     # CPU核心数
     core_num=`cat /proc/cpuinfo | grep "processor" | wc -l`
@@ -183,6 +184,7 @@ if [[ $server_count -ge 1 ]]; then
           taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} | tee $log_url
           if [[ $@ =~ need_freeze ]]; then
             taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee $log_url
+          fi
       else
           taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> $log_url &
       fi
@@ -196,7 +198,8 @@ if [[ $server_count -ge 1 ]]; then
       if [ $i -eq 0 ]; then
           ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} | tee $log_url
           if [[ $@ =~ need_freeze ]]; then
-            ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee $log_url
+            ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee
+          fi
       else
           ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> $log_url &
       fi
