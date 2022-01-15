@@ -198,7 +198,7 @@ if [[ $server_count -ge 1 ]]; then
       if [ $i -eq 0 ]; then
           ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} | tee $log_url
           if [[ $@ =~ need_freeze ]]; then
-            ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee
+            ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee $log_url
           fi
       else
           ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> $log_url &
