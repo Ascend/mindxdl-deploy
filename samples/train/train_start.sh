@@ -62,7 +62,7 @@ logger "local_code_dir: ${local_code_dir}"
 params="$@"
 train_param=${params%%need_freeze*}
 logger "train_params:${train_param}"
-if [[ $@ =~ need_freeze]]; then
+if [[ $@ =~ need_freeze ]]; then
     freeze_cmd=${params##*need_freeze }
     logger "freeze_cmd:${freeze_cmd}"
 fi
@@ -104,8 +104,8 @@ function get_env_for_1p_job() {
   export ASCEND_DEVICE_ID=${DEVICE_ID}
   export RANK_ID=0
   export RANK_SIZE=1
+  export DEVICE_INDEX=$RANK_ID
   export JOB_ID=123456789
-  unset RANK_TABLE_FILE
   env >env.log
 }
 
@@ -146,9 +146,9 @@ if [[ $server_count -eq 1 ]]; then
   server_id=0
   if [ "${device_count}" -eq 1 ]; then
     get_env_for_1p_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 | dls_logger "$log_url" append
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 | tee "$log_url"
     if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 | dls_logger "$log_url" append
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 | tee "$log_url"
     fi
     exit 1
   fi

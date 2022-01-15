@@ -59,7 +59,7 @@ spec:
           - "/bin/bash"
           - "-c"
           # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
-          - "cd /job/code/ResNet50_for_MindSpore_1.4_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_MindSpore_1.4_code /job/output/logs train.py --net=resnet50 --dataset=imagenet2012 --run_distribute=true --device_num=8 --dataset_path=/job/data/imagenet/train"
+          - "cd /job/code/ResNet50_for_MindSpore_1.4_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_MindSpore_1.4_code /job/output/logs train.py --net=resnet50 --dataset=imagenet2012 --run_distribute=True --device_num=8 --dataset_path=/job/data/imagenet/train"
           #args: [ "while true; do sleep 30000; done;"  ]     # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                               # The command is 'kubectl exec -it -n {namespace} {podname} bash'
           resources:
@@ -76,8 +76,6 @@ spec:
             mountPath: /job/data                      # Path of the training dataset in the container.
           - name: output
             mountPath: /job/output                    # Training output path in the container.
-          - name: slog
-            mountPath: /var/log/npu
           - name: ascend-driver
             mountPath: /usr/local/Ascend/driver
           - name: ascend-add-ons
@@ -102,9 +100,6 @@ spec:
           nfs:
             server: 127.0.0.1
             path: "/data/atlas_dls/output/"           # Configure the path for saving the configuration model, which is related to the script.
-        - name: slog
-          hostPath:
-            path: /var/log/npu                        # Configure the NPU log path and mount it to the local host.
         - name: ascend-driver
           hostPath:
             path: /usr/local/Ascend/driver
