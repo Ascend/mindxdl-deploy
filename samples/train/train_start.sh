@@ -23,7 +23,7 @@ boot_file="$3"
 shift 3
 
 function show_help() {
-  echo "Usage train_start.sh /job/code/resnet50 train.py /tmp/log/training.log"
+  echo "Usage train_start.sh /job/code/resnet50 /tmp/log/training.log train.py"
 }
 
 function param_check() {
