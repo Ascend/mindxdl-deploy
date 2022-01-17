@@ -150,7 +150,7 @@ if [[ $server_count -eq 1 ]]; then
     if [[ $@ =~ need_freeze ]]; then
       ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 | tee "$log_url"
     fi
-    exit 1
+    exit 0
   fi
 fi
 
