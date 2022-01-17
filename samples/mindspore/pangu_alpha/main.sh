@@ -39,7 +39,7 @@ if [ $# == 5 ]; then
         group_info_dir=./group_info.pb
         group_info_file_tmp=$(realpath $group_info_dir)
         export GROUP_INFO_FILE=${group_info_file_tmp}
-        echo "start training for rank $RANK_ID, device $DEVICE_ID"
+        echo "start training for rank ${RANK_ID}, device ${DEVICE_ID}"
         env > env.log
 
         if [ $i -eq 0 ]; then

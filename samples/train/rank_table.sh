@@ -28,7 +28,7 @@ function check_hccl_status()
         local status=$(get_json_value ${RANK_TABLE_FILE} status)
         if [[ "$status" != "completed" ]]; then
             echo "hccl status is not completed, wait 5s and retry." | tee -a hccl.log
-            sleep $retry_interval
+            sleep ${retry_interval}
             continue
         else
             echo 0
@@ -55,5 +55,5 @@ function get_server_id_0_ip()
 {
     local key="server_id"
     local first_server_ip=$(cat ${RANK_TABLE_FILE} |awk -F ":" '{print $29}'|awk -F "\"" '{print $2}')
-    echo $first_server_ip
+    echo ${first_server_ip}
 }

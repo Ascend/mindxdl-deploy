@@ -23,7 +23,7 @@ boot_file="$3"
 shift 3
 
 function show_help() {
-  echo "Usage train_start.sh /job/code/resnet50 train.py /tmp/log/training.log"
+  echo "Usage train_start.sh /job/code/resnet50 /tmp/log/training.log train.py"
 }
 
 function param_check() {
@@ -48,7 +48,7 @@ function param_check() {
 
 param_check
 
-boot_file_path="$app_url"
+boot_file_path=${app_url}
 local_code_dir=${boot_file_path%/*}
 
 logger "user: $(id)"
@@ -69,9 +69,6 @@ fi
 
 start_time=$(date +%Y-%m-%d-%H:%M:%S)
 logger "Training start at ${start_time}"
-
-# install dependencies
-# install_dependencies "${local_code_dir}" 2>&1 | dls_logger "$log_url"
 
 # hccl json process
 source rank_table.sh
@@ -104,7 +101,7 @@ function get_env_for_1p_job() {
   export ASCEND_DEVICE_ID=${DEVICE_ID}
   export RANK_ID=0
   export RANK_SIZE=1
-  export DEVICE_INDEX=$RANK_ID
+  export DEVICE_INDEX=${RANK_ID}
   export JOB_ID=123456789
   env >env.log
 }
@@ -134,8 +131,8 @@ function get_env_for_pytorch_multi_node_job() {
   export HCCL_IF_IP=${XDL_IP}
   first_server_ip=$(get_server_id_0_ip)
   export MASTER_ADDR=${first_server_ip}
-  export WORLD_SIZE=$server_count
-  export RANK=$server_id
+  export WORLD_SIZE=${server_count}
+  export RANK=${server_id}
   set_env
 }
 
@@ -146,11 +143,11 @@ if [[ $server_count -eq 1 ]]; then
   server_id=0
   if [ "${device_count}" -eq 1 ]; then
     get_env_for_1p_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 | tee "$log_url"
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 | tee {$log_url}
     if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 | tee "$log_url"
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 | tee {$log_url}
     fi
-    exit 1
+    exit 0
   fi
 fi
 
@@ -165,9 +162,9 @@ if [[ $server_count -ge 1 ]]; then
   logger "server id is: ""${server_id}"
   if [ ${framework} == "PyTorch" ]; then
     get_env_for_pytorch_multi_node_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --addr=$MASTER_ADDR --world-size=$WORLD_SIZE --rank=$RANK| tee $log_url
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --addr=$MASTER_ADDR --world-size=$WORLD_SIZE --rank=$RANK| tee {$log_url}
     if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=$MASTER_ADDR --world-size=$WORLD_SIZE --rank=$RANK| tee $log_url
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=$MASTER_ADDR --world-size=$WORLD_SIZE --rank=$RANK| tee {$log_url}
     fi
   elif [ ${framework} == "Tensorflow" ]; then
     # CPU核心数
@@ -177,16 +174,16 @@ if [[ $server_count -ge 1 ]]; then
     for ((i = $((device_each_server - 1)); i >= 0; i--)); do
       get_env_for_multi_card_job
       export DEVICE_INDEX=${RANK_ID}
-      logger "start training for rank $RANK_ID, device $DEVICE_ID"
+      logger "start training for rank ${RANK_ID}, device ${DEVICE_ID}"
       # 设置绑定范围，如:0-11
       core_range="$((i*${core_num}/8))-$(((i+1)*${core_num}/8-1))"
       if [ $i -eq 0 ]; then
-          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} | tee $log_url
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} | tee {$log_url}
           if [[ $@ =~ need_freeze ]]; then
-            taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee $log_url
+            taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee {$log_url}
           fi
       else
-          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> $log_url &
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> {$log_url} &
       fi
     done
   elif [ ${framework} == "Mindspore"]; then
@@ -196,12 +193,12 @@ if [[ $server_count -ge 1 ]]; then
       get_env_for_multi_card_job
       echo "start training for rank $RANK_ID, device $DEVICE_ID"
       if [ $i -eq 0 ]; then
-          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} | tee $log_url
+          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} | tee ${log_url}
           if [[ $@ =~ need_freeze ]]; then
-            ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee $log_url
+            ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee ${log_url}
           fi
       else
-          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> $log_url &
+          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> ${log_url} &
       fi
     done
   else
