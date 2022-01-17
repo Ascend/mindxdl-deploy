@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 # default start shell path
 DLS_USER_HOME_DIR="$(
   cd "$(dirname "$0")" || exit 1
@@ -49,7 +48,7 @@ function param_check() {
 
 param_check
 
-boot_file_path="$app_url/$boot_file"
+boot_file_path="$app_url"
 local_code_dir=${boot_file_path%/*}
 
 logger "user: $(id)"
@@ -60,11 +59,19 @@ logger "log_url: $log_url"
 logger "command: ${boot_file} $@"
 logger "local_code_dir: ${local_code_dir}"
 
+params="$@"
+train_param=${params%%need_freeze*}
+logger "train_params:${train_param}"
+if [[ $@ =~ need_freeze ]]; then
+    freeze_cmd=${params##*need_freeze }
+    logger "freeze_cmd:${freeze_cmd}"
+fi
+
 start_time=$(date +%Y-%m-%d-%H:%M:%S)
 logger "Training start at ${start_time}"
 
 # install dependencies
-install_dependencies "${local_code_dir}" 2>&1 | dls_logger "$log_url"
+# install_dependencies "${local_code_dir}" 2>&1 | dls_logger "$log_url"
 
 # hccl json process
 source rank_table.sh
@@ -97,8 +104,8 @@ function get_env_for_1p_job() {
   export ASCEND_DEVICE_ID=${DEVICE_ID}
   export RANK_ID=0
   export RANK_SIZE=1
+  export DEVICE_INDEX=$RANK_ID
   export JOB_ID=123456789
-  unset RANK_TABLE_FILE
   env >env.log
 }
 
@@ -139,17 +146,17 @@ if [[ $server_count -eq 1 ]]; then
   server_id=0
   if [ "${device_count}" -eq 1 ]; then
     get_env_for_1p_job
-    ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" 2>&1 | dls_logger "$log_url" append
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 | tee "$log_url"
+    if [[ $@ =~ need_freeze ]]; then
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 | tee "$log_url"
+    fi
+    exit 1
   fi
 fi
 
 # 多节点场景
-if [[ $server_count -gt 1 ]]; then
+if [[ $server_count -ge 1 ]]; then
   server_id=$(get_server_id)
-  if [ $? -eq 1 ]; then
-    echo "get server id failed."
-    exit 1
-  fi
   if [ -z $framework ]; then
     echo "framework is null."
     exit 1
@@ -158,7 +165,10 @@ if [[ $server_count -gt 1 ]]; then
   logger "server id is: ""${server_id}"
   if [ ${framework} == "PyTorch" ]; then
     get_env_for_pytorch_multi_node_job
-    ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" --addr=$MASTER_ADDR --world-size=$WORLD_SIZE --rank=$RANK| tee $log_url
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --addr=$MASTER_ADDR --world-size=$WORLD_SIZE --rank=$RANK| tee $log_url
+    if [[ $@ =~ need_freeze ]]; then
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=$MASTER_ADDR --world-size=$WORLD_SIZE --rank=$RANK| tee $log_url
+    fi
   elif [ ${framework} == "Tensorflow" ]; then
     # CPU核心数
     core_num=`cat /proc/cpuinfo | grep "processor" | wc -l`
@@ -171,22 +181,30 @@ if [[ $server_count -gt 1 ]]; then
       # 设置绑定范围，如:0-11
       core_range="$((i*${core_num}/8))-$(((i+1)*${core_num}/8-1))"
       if [ $i -eq 0 ]; then
-          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" | tee $log_url
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} | tee $log_url
+          if [[ $@ =~ need_freeze ]]; then
+            taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee $log_url
+          fi
       else
-          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" &>> $log_url &
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> $log_url &
       fi
     done
-  else
+  elif [ ${framework} == "Mindspore"]; then
     device_each_server=$((device_count / server_count))
     rank_start=$((device_each_server * server_id))
     for ((i = $((device_each_server - 1)); i >= 0; i--)); do
       get_env_for_multi_card_job
       echo "start training for rank $RANK_ID, device $DEVICE_ID"
       if [ $i -eq 0 ]; then
-          ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" | tee $log_url
+          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} | tee $log_url
+          if [[ $@ =~ need_freeze ]]; then
+            ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee $log_url
+          fi
       else
-          ${DLS_PROGRAM_EXECUTOR} "${boot_file_path}" "$@" &>> $log_url &
+          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> $log_url &
       fi
     done
+  else
+    echo "framework error"
   fi
 fi
