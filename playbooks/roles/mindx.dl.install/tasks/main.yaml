@@ -3,17 +3,12 @@
     msg: "**********start install MindX DL********************"
 
 - name: check namespace
-<<<<<<< HEAD
   shell: "kubectl get namespace | awk '$1 ~ /^{{ item }}$/ {print $1}'"
-=======
-  shell: "kubectl get namespace | awk '$1 ~ /^volcano-system$/ {print $1}'"
->>>>>>> 58606dbc457063edca92e364572f9246de4cd25f
   environment:
     http_proxy: ""
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
-<<<<<<< HEAD
   register: namespace_result
   loop:
     - volcano-system
@@ -21,24 +16,13 @@
 
 - name: create namespace
   shell: "kubectl create namespace {{ item.item }}"
-=======
-  changed_when: false
-  register: get_namespace
-
-- name: create namespace
-  shell: "kubectl create namespace volcano-system"
->>>>>>> 58606dbc457063edca92e364572f9246de4cd25f
   environment:
     http_proxy: ""
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
-<<<<<<< HEAD
   when: item.stdout == ""
   loop: "{{ namespace_result.results }}"
-=======
-  when: get_namespace.stdout != "volcano-system"
->>>>>>> 58606dbc457063edca92e364572f9246de4cd25f
 
 - name: create image-pull-secret
   shell: |
