@@ -1,5 +1,4 @@
 # defaults file for mindx.k8s.prom
-state: 'present'
 PROM_YAML_DIR: "~/deploy_yamls/prometheus"
 HARBOR_URL: "{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/"
 REPO_URL: "{{ HARBOR_URL if HARBOR_IP != '' else '' }}"

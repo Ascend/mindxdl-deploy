@@ -59,9 +59,9 @@ resources.tar.gz
 按如下步骤执行即可：
 
 ```bash
-root@master:~/mindxdl-deployer#bash install_ansible.sh
+root@master:~/mindxdl-deployer# bash install_ansible.sh
 
-root@master:~/mindxdl-deployer#ansible --version
+root@master:~/mindxdl-deployer# ansible --version
 config file = None
 configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
 ansible python module location = /usr/local/lib/python3.6/dist-packages/ansible
@@ -121,8 +121,6 @@ worker3_ipaddress
 
 inventory文件配置详细可参考[[How to build your inventory &mdash; Ansible Documentation](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)]
 
-如果只有1个节点，可不配置worker信息
-
 ### 步骤3：配置安装信息
 
 在group_vars目录中的all.yaml文件
@@ -161,12 +159,12 @@ MINDX_GROUP_ID: 9000
 
 | 配置项               | 说明                                   |
 | ----------------- | ------------------------------------ |
-| HARBOR_HOST_IP    | 配置harbor的监听ip，多网卡场景下**必须配置**         |
+| HARBOR_HOST_IP    | 配置harbor的监听ip，多网卡场景下**建议配置**         |
 | HARBOR_HTTPS_PORT | harbor的https监听端口，默认为7443             |
 | HARBOR_PATH       | Harbor的安装路径                          |
 | HARBOR_PASSWORD   | harbor的登录密码，不可为空，**必须配置**。安装完成后应立即删除 |
 | K8S_NAMESPACE     | mindx dl组件默认k8s命名空间                  |
-| K8S_API_SERVER_IP | K8s的api server监听地址，多网卡场景下**必须配置**    |
+| K8S_API_SERVER_IP | K8s的api server监听地址，多网卡场景下**建议配置**    |
 | NFS_PATH          | nfs服务器的共享路径，可配置多个路径                  |
 | MYSQL_DATAPATH    | mysql的安装路径                           |
 | MYSQL_PASSWORD    | mysql的登录密码，不可为空，**必须配置**。安装完成后应立即删除  |
@@ -177,10 +175,13 @@ MINDX_GROUP_ID: 9000
 
 ### 步骤4：检查集群状态
 
+如果inventory_file内配置了非localhost的远程ip，根据ansible官方建议，请用户自行使用SSH密钥的方式连接到远程机器，可参考[[connection_details; Ansible Documentation](https://docs.ansible.com/ansible/latest/user_guide/connection_details.html#setting-up-ssh-keys)]
+
 在目录中执行：
 
 ```bash
-ansible -i inventory_file all -m ping
+root@master:~/mindxdl-deployer# ansible -i inventory_file all -m ping
+
 localhost | SUCCESS => {
     "ansible_facts": {
         "discovered_interpreter_python": "/usr/bin/python3"
@@ -199,48 +200,12 @@ worker1_ipaddres | SUCCESS => {
 
 当所有设备都能ping通，则表示inventory中所有设备连通性正常。否则，请检查设备的ssh连接和inventory文件配置是否正确
 
-### 步骤4：安装配置
-
-本工具中提供了all.yaml文件用于自动安装所有组件。可更加需要自行调整安装配置
-
-如果master存在多个网卡，请打开all.yaml找到如下部分：
-
-```yaml
-- hosts: master
-  roles:
-    - role: mindx.k8s.master
-    - role: mindx.k8s.label
-      vars:
-        label_key: masterselector
-        label_value: dls-master-node
-    - role: mindx.k8s.prom
-    - role: mindx.kubeedge
-```
-
-在mindx.k8s.master角色下增加apiserver_advertise_address参数，用于指定k8s apiserver绑定的ip地址
-
-```yaml
-- hosts: master
-  roles:
-    - role: mindx.k8s.master
-      vars:
-        apiserver_advertise_address: ipaddress
-    - role: mindx.k8s.label
-      vars:
-        label_key: masterselector
-        label_value: dls-master-node
-    - role: mindx.k8s.prom
-    - role: mindx.kubeedge
-```
-
-master节点中将自动安装Prometheus和kubeedge中的edgecore。如不需要，将对应角色删除即可
-
 ### 步骤5：执行安装
 
 使用ansible-playbook执行安装：
 
 ```bash
-root@master:~/mindxdl-deployer#ansible-playbook -i inventory_file all.yaml
+root@master:~/mindxdl-deployer# ansible-playbook -i inventory_file all.yaml
 ```
 
 如果inventory_file内配置了非localhost的远程ip，本工具会将本机的~/resources目录分发到远程机器上。如果有重复执行以上命令的需求，可在以上命令后加`-e resources_no_copy=true`参数，避免重复执行耗时的~/resources目录打包、分发操作。
@@ -281,11 +246,11 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 
 注：
 
-1. 手动执行kubectl命令时，需取消http(s)_proxy网络代理配置
+1. 手动执行kubectl命令时，需取消http(s)_proxy网络代理配置，否则会一直卡死
 
 2. k8s节点不可重复初始化或加入，使用本工具前，请先执行`kubeadm reset`清除节点上已有的k8s配置
 
-3. 如果docker.service配置了代理，则可能无法访问harbor。请在`/etc/systemd/system/docker.service.d/proxy.conf`中NO_PROXY添加harbor host的ip，然后执行`systemctl daemon-reload && systemctl restart docker`生效
+3. 如果docker.service配置了代理，则可能无法访问harbor。使用本工具前，请先在`/etc/systemd/system/docker.service.d/proxy.conf`中NO_PROXY添加harbor host的ip，然后执行`systemctl daemon-reload && systemctl restart docker`生效
 
 ### 步骤7：安装MindX DL组件
 
@@ -306,9 +271,9 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
    ```
 
 3. 执行安装命令
-   
+
    ```bash
-   ansible-playbook -i inventory_file playbooks/10.mindxdl.yaml
+   root@master:~/mindxdl-deployer# ansible-playbook -i inventory_file playbooks/10.mindxdl.yaml
    ```
 
 注：

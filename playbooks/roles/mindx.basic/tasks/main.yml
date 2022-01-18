@@ -38,6 +38,7 @@
     - /var/log/mindx-dl/cluster-manager
     - /var/log/mindx-dl/data-manager
     - /var/log/mindx-dl/dataset-manager
+    - /var/log/mindx-dl/label-manager
     - /var/log/mindx-dl/devicePlugin
     - /var/log/mindx-dl/edge-manager
     - /var/log/mindx-dl/hccl-controller

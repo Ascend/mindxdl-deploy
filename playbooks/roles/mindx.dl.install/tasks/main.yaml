@@ -3,23 +3,26 @@
     msg: "**********start install MindX DL********************"
 
 - name: check namespace
-  shell: "kubectl get namespace | awk '$1 ~ /^volcano-system$/ {print $1}'"
+  shell: "kubectl get namespace | awk '$1 ~ /^{{ item }}$/ {print $1}'"
   environment:
     http_proxy: ""
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
-  changed_when: false
-  register: get_namespace
+  register: namespace_result
+  loop:
+    - volcano-system
+    - edge-app
 
 - name: create namespace
-  shell: "kubectl create namespace volcano-system"
+  shell: "kubectl create namespace {{ item.item }}"
   environment:
     http_proxy: ""
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
-  when: get_namespace.stdout != "volcano-system"
+  when: item.stdout == ""
+  loop: "{{ namespace_result.results }}"
 
 - name: create image-pull-secret
   shell: |
