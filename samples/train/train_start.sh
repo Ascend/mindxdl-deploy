@@ -186,7 +186,7 @@ if [[ "${server_count}" -ge 1 ]]; then
           taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> ${log_url} &
       fi
     done
-  elif [ "${framework}" == "Mindspore" ]; then
+  elif [ "${framework}" == "MindSpore" ]; then
     device_each_server=$((device_count / server_count))
     rank_start=$((device_each_server * server_id))
     for ((i = $((device_each_server - 1)); i >= 0; i--)); do
