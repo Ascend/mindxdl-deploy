@@ -23,34 +23,43 @@
     mode: 0700
   ignore_errors: true
 
-- name: create directories
+- name: create log directories for "{{DL_USR}}"
   file:
     path: "{{ item }}"
     state: directory
     owner: "{{DL_USR}}"
     group: "{{DL_GRP}}"
     mode: 0750
-  with_items:
+  loop:
     - /var/log/mindx-dl
     - /var/log/mindx-dl/apigw
     - /var/log/mindx-dl/access-manager
-    - /var/log/mindx-dl/cert-importer
     - /var/log/mindx-dl/cluster-manager
     - /var/log/mindx-dl/data-manager
     - /var/log/mindx-dl/dataset-manager
     - /var/log/mindx-dl/label-manager
-    - /var/log/mindx-dl/devicePlugin
     - /var/log/mindx-dl/edge-manager
     - /var/log/mindx-dl/hccl-controller
-    - /var/log/mindx-dl/image-manager
-    - /var/log/mindx-dl/license-manager
     - /var/log/mindx-dl/model-manager
-    - /var/log/mindx-dl/npu-exporter
+    - /var/log/mindx-dl/noded
     - /var/log/mindx-dl/task-manager
     - /var/log/mindx-dl/train-manager
     - /var/log/mindx-dl/user-manager
     - /var/log/mindx-dl/volcano-controller
     - /var/log/mindx-dl/volcano-scheduler
+
+- name: create log directories for root
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0750
+  loop:
+    - /var/log/mindx-dl/image-manager
+    - /var/log/mindx-dl/devicePlugin
+    - /var/log/mindx-dl/npu-exporter
+    - /var/log/mindx-dl/license-manager
 
 - name: delete old hostname in /etc/hosts
   lineinfile:

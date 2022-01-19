@@ -11,12 +11,6 @@
     state: directory
     mode: 0750
 
-- name: set harbor.pwd
-  template:
-    src: harbor.pwd.j2
-    dest: "{{ HARBOR_PATH }}/harbor.pwd"
-    mode: 0400
-
 - name: find harbor-offline-installer-*.tgz
   find:
     paths: "{{ resource_dir }}"
