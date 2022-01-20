@@ -55,6 +55,6 @@ function get_server_id()
 function get_server_id_0_ip()
 {
     local key="server_id"
-    local first_server_ip=$(cat ${RANK_TABLE_FILE} |awk -F ":" '{print $29}'|awk -F "\"" '{print $2}')
+    local first_server_ip=$(cat ${RANK_TABLE_FILE} |awk -F ":" '{print $(NF-2)}'|awk -F "\"" '{print $2}')
     echo ${first_server_ip}
 }
