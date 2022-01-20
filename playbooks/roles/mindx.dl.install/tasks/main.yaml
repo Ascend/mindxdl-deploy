@@ -10,6 +10,7 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
   register: namespace_result
+  changed_when: false
   loop:
     - volcano-system
     - edge-app
@@ -47,7 +48,7 @@
     dest: /usr/bin/
     mode: 0700
 
-- name: install MinX DL
+- name: install MindX DL
   shell: "/usr/bin/dlinstall --harbor {{ HARBOR_IP }} --harbor-port {{ HARBOR_HTTPS_PORT }} --nfs {{ NFS_IP }} {{ item }}"
   ignore_errors: true
   when: "ansible_architecture in item"

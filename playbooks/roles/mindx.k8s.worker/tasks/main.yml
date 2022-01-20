@@ -65,17 +65,9 @@
     remote_src: yes
 
 - name: label worker
-  shell: kubectl label --overwrite node {{ansible_hostname}} node-role.kubernetes.io/worker=worker
-  environment:
-    http_proxy: ""
-    https_proxy: ""
-    HTTP_PROXY: ""
-    HTTPS_PROXY: ""
-  delegate_to: "{{ groups['master'][0] }}"
-  delegate_facts: true
-
-- name: label dls worker
-  shell: kubectl label --overwrite node {{ansible_hostname}} workerselector=dls-worker-node
+  shell: |
+    kubectl label --overwrite node {{ansible_hostname}} node-role.kubernetes.io/worker=worker
+    kubectl label --overwrite node {{ansible_hostname}} workerselector=dls-worker-node
   environment:
     http_proxy: ""
     https_proxy: ""

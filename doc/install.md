@@ -56,7 +56,7 @@ resources.tar.gz
 
 工具中包含一个install_ansible.sh文件用于安装ansible
 
-按如下步骤执行即可：
+在工具目录中执行：
 
 ```bash
 root@master:~/mindxdl-deployer# bash install_ansible.sh
@@ -177,7 +177,7 @@ MINDX_GROUP_ID: 9000
 
 如果inventory_file内配置了非localhost的远程ip，根据ansible官方建议，请用户自行使用SSH密钥的方式连接到远程机器，可参考[[connection_details; Ansible Documentation](https://docs.ansible.com/ansible/latest/user_guide/connection_details.html#setting-up-ssh-keys)]
 
-在目录中执行：
+在工具目录中执行：
 
 ```bash
 root@master:~/mindxdl-deployer# ansible -i inventory_file all -m ping
@@ -200,15 +200,21 @@ worker1_ipaddres | SUCCESS => {
 
 当所有设备都能ping通，则表示inventory中所有设备连通性正常。否则，请检查设备的ssh连接和inventory文件配置是否正确
 
-### 步骤5：执行安装
+### <a name="resources_no_copy">步骤5：执行安装</a>
 
-使用ansible-playbook执行安装：
+在工具目录中执行：
 
 ```bash
 root@master:~/mindxdl-deployer# ansible-playbook -i inventory_file all.yaml
 ```
 
-如果inventory_file内配置了非localhost的远程ip，本工具会将本机的~/resources目录分发到远程机器上。如果有重复执行以上命令的需求，可在以上命令后加`-e resources_no_copy=true`参数，避免重复执行耗时的~/resources目录打包、分发操作。
+注：
+
+1. k8s节点不可重复初始化或加入，使用本工具前，请先执行`kubeadm reset`清除节点上已有的k8s配置
+
+2. 如果docker.service配置了代理，则可能无法访问harbor镜像仓。使用本工具前，请先在`/etc/systemd/system/docker.service.d/proxy.conf`中NO_PROXY添加harbor host的ip，然后执行`systemctl daemon-reload && systemctl restart docker`生效
+
+3. 如果inventory_file内配置了非localhost的远程ip，本工具会将本机的~/resources目录分发到远程机器上。如果有重复执行以上命令的需求，可在以上命令后加`-e resources_no_copy=true`参数，避免重复执行耗时的~/resources目录打包、分发操作。
 
 ### 步骤6：安装后检查
 
@@ -248,10 +254,6 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 
 1. 手动执行kubectl命令时，需取消http(s)_proxy网络代理配置，否则会一直卡死
 
-2. k8s节点不可重复初始化或加入，使用本工具前，请先执行`kubeadm reset`清除节点上已有的k8s配置
-
-3. 如果docker.service配置了代理，则可能无法访问harbor。使用本工具前，请先在`/etc/systemd/system/docker.service.d/proxy.conf`中NO_PROXY添加harbor host的ip，然后执行`systemctl daemon-reload && systemctl restart docker`生效
-
 ### 步骤7：安装MindX DL组件
 
 1. 在~/resources/目录下创建mindxdl目录
@@ -270,10 +272,10 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
          ....
    ```
 
-3. 执行安装命令
+3. 在工具目录中执行安装命令
 
    ```bash
-   root@master:~/mindxdl-deployer# ansible-playbook -i inventory_file playbooks/10.mindxdl.yaml
+   root@master:~/mindxdl-deployer# ansible-playbook -i inventory_file playbooks/11.mindxdl.yaml
    ```
 
 注：
@@ -299,7 +301,8 @@ playbooks/
 ├── 07.prometheus.yaml
 ├── 08.kubeedge.yaml
 ├── 09.pre-image.yaml
-├── 10.mindxdl.yaml
+├── 10.redis.yaml
+├── 11.mindxdl.yaml
 ```
 
 例如:
@@ -310,6 +313,8 @@ playbooks/
    ansible-playbook -i inventory_file playbooks/01.resource.yaml
    ```
 
+   可在以上命令后加`-e resources_no_copy=true`参数，该参数作用请见<a href="#resources_no_copy">步骤5：执行安装注意事项第3点</a>
+
 2. 只安装docker，则执行
    
    ```bash
@@ -318,7 +323,7 @@ playbooks/
 
 ## 安装过程配置
 
-工具跟目录下的all.yaml为全量安装。 实际安装时可根据需要对组件灵活删减
+工具目录下的all.yaml为全量安装，安装效果跟依次执行playbooks目录下的01~10编号的yaml效果一致。实际安装时可根据需要对组件灵活删减
 
 # 高级配置
 
