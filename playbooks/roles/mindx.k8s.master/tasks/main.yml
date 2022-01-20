@@ -60,13 +60,20 @@
     mode: "0640"
     remote_src: yes
 
+- name: create deploy directory on host
+  file:
+    path: "{{ CALICO_YAML_DIR }}"
+    state: directory
+    mode: 0750
+
 - name: set calico yaml
   template:
     src: "calico_{{calico_version}}.yaml"
-    dest: "{{ role_path }}/calico_{{calico_version}}.yaml"
+    dest: "{{ CALICO_YAML_DIR }}/calico_{{calico_version}}.yaml"
+    mode: 0640
 
 - name: apply calico
-  shell: "kubectl apply -f {{ role_path }}/calico_{{calico_version}}.yaml"
+  shell: "kubectl apply -f {{ CALICO_YAML_DIR }}/calico_{{calico_version}}.yaml"
   environment:
     http_proxy: ""
     https_proxy: ""

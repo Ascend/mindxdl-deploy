@@ -22,7 +22,8 @@
 - name: config nfs /etc/exports
   ansible.builtin.lineinfile:
     path: /etc/exports
-    line: "{{item}} *(rw,sync,no_root_squash)"
+    regexp: "^{{item}} "
+    line: "{{item}} {{ MASTER_WORKER_IP | join('(rw,sync,no_root_squash) ') | replace('localhost', MASTER_IP) }}(rw,sync,no_root_squash)"
     state: present
   loop: "{{ NFS_PATH }}"
 
