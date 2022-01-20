@@ -54,7 +54,7 @@ spec:
               fieldRef:
                 fieldPath: status.hostIP
           - name: framework
-            value: "Mindspore"
+            value: "MindSpore"
           command:
           - "/bin/bash"
           - "-c"
