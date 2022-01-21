@@ -1,3 +1,4 @@
 # defaults file for ascend.docker
 state: 'present'
 resource_dir: "~/resources"
+MASTER_IP: "{{ ansible_default_ipv4.address }}"

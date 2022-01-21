@@ -2,10 +2,6 @@
   debug:
     msg: "******************************start install kubeedge******************************"
 
-- name: set MASTER_IP
-  set_fact:
-    MASTER_IP: "{{ hostvars[groups['master'][0]]['ansible_default_ipv4']['address'] }}"
-
 - name: copy cloudcore
   copy:
    src: "{{resource_dir}}/linux_{{ansible_architecture}}/{{ item }}"
