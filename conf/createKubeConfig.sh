@@ -14,6 +14,7 @@
 #  limitations under the License.
 
 # run this shell like this : bash createKubeConfig.sh https://masterip:port
+set -e
 if [ $# = 0 ]; then
   echo "please input the kube-apiserver ip, like https://127.0.0.1:6443"
   exit 0
@@ -73,10 +74,10 @@ function createRoleBinding() {
 function createRole() {
   #task-manager
   kubectl delete clusterrole task-manager-role || true
-  kubectl create clusterrole task-manager-role --verb=* --resource=pods,pods/log,services,networkpolicies.networking.k8s.io,podgroups.scheduling.volcano.sh,deployments.apps,horizontalpodautoscalers.autoscaling
+  creatTMRole
   #hccl-controller
   kubectl delete clusterrole hccl-controller-role || true
-  kubectl create clusterrole hccl-controller-role --verb=get,list,update,watch --resource=jobs.batch.volcano.sh,pods,deployments.apps,configmaps
+  creatHCRole
   #device-plugin
   kubectl delete clusterrole device-plugin-role || true
   kubectl create clusterrole device-plugin-role --verb=get,list,update,patch --resource=pods,nodes,nodes/status
@@ -98,6 +99,54 @@ function  clean() {
     rm -rf *.crt
     rm -rf *.csr
 
+}
+
+function creatTMRole() {
+    cat <<EOF | kubectl apply -f -
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: task-manager-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "namespaces", "services", "pods/log"]
+    verbs: ["*"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["*"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["*"]
+  - apiGroups: [ "networking.k8s.io" ]
+    resources: [ "networkpolicies" ]
+    verbs: [ "*" ]
+  - apiGroups: ["scheduling.volcano.sh"]
+    resources: [ "podgroups" ]
+    verbs: [ "get","delete" ]
+EOF
+}
+
+
+function creatHCRole() {
+    cat <<EOF | kubectl apply -f -
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: hccl-controller-role
+rules:
+  - apiGroups: ["batch.volcano.sh"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch",]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "update","watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get","list","watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "update","watch"]
+EOF
 }
 
 echo "start to create kubeconfig files for MindXDL"
