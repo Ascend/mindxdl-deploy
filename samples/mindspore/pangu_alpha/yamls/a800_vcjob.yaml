@@ -79,6 +79,8 @@ spec:
             mountPath: /usr/local/Ascend/driver
           - name: ascend-add-ons
             mountPath: /usr/local/Ascend/add-ons
+          - name: log-mindxelastic
+            mountPath: /var/log/mindx-dl/mindx_elastic
           - name: localtime
             mountPath: /etc/localtime
         nodeSelector:
@@ -101,6 +103,10 @@ spec:
         - name: ascend-add-ons
           hostPath:
             path: /usr/local/Ascend/add-ons                    # Configure the add-ons driver of the NPU and mount it to Docker.
+        - name: log-mindxelastic
+          hostPath:
+            path: /var/log/mindx-dl/mindx_elastic
+            type: Directory
         - name: localtime
           hostPath:
             path: /etc/localtime                               # Configure the Docker time.
