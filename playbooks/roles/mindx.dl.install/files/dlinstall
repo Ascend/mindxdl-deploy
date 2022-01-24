@@ -161,15 +161,9 @@ function build_image()
     local name=$2
     local arch=$3
     local tag=$4
-    local build_dir=$(dirname $docker_file)
-    local image_manager_arg=""
-
-    if [ ${name} == "image-manager" ];then
-        image_manager_arg="--build-arg DOCKER_API_VERSION=${DOCKER_API_VERSION}"
-    fi
 
     if [ ${DEBUG} == "y" ];then
-        echo "DEBUG: docker build . -f ${docker_file} -t ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} ${image_manager_arg}"
+        echo "DEBUG: docker build . -f ${docker_file} -t ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}"
         echo "DEBUG: docker push ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}"
         echo "DEBUG: docker manifest create ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} -a"
         echo "DEBUG: docker manifest annotate ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}:${tag} ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} --os linux --arch ${arch}"
@@ -181,7 +175,7 @@ function build_image()
     fi
 
     cd ${DEPLOY_PATH}
-    docker build . -f ${docker_file} -t ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag} ${image_manager_arg}
+    docker build . -f ${docker_file} -t ${HARBOR_HOST}${HARBOR_PORT}/${PROJECT}/${name}_${arch}:${tag}
     if [ $? != 0 ];then
         echo "docker build failed"
         exit 1
