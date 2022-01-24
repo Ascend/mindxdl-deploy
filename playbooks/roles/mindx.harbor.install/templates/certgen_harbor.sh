@@ -3,11 +3,11 @@
 set -o errexit
 
 readonly caPath=${CA_PATH:-/etc/kubeedge/ca}
-readonly subject=${SUBJECT:-/C=CN/ST=Sichuan/L=Chengdu/O=Huawei/OU=Ascend/CN=Mindx}
+readonly subject=${SUBJECT:-/C=CN/ST=Sichuan/L=Chengdu/O=Huawei/OU=Ascend/CN=MindX}
 
 genCA() {
-    openssl genrsa -out ${caPath}/rootCA.key 4096
-    openssl req -x509 -new -nodes -sha512 -days 3650 -subj ${subject} -key ${caPath}/rootCA.key -out ${caPath}/rootCA.crt
+    openssl ecparam -name secp384r1 -genkey -noout -out ${caPath}/rootCA.key
+    openssl req -x509 -new -nodes -sha256 -days 3650 -subj ${subject} -key ${caPath}/rootCA.key -out ${caPath}/rootCA.crt
     chmod 600 ${caPath}/rootCA.*
 }
 
