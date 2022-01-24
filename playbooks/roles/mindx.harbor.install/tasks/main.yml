@@ -8,6 +8,12 @@
   failed_when: true
   when: "'harbor' not in groups or groups['harbor'] | length != 1"
 
+- name: message
+  debug:
+    msg: "no harbor password is set, please check"
+  when: HARBOR_PASSWORD | length == 0
+  failed_when: HARBOR_PASSWORD | length == 0
+
 - name: set HARBOR_IP
   set_fact:
     HARBOR_IP: "{{ ansible_default_ipv4.address if HARBOR_HOST_IP == '' else HARBOR_HOST_IP }}"
