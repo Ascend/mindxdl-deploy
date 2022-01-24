@@ -102,7 +102,7 @@ spec:
             path: /usr/local/Ascend/add-ons                    # Configure the add-ons driver of the NPU and mount it to Docker.
         - name: log-mindxelastic
           hostPath:
-            path: /var/log/mindx-dl/elastic              # Configure
+            path: /var/log/mindx-dl/elastic                    # Configure the path of log
             type: Directory
         - name: localtime
           hostPath:
