@@ -173,6 +173,8 @@ MINDX_GROUP_ID: 9000
 | MINDX_GROUP       | mindx dl组件默认运行用户组                    |
 | MINDX_GROUP_ID    | mindx dl组件默认运行用户组id                  |
 
+harbor的登录用户名默认为admin
+
 ### 步骤4：检查集群状态
 
 如果inventory_file内配置了非localhost的远程ip，根据ansible官方建议，请用户自行使用SSH密钥的方式连接到远程机器，可参考[[connection_details; Ansible Documentation](https://docs.ansible.com/ansible/latest/user_guide/connection_details.html#setting-up-ssh-keys)]

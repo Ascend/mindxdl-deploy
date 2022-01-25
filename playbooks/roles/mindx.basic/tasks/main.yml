@@ -16,12 +16,15 @@
 
 - name: create /etc/mindx-dl
   file:
-    path: /etc/mindx-dl
+    path: "{{ item }}"
     state: directory
     owner: "{{DL_USR}}"
     group: "{{DL_GRP}}"
     mode: 0700
   ignore_errors: true
+  loop:
+    - /etc/mindx-dl
+    - /etc/mindx-dl/edge-manager
 
 - name: create log directories for "{{DL_USR}}"
   file:

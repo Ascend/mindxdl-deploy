@@ -2,3 +2,6 @@
 state: 'present'
 resource_dir: "~/resources"
 MASTER_IP: "{{ ansible_default_ipv4.address }}"
+
+DL_USR: "{{ MINDX_USER }}"
+DL_GRP: "{{ MINDX_GROUP }}"
