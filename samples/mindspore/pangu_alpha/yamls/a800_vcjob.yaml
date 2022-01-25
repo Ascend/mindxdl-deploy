@@ -11,6 +11,17 @@ data:
         "status":"initializing"
     }
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fault-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
+  namespace: vcjob                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
+data:
+  fault-npus: |
+    {
+        "status":"initializing"
+    }
+---
 apiVersion: batch.volcano.sh/v1alpha1
 kind: Job
 metadata:
@@ -71,6 +82,8 @@ spec:
           volumeMounts:
           - name: ascend-910-config
             mountPath: /user/serverid/devindex/config
+          - name: fault-config
+            mountPath: /user/restore/fault/config
           - name: code
             mountPath: /job/code/
           - name: data
@@ -89,6 +102,9 @@ spec:
         - name: ascend-910-config
           configMap:
             name: rings-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
+        - name: fault-config
+          configMap:
+            name: fault-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
         - name: code
           nfs:
             server: 127.0.0.1                                  # IP address of the NFS server. In this example, the shared path is /data/atlas_dls/.
