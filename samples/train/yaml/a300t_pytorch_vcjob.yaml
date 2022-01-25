@@ -119,7 +119,7 @@ spec:
           hostPath:
             path: /etc/localtime                      # Configure the Docker time.
         - name: dshm
-            emptyDir:
+          emptyDir:
               medium: Memory
               sizeLimit: 16Gi
         restartPolicy: OnFailure
