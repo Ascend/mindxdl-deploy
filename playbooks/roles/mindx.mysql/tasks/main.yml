@@ -14,6 +14,12 @@
   failed_when: true
   when: groups['mysql'] != groups['master']
 
+- name: message
+  debug:
+    msg: "no mysql password is set, please check"
+  when: MYSQL_PASSWORD | length == 0
+  failed_when: MYSQL_PASSWORD | length == 0
+
 - name: create deploy directory on host
   file:
     path: "{{ MYSQL_YAML_DIR }}"
