@@ -1,0 +1,15 @@
+[Unit]
+Description=Ascend k8s device plugin
+Documentation=hiascend.com
+
+[Service]
+ExecStart=/usr/bin/bash -c "/usr/local/bin/device-plugin -volcanoType=true -logFile=/var/log/mindx-dl/devicePlugin/devicePlugin.log &"
+Restart=3
+RestartSec=2
+KillMode=process
+Environment="LD_LIBRARY_PATH=/usr/local/kmc"
+Type=forking
+
+
+[Install]
+WantedBy=multi-user.target
