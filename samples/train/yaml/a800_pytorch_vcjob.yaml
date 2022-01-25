@@ -117,7 +117,7 @@ spec:
         - name: localtime
           hostPath:
             path: /etc/localtime                      # Configure the Docker time.
-        -name: dshm
+        - name: dshm
             emptyDir:
               medium: Memory
               sizeLimit: 16Gi
