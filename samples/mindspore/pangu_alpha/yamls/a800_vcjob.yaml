@@ -51,7 +51,6 @@ spec:
           ring-controller.atlas: ascend-910
       spec:
         terminationGracePeriodSeconds: 900
-        serviceAccountName: train-manager
         containers:
         - image: mindspore:b035         # Training framework image, which can be modified.
           imagePullPolicy: IfNotPresent
