@@ -3,7 +3,7 @@ Description=Ascend npu exporter
 Documentation=hiascend.com
 
 [Service]
-ExecStart=/usr/bin/bash -c "/usr/local/bin/npu-exporter -ip=127.0.0.1  -port=8082 -logFile=/var/log/mindx-dl/npu-exporter/npu-exporter.log &"
+ExecStart=/bin/bash -c "/usr/local/bin/npu-exporter -ip=127.0.0.1  -port=8082 -logFile=/var/log/mindx-dl/npu-exporter/npu-exporter.log &"
 Restart=3
 RestartSec=2
 KillMode=process
