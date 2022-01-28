@@ -76,7 +76,7 @@ ansible默认安装在系统自带python3中，安装完成后执行ansible --ve
 
 ### 步骤2：配置集群信息
 
-需要提前规划好如下集群信息：
+在inventory文件中，需要提前规划好如下集群信息：
 
 1. 安装harbor的服务器ip
 
@@ -86,7 +86,7 @@ ansible默认安装在系统自带python3中，安装完成后执行ansible --ve
 
 4. mysql安装的节点ip，只能为本机localhost
 
-5. nfs服务器信息。nfs可使用已有nfs服务器。如不需要安装nfsserver，去掉nfs_server配置即可
+5. nfs服务器ip。nfs可使用已有nfs服务器。如不需要安装nfsserver，去掉nfs_server配置即可
 
 ```bash
 [harbor]
@@ -258,7 +258,7 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 
 ### 步骤7：安装MindX DL组件
 
-1. 在~/resources/目录下创建mindxdl目录
+1. 在~/resources/目录下创建mindxdl目录。如果该目录已存在，请确保该目录下为空
    
    ```bash
       mkdir -p ~/resources/mindxdl
@@ -285,6 +285,14 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 1. MindX DL相关组件安装时依赖harbor。安装过程会制作镜像并上传到harbor中
 
 2. 安装MindX DL组件，当前仅支持k8s为master单机节点，或worker与master节点的CPU架构相同的情况
+
+## 更新MindX DL组件
+
+如果用户已完整执行过以上安装步骤，本工具支持单独更新MindX DL组件。
+
+1. 查阅“步骤2：配置集群信息”的inventory文件和“步骤3：配置安装信息”的group_vars/all.yaml文件，确保这2个配置文件同上一次使用本工具时的配置完全一致
+
+2. 执行“步骤7：安装MindX DL组件”。该步骤可重复执行
 
 # 详细说明
 
