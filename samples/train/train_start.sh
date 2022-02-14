@@ -67,6 +67,8 @@ if [[ $@ =~ need_freeze ]]; then
     logger "freeze_cmd:${freeze_cmd}"
 fi
 
+chmod 640 ${log_url}
+
 start_time=$(date +%Y-%m-%d-%H:%M:%S)
 logger "Training start at ${start_time}"
 
@@ -76,6 +78,7 @@ source rank_table.sh
 ret=$(check_hccl_status)
 if [[ "${ret}" == "1" ]]; then
   echo "wait hccl status timeout, train job failed." | tee -a hccl.log
+  chmod 440 ${log_url}
   exit 1
 fi
 
@@ -85,6 +88,7 @@ sleep 1
 device_count=$(cat "${RANK_TABLE_FILE}" | grep -o device_id | wc -l)
 if [[ "${device_count}" -eq 0 ]]; then
   echo "device count is 0, train job failed." | tee -a hccl.log
+  chmod 440 ${log_url}
   exit 1
 fi
 
@@ -92,6 +96,7 @@ fi
 server_count=$(get_json_value ${RANK_TABLE_FILE} server_count)
 if [[ "${server_count}" == "" ]]; then
   echo "server count is 0, train job failed." | tee -a hccl.log
+  chmod 440 ${log_url}
   exit 1
 fi
 
@@ -146,6 +151,7 @@ if [[ "${server_count}" -eq 1 ]]; then
     if [[ $@ =~ need_freeze ]]; then
       ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 | tee ${log_url}
     fi
+    chmod 440 ${log_url}
     exit 0
   fi
 fi
@@ -155,6 +161,7 @@ if [[ "${server_count}" -ge 1 ]]; then
   server_id=$(get_server_id)
   if [ -z "${framework}" ]; then
     echo "framework is null."
+    chmod 440 ${log_url}
     exit 1
   fi
 
@@ -201,6 +208,8 @@ if [[ "${server_count}" -ge 1 ]]; then
       fi
     done
   else
-    echo "framework error"
+    logger "framework error"
   fi
 fi
+
+chmod 440 ${log_url}
