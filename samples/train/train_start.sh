@@ -15,12 +15,12 @@ export PYTHONUNBUFFERED=1
 
 # use utils.sh env and functions
 source utils.sh
-
-if echo $@ |grep [\,\;\<\>\|\#\$\&\`]; then
-  echo "invalid input params"
+echo $@ |grep -q -E '^[ 0-9a-zA-Z./:_=-]*$'
+ret=$?
+if [ "%{ret}" -ne 0 ]; then
+  echo "params error!"
   exit 1
 fi
-
 
 # training job input parameters
 app_url="$1"
