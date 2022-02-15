@@ -50,8 +50,8 @@ function param_check() {
     exit 1
   fi
 
-  if [ -L ${app_url} ]; then
-    echo "app url is a link!"
+  if [ -L ${boot_file} ]; then
+    echo "boot file is a link!"
     exit 1
   fi
 
