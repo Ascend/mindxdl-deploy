@@ -103,7 +103,6 @@ function get_env_for_1p_job() {
   export RANK_SIZE=1
   export DEVICE_INDEX=${RANK_ID}
   export JOB_ID=123456789
-  env >env.log
 }
 
 function get_env_for_multi_card_job() {

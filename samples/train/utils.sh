@@ -46,15 +46,3 @@ else
 function logger {
     echo "[$(date +%Y%m%d-%H:%M:%S)] [MindXDL Service Log]$*"
 }
-
-function logger_error() {
-    logger "[$(date +%Y%m%d-%H:%M:%S)] [ERROR]$*"
-}
-
-function logger_warn() {
-    logger "[$(date +%Y%m%d-%H:%M:%S)] [WARN]$*"
-}
-
-function logger_info() {
-    logger "[$(date +%Y%m%d-%H:%M:%S)] [INFO]$*"
-}
