@@ -23,8 +23,14 @@ if [ "%{ret}" -ne 0 ]; then
 fi
 
 # training job input parameters
-app_url="$1"
-log_url="$2"
+code_real_dir=`readlink -f $1`
+if [ -d "${code_real_dir}" ]; then
+    app_url="${code_real_dir}"
+fi
+log_real_path=`readlink -f $2`
+if [ -f "${log_real_path}" ]; then
+    log_url="${log_real_path}"
+fi
 boot_file="$3"
 shift 3
 
