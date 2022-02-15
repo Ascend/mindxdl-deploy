@@ -33,6 +33,11 @@ function param_check() {
     exit 1
   fi
 
+  if [ -L ${app_url} ]; then
+    echo "code dir is a link!"
+    exit 1
+  fi
+
   if [ -z "${boot_file}" ]; then
     echo "please input boot file"
     show_help
@@ -44,6 +49,12 @@ function param_check() {
     show_help
     exit 1
   fi
+
+  if [ -L ${log_url} ]; then
+    echo "log url is a link!"
+    exit 1
+  fi
+
 }
 
 param_check
