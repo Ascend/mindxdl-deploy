@@ -17,7 +17,7 @@ export PYTHONUNBUFFERED=1
 source utils.sh
 echo $@ |grep -q -E '^[ 0-9a-zA-Z./:_=-]*$'
 ret=$?
-if [ "%{ret}" -ne 0 ]; then
+if [ "${ret}" -ne 0 ]; then
   echo "params error!"
   exit 1
 fi
