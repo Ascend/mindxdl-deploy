@@ -16,6 +16,12 @@ export PYTHONUNBUFFERED=1
 # use utils.sh env and functions
 source utils.sh
 
+if echo $@ |grep [\,\;\<\>\|\#\$\&\`]; then
+  echo "invalid input params"
+  exit 1
+fi
+
+
 # training job input parameters
 app_url="$1"
 log_url="$2"
@@ -44,6 +50,11 @@ function param_check() {
     exit 1
   fi
 
+  if [ -L ${app_url} ]; then
+    echo "app url is a link!"
+    exit 1
+  fi
+
   if [ -z "${log_url}" ]; then
     echo "please input log url"
     show_help
@@ -57,17 +68,14 @@ function param_check() {
 
 }
 
-param_check
-
 boot_file_path=${app_url}
-local_code_dir=${boot_file_path%/*}
-
 params="$@"
 train_param=${params%%need_freeze*}
 if [[ $@ =~ need_freeze ]]; then
     freeze_cmd=${params##*need_freeze }
 fi
 
+param_check
 chmod 640 ${log_url}
 
 start_time=$(date +%Y-%m-%d-%H:%M:%S)
