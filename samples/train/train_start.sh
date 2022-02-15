@@ -51,20 +51,10 @@ param_check
 boot_file_path=${app_url}
 local_code_dir=${boot_file_path%/*}
 
-logger "user: $(id)"
-logger "pwd: ${PWD}"
-logger "app_url: ${app_url}"
-logger "boot_file: ${boot_file}"
-logger "log_url: ${log_url}"
-logger "command: ${boot_file} $@"
-logger "local_code_dir: ${local_code_dir}"
-
 params="$@"
 train_param=${params%%need_freeze*}
-logger "train_params:${train_param}"
 if [[ $@ =~ need_freeze ]]; then
     freeze_cmd=${params##*need_freeze }
-    logger "freeze_cmd:${freeze_cmd}"
 fi
 
 chmod 640 ${log_url}
