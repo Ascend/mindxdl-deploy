@@ -86,7 +86,7 @@ ansible默认安装在系统自带python3中，安装完成后执行ansible --ve
 
 4. mysql安装的节点ip，只能为本机localhost
 
-5. nfs服务器ip。nfs可使用已有nfs服务器。如不需要安装nfsserver，去掉nfs_server配置即可
+5. nfs服务器ip。nfs可使用已有nfs服务器。
 
 ```bash
 [harbor]
@@ -254,7 +254,7 @@ mindx-dl      mysql-55569fc484-bb6kw                     1/1     Running   1    
 
 注：
 
-1. 手动执行kubectl命令时，需取消http(s)_proxy网络代理配置，否则会一直卡死
+1. 手动执行kubectl命令时，需取消http(s)_proxy网络代理配置，否则会连接报错或一直卡死
 
 ### 步骤7：安装MindX DL组件
 
