@@ -15,10 +15,22 @@ export PYTHONUNBUFFERED=1
 
 # use utils.sh env and functions
 source utils.sh
+echo $@ |grep -q -E '^[ 0-9a-zA-Z./:_=-]*$'
+ret=$?
+if [ "${ret}" -ne 0 ]; then
+  echo "params error!"
+  exit 1
+fi
 
 # training job input parameters
-app_url="$1"
-log_url="$2"
+code_real_dir=`readlink -f $1`
+if [ -d "${code_real_dir}" ]; then
+    app_url="${code_real_dir}"
+fi
+log_real_path=`readlink -f $2`
+if [ -f "${log_real_path}" ]; then
+    log_url="${log_real_path}"
+fi
 boot_file="$3"
 shift 3
 
@@ -33,9 +45,19 @@ function param_check() {
     exit 1
   fi
 
+  if [ -L ${app_url} ]; then
+    echo "code dir is a link!"
+    exit 1
+  fi
+
   if [ -z "${boot_file}" ]; then
     echo "please input boot file"
     show_help
+    exit 1
+  fi
+
+  if [ -L ${boot_file} ]; then
+    echo "boot file is a link!"
     exit 1
   fi
 
@@ -44,28 +66,23 @@ function param_check() {
     show_help
     exit 1
   fi
+
+  if [ -L ${log_url} ]; then
+    echo "log url is a link!"
+    exit 1
+  fi
+
 }
 
-param_check
-
 boot_file_path=${app_url}
-local_code_dir=${boot_file_path%/*}
-
-logger "user: $(id)"
-logger "pwd: ${PWD}"
-logger "app_url: ${app_url}"
-logger "boot_file: ${boot_file}"
-logger "log_url: ${log_url}"
-logger "command: ${boot_file} $@"
-logger "local_code_dir: ${local_code_dir}"
-
 params="$@"
 train_param=${params%%need_freeze*}
-logger "train_params:${train_param}"
 if [[ $@ =~ need_freeze ]]; then
     freeze_cmd=${params##*need_freeze }
-    logger "freeze_cmd:${freeze_cmd}"
 fi
+
+param_check
+chmod 640 ${log_url}
 
 start_time=$(date +%Y-%m-%d-%H:%M:%S)
 logger "Training start at ${start_time}"
@@ -76,6 +93,7 @@ source rank_table.sh
 ret=$(check_hccl_status)
 if [[ "${ret}" == "1" ]]; then
   echo "wait hccl status timeout, train job failed." | tee -a hccl.log
+  chmod 440 ${log_url}
   exit 1
 fi
 
@@ -85,6 +103,7 @@ sleep 1
 device_count=$(cat "${RANK_TABLE_FILE}" | grep -o device_id | wc -l)
 if [[ "${device_count}" -eq 0 ]]; then
   echo "device count is 0, train job failed." | tee -a hccl.log
+  chmod 440 ${log_url}
   exit 1
 fi
 
@@ -92,6 +111,7 @@ fi
 server_count=$(get_json_value ${RANK_TABLE_FILE} server_count)
 if [[ "${server_count}" == "" ]]; then
   echo "server count is 0, train job failed." | tee -a hccl.log
+  chmod 440 ${log_url}
   exit 1
 fi
 
@@ -103,7 +123,6 @@ function get_env_for_1p_job() {
   export RANK_SIZE=1
   export DEVICE_INDEX=${RANK_ID}
   export JOB_ID=123456789
-  env >env.log
 }
 
 function get_env_for_multi_card_job() {
@@ -147,6 +166,7 @@ if [[ "${server_count}" -eq 1 ]]; then
     if [[ $@ =~ need_freeze ]]; then
       ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 | tee ${log_url}
     fi
+    chmod 440 ${log_url}
     exit 0
   fi
 fi
@@ -156,6 +176,7 @@ if [[ "${server_count}" -ge 1 ]]; then
   server_id=$(get_server_id)
   if [ -z "${framework}" ]; then
     echo "framework is null."
+    chmod 440 ${log_url}
     exit 1
   fi
 
@@ -202,6 +223,8 @@ if [[ "${server_count}" -ge 1 ]]; then
       fi
     done
   else
-    echo "framework error"
+    logger "framework error"
   fi
 fi
+
+chmod 440 ${log_url}
