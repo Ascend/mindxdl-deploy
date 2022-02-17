@@ -1,5 +1,4 @@
 #!/bin/bash
-# set -x
 
 # hccl-controller组件生成的rank_table_file
 export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
