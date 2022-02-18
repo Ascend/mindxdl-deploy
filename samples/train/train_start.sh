@@ -25,10 +25,13 @@ fi
 # training job input parameters
 code_real_dir=`readlink -f $1`
 if [ -d "${code_real_dir}" ]; then
-    app_url="${code_real_dir}"
+    app_url="${code_real_dir}/"
 fi
 log_real_path=`readlink -f $2`
 if [ -f "${log_real_path}" ]; then
+    log_url="${log_real_path}"
+else
+    touch ${log_real_path}
     log_url="${log_real_path}"
 fi
 boot_file="$3"
