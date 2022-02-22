@@ -8,7 +8,7 @@ readonly subject=${SUBJECT:-/C=CN/ST=Sichuan/L=Chengdu/O=Huawei/OU=Ascend/CN=Min
 genCA() {
     openssl ecparam -name secp384r1 -genkey -noout -out ${caPath}/rootCA.key
     openssl req -x509 -new -nodes -sha256 -days 3650 -subj ${subject} -key ${caPath}/rootCA.key -out ${caPath}/rootCA.crt
-    chmod 600 ${caPath}/rootCA.*
+    chmod 400 ${caPath}/rootCA.*
 }
 
 ensureCA() {
@@ -48,8 +48,8 @@ EOF
 
     openssl x509 -req -sha512 -days 3650 -extfile ${certPath}/v3.ext -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
     -CAcreateserial -in ${certPath}/${name}.csr -out ${certPath}/${name}.crt
-    chmod 600 ${certPath}/${name}.* ${certPath}/v3.ext
-    chmod 600 ${caPath}/rootCA.srl
+    chmod 400 ${certPath}/${name}.* ${certPath}/v3.ext
+    chmod 400 ${caPath}/rootCA.srl
 }
 
 genCertAndKey() {
