@@ -18,7 +18,7 @@
   copy:
     src: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/rootCA.crt"
     dest: "/etc/docker/certs.d/{{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}}/"
-    mode: 0600
+    mode: 0400
 
 - name: docker login harbor
   shell: "docker login {{HARBOR_IP}}:{{HARBOR_HTTPS_PORT}} -u admin -p {{ HARBOR_PASSWORD }}"

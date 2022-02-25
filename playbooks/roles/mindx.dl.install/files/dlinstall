@@ -101,7 +101,7 @@ function get_app_info()
         fi
         YML_PATH=$(find ${APP_PATH} -maxdepth 1 -name '*-v*.yaml' | grep "${acc_flag}-volcano")
     else
-        YML_PATH=$(find ${APP_PATH} -maxdepth 1 -name '*-v*.yaml')
+        YML_PATH=$(find ${APP_PATH} -maxdepth 1 -name '*-v*.yaml' | grep -v '\-without-token-')
     fi
     if [ -z ${YML_PATH} ];then
         YML_PATH=$(find ${APP_PATH} -maxdepth 1 -name '*-v*.yml')
@@ -243,7 +243,7 @@ function do_install()
         return
     fi
 
-    for image in $(cat ${DEPLOY_PATH}/${YML_FILE} | awk '$1 ~ /^image:/ {print $2}')
+    for image in $(cat ${DEPLOY_PATH}/${YML_FILE} | grep 'image: ' | awk -F'image: ' '{print $2}')
     do
         docker pull ${image}
         ansible worker -i ../inventory_file -m shell -a "docker pull ${image}"

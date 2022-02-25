@@ -9,3 +9,8 @@
 
 - include_tasks: install.yml
   when: docker_status.stdout == "0"
+
+- name: message
+  debug:
+    msg: "docker is running already"
+  when: docker_status.stdout == "1"
