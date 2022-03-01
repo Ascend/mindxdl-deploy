@@ -1,8 +1,0 @@
----
-# install docker
-- hosts:
-    - master
-    - worker
-  roles:
-    - role: mindx.basic
-    - role: mindx.docker
