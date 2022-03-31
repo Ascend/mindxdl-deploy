@@ -80,7 +80,7 @@ function createRole() {
   creatHCRole
   #device-plugin
   kubectl delete clusterrole device-plugin-role || true
-  kubectl create clusterrole device-plugin-role --verb=get,list,update,patch --resource=pods,nodes,nodes/status
+  creatDPRole
   #noded
   kubectl delete clusterrole noded-role || true
   kubectl create clusterrole noded-role --verb=patch --resource=nodes/status
@@ -148,6 +148,31 @@ rules:
     verbs: ["get", "list", "update","watch"]
 EOF
 }
+
+
+function creatDPRole() {
+    cat <<EOF | kubectl apply -f -
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: device-plugin-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "update",]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "patch"]
+  - apiGroups: [""]
+    resources: ["nodes/status"]
+    verbs: ["get","patch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list","watch"]
+EOF
+}
+
+
 
 echo "start to create kubeconfig files for MindXDL"
 init
