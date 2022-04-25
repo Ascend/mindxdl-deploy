@@ -93,8 +93,8 @@ logger "Training start at ${start_time}"
 # hccl json process
 source rank_table.sh
 
-ret=$(check_hccl_status)
-if [[ "${ret}" == "1" ]]; then
+check_hccl_status
+if [ $? -eq 1 ]; then
   echo "wait hccl status timeout, train job failed." | tee -a hccl.log
   chmod 440 ${log_url}
   exit 1
