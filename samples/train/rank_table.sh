@@ -32,12 +32,11 @@ function check_hccl_status()
             sleep ${retry_interval}
             continue
         else
-            echo 0
-            return
+            return 0
         fi
     }
     done
-    echo 1
+    return 1
 }
 
 function get_server_id()
