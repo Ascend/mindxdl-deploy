@@ -39,6 +39,7 @@ spec:
           app: mindspore
           ring-controller.atlas: ascend-910
       spec:
+        terminationGracePeriodSeconds: 360
         containers:
         - image: mindspore:b035         # Training framework image, which can be modified.
           imagePullPolicy: IfNotPresent
