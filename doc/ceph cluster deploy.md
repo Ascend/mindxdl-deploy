@@ -1,7 +1,7 @@
 # ceph集群部署
 
 本教程使用cephadm部署工具部署
-使用ubuntu 18.04部署，ceph版本为16.2
+使用ubuntu 18.04部署，ceph版本为15.2
 本教程参考ceph官网，官网为 https://docs.ceph.com/en/pacific/
 本教程使用节点信息如下
 
