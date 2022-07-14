@@ -26,9 +26,9 @@ spec:
         name: resnet50infer
         resources:
           requests:
-            huawei.com/Ascend310: 1             # Number of the Ascend 310 Processors. If the Ascend 710 Processor is used, change it to huawei.com/Ascend710.
+            huawei.com/Ascend310: 1             # Number of the Ascend 310 Processors. If the Ascend 310P Processor is used, change it to huawei.com/Ascend310P.
           limits:
-            huawei.com/Ascend310: 1             # The value should be the same as that of requests . If the Ascend 710 Processor is used, change it to huawei.com/Ascend710.
+            huawei.com/Ascend310: 1             # The value should be the same as that of requests . If the Ascend 310P Processor is used, change it to huawei.com/Ascend310P.
         volumeMounts:
         - name: slog
           mountPath: /var/log/npu/conf/slog/    #Log path
