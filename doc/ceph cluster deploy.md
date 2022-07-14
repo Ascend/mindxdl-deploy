@@ -1,7 +1,7 @@
 # ceph集群部署
 
 本教程使用cephadm部署工具部署
-使用ubuntu 18.04部署，ceph版本为16.2
+使用ubuntu 18.04部署，ceph版本为15.2
 本教程参考ceph官网，官网为 https://docs.ceph.com/en/pacific/
 本教程使用节点信息如下
 
@@ -42,7 +42,7 @@ ARM架构设备也支持部署
     执行以下命令修改源为三方源。
     ```bash
     wget -q -O- 'https://download.ceph.com/keys/release.asc' | sudo apt-key add -
-    sudo apt-add-repository 'deb https://mirrors.tuna.tsinghua.edu.cn/ceph/debian-pacific/ bionic main'
+    sudo apt-add-repository 'deb https://mirrors.tuna.tsinghua.edu.cn/ceph/debian-octopus/ buster main'
     sudo apt update
     ```
     安装后执行apt install cephadm 安装cephadm。
@@ -64,10 +64,10 @@ ARM架构设备也支持部署
     sudo /usr/sbin/cephadm shell --fsid xxxxxxxxxxxxx -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring
     ```
 4. 登录DashBoard设置存储副本为2
-    a. 使用步骤3中出现的Dashboard信息登录Dashboard，点击左侧的Configuration。
-    b. 点击右上角的“Level:basic”旁边的叉，关闭过滤条件，并在搜索框输入osd_pool_default_size，进行搜索。
-    c. 选中“osd_pool_default_size",点击左上角编辑，进入编辑界面。
-    d. 把global对应的值设置为2，即为设置ceph存储集群副本为2，设置完成，点击保存。
+    1. 使用步骤3中出现的Dashboard信息登录Dashboard，点击左侧的Configuration。
+    2. 点击右上角的“Level:basic”旁边的叉，关闭过滤条件，并在搜索框输入osd_pool_default_size，进行搜索。
+    3. 选中“osd_pool_default_size",点击左上角编辑，进入编辑界面。
+    4. 把global对应的值设置为2，即为设置ceph存储集群副本为2，设置完成，点击保存。
 5. 把集群的ssh密钥分发到其它节点
     `ssh-copy-id -f -i /etc/ceph/ceph.pub root@*<new-host>*`
 
