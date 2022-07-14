@@ -206,13 +206,19 @@ data:
         target_label: kubernetes_name
 
     - job_name: kubernetes-access-manager
+      scheme: https
+      tls_config:
+        insecure_skip_verify: true
       metrics_path: /accessmanager/v1/metrics
       static_configs:
         - targets:
-            - access-manager.default:8090
+            - access-manager.mindx-dl:8090
 
     - job_name: kubernetes-license-agent
+      scheme: https
+      tls_config:
+        insecure_skip_verify: true
       metrics_path: /v1/license_agent_metric
       static_configs:
         - targets:
-            - access-manager.default:8090
+            - access-manager.mindx-dl:8090
