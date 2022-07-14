@@ -64,11 +64,10 @@ ARM架构设备也支持部署
     sudo /usr/sbin/cephadm shell --fsid xxxxxxxxxxxxx -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring
     ```
 4. 登录DashBoard设置存储副本为2
-
-    a. 使用步骤3中出现的Dashboard信息登录Dashboard，点击左侧的Configuration。
-    b. 点击右上角的“Level:basic”旁边的叉，关闭过滤条件，并在搜索框输入osd_pool_default_size，进行搜索。
-    c. 选中“osd_pool_default_size",点击左上角编辑，进入编辑界面。
-    d. 把global对应的值设置为2，即为设置ceph存储集群副本为2，设置完成，点击保存。
+    1. 使用步骤3中出现的Dashboard信息登录Dashboard，点击左侧的Configuration。
+    2. 点击右上角的“Level:basic”旁边的叉，关闭过滤条件，并在搜索框输入osd_pool_default_size，进行搜索。
+    3. 选中“osd_pool_default_size",点击左上角编辑，进入编辑界面。
+    4. 把global对应的值设置为2，即为设置ceph存储集群副本为2，设置完成，点击保存。
 5. 把集群的ssh密钥分发到其它节点
     `ssh-copy-id -f -i /etc/ceph/ceph.pub root@*<new-host>*`
 
