@@ -1,0 +1,19 @@
+[Unit]
+Description=Ascend license manager
+Documentation=https://www.hiascend.com
+
+[Service]
+ExecStart=/bin/bash -c "/usr/local/bin/license-manager -ip=127.0.0.1 -port=8081>/dev/null 2>&1 &"
+Restart=always
+RestartSec=2
+KillMode=process
+Environment="LD_LIBRARY_PATH=/usr/local/kmc:/usr/local/adaptivelm"
+Environment="GOGC=50"
+Environment="GOMAXPROCS=2"
+Environment="GODEBUG=madvdontneed=1"
+Type=forking
+User=hwMindX
+Group=hwMindX
+
+[Install]
+WantedBy=multi-user.target
