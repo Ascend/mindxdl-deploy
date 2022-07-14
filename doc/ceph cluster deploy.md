@@ -64,6 +64,7 @@ ARM架构设备也支持部署
     sudo /usr/sbin/cephadm shell --fsid xxxxxxxxxxxxx -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring
     ```
 4. 登录DashBoard设置存储副本为2
+
     a. 使用步骤3中出现的Dashboard信息登录Dashboard，点击左侧的Configuration。
     b. 点击右上角的“Level:basic”旁边的叉，关闭过滤条件，并在搜索框输入osd_pool_default_size，进行搜索。
     c. 选中“osd_pool_default_size",点击左上角编辑，进入编辑界面。
