@@ -52,10 +52,6 @@ function createKubeConfig() {
 }
 
 function createRoleBinding() {
-  #task-manager
-  kubectl delete clusterrolebinding task-manager-clusterrolebinding || true
-  kubectl create clusterrolebinding task-manager-clusterrolebinding --clusterrole=task-manager-role \
-  --user=task-manager
   #hccl-controller
   kubectl delete clusterrolebinding hccl-controller-clusterrolebinding || true
   kubectl create clusterrolebinding hccl-controller-clusterrolebinding --clusterrole=hccl-controller-role \
@@ -72,9 +68,6 @@ function createRoleBinding() {
 }
 
 function createRole() {
-  #task-manager
-  kubectl delete clusterrole task-manager-role || true
-  creatTMRole
   #hccl-controller
   kubectl delete clusterrole hccl-controller-role || true
   creatHCRole
@@ -101,30 +94,6 @@ function  clean() {
 
 }
 
-function creatTMRole() {
-    cat <<EOF | kubectl apply -f -
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: task-manager-role
-rules:
-  - apiGroups: [""]
-    resources: ["pods", "namespaces", "services", "pods/log"]
-    verbs: ["*"]
-  - apiGroups: ["autoscaling"]
-    resources: ["horizontalpodautoscalers"]
-    verbs: ["*"]
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["*"]
-  - apiGroups: [ "networking.k8s.io" ]
-    resources: [ "networkpolicies" ]
-    verbs: [ "*" ]
-  - apiGroups: ["scheduling.volcano.sh"]
-    resources: [ "podgroups" ]
-    verbs: [ "get","delete" ]
-EOF
-}
 
 
 function creatHCRole() {
@@ -176,7 +145,6 @@ EOF
 
 echo "start to create kubeconfig files for MindXDL"
 init
-createKubeConfig $1 task-manager
 createKubeConfig $1 hccl-controller
 createKubeConfig $1 device-plugin
 createKubeConfig $1 noded
