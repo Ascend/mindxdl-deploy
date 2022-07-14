@@ -60,18 +60,18 @@ spec:
             runAsUser: 9000
             runAsGroup: 9000
           volumeMounts:
-            - name: license-data
-              mountPath: /etc/mindx-dl
             - name: log-license-manager
               mountPath: /var/log/mindx-dl/license-manager
             - name: localtime
               mountPath: /etc/localtime
               readOnly: true
+            - name: keystore-kmc
+              mountPath: /etc/mindx-dl/kmc_primary_store
+            - name: keystore-kmcfg
+              mountPath: /etc/mindx-dl/.config
+            - name: keystore-license
+              mountPath: /etc/mindx-dl/license-manager
       volumes:
-        - name: license-data
-          hostPath:
-            path: /etc/mindx-dl
-            type: Directory
         - name: log-license-manager
           hostPath:
             path: /var/log/mindx-dl/license-manager
@@ -79,3 +79,12 @@ spec:
         - name: localtime
           hostPath:
             path: /etc/localtime
+        - name: keystore-kmc
+          hostPath:
+            path: /etc/mindx-dl/kmc_primary_store
+        - name: keystore-kmcfg
+          hostPath:
+            path: /etc/mindx-dl/.config
+        - name: keystore-license
+          hostPath:
+            path: /etc/mindx-dl/license-manager

@@ -9,7 +9,7 @@ COPY ./liblic_release.so  /mindx-dl/
 RUN apt-get update && apt-get install -y sudo
 RUN echo  "hwMindX ALL=(ALL) NOPASSWD: /mindx-dl/esn" >> /etc/sudoers
 RUN chown -R hwMindX:hwMindX /mindx-dl/ &&\
-    # the parent directory owner need be the max premissions user
+    # the parent directory owner need be the max permissions user
     chown root:root /mindx-dl/ &&\
     chown -R root:root /mindx-dl/esn  &&\
     chmod 750 -R /home/hwMindX &&\
