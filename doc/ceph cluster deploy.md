@@ -42,7 +42,7 @@ ARM架构设备也支持部署
     执行以下命令修改源为三方源。
     ```bash
     wget -q -O- 'https://download.ceph.com/keys/release.asc' | sudo apt-key add -
-    sudo apt-add-repository 'deb https://mirrors.tuna.tsinghua.edu.cn/ceph/debian-pacific/ bionic main'
+    sudo apt-add-repository 'deb https://mirrors.tuna.tsinghua.edu.cn/ceph/debian-octopus/ buster main'
     sudo apt update
     ```
     安装后执行apt install cephadm 安装cephadm。
