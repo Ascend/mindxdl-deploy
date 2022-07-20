@@ -40,7 +40,7 @@ spec:
           app: pytorch
           ring-controller.atlas: ascend-910  # The value must be the same as the label in ConfigMap and cannot be changed.
       spec:
-        hostnetwork: true
+        hostNetwork: true
         containers:
         - image: torch:b030               # Training framework image, which can be modified.
           imagePullPolicy: IfNotPresent
