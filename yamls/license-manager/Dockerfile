@@ -21,7 +21,7 @@ RUN chown -R hwMindX:hwMindX /mindx-dl/ &&\
     chmod 504 /mindx-dl/esn &&\
     chmod 500 /mindx-dl/lib/* &&\
     echo 'umask 027' >> /etc/profile && \
-    echo 'source /etc/profile' >> ~/.bashrc
+    echo 'source /etc/profile' >> /home/hwMindX/.bashrc
 ENV LD_LIBRARY_PATH=/mindx-dl:/mindx-dl/lib:${LD_LIBRARY_PATH}
 USER hwMindX
 CMD /mindx-dl/license-manager
