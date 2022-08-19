@@ -64,7 +64,10 @@ function createRoleBinding() {
   kubectl delete clusterrolebinding noded-clusterrolebinding || true
   kubectl create clusterrolebinding noded-clusterrolebinding --clusterrole=noded-role \
   --user=noded
-
+  #resilience-controller
+  kubectl delete clusterrolebinding resilience-controller-clusterrolebinding || true
+  kubectl create clusterrolebinding resilience-controller-clusterrolebinding --clusterrole=resilience-controller-role \
+  --user=resilience-controller
 }
 
 function createRole() {
@@ -77,6 +80,9 @@ function createRole() {
   #noded
   kubectl delete clusterrole noded-role || true
   kubectl create clusterrole noded-role --verb=patch --resource=nodes/status
+  #resilience-controller
+  kubectl delete clusterrole resilience-controller-role || true
+  creatRCRole
 }
 
 function init() {
@@ -94,6 +100,22 @@ function  clean() {
 
 }
 
+
+function creatRCRole() {
+    cat <<EOF | kubectl apply -f -
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: resilience-controller-role
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch.volcano.sh"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "create", "watch", "delete"]
+EOF
+}
 
 
 function creatHCRole() {
@@ -142,12 +164,12 @@ EOF
 }
 
 
-
 echo "start to create kubeconfig files for MindXDL"
 init
 createKubeConfig $1 hccl-controller
 createKubeConfig $1 device-plugin
 createKubeConfig $1 noded
+createKubeConfig $1 resilience-controller
 clean
 echo "kubeconfig files create successfully"
 createRole
