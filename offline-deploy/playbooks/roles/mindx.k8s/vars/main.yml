@@ -1,0 +1,11 @@
+# defaults file for mindx.k8s.install
+host_count: "{{ ansible_play_hosts_all | length }}"
+first_host: "{{ ansible_play_hosts_all[0] }}"
+sys_dir: "{{resource_dir}}/{{ os_name | lower }}_{{os_version}}_{{ansible_architecture}}/sys"
+# k8s二进制程序所在路径
+k8s_dir: "{{resource_dir}}/linux_{{ansible_architecture}}/k8s"
+# k8s镜像所在路径
+k8s_image: "{{resource_dir}}/images/k8s_image_{{ansible_architecture}}"
+no_copy_flag: "{{ NO_COPY | default('false') }}"
+
+NODE_NAME: "{{ set_hostname if set_hostname is defined else ansible_hostname }}"

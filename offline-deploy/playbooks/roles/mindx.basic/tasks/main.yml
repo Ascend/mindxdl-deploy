@@ -1,0 +1,36 @@
+- name: include vars
+  include_vars: ../defaults/main.yml
+
+- name: install haveged - ubuntu
+  shell: dpkg --force-all -i {{ haveged_dir }}/*.deb
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    DEBIAN_PRIORITY: critical
+  when:
+    - os_name|lower == 'ubuntu'
+    - os_version == '18.04'
+  ignore_errors: true
+
+- name: install haveged - centos
+  shell: rpm --force -ivh {{ haveged_dir }}/*.rpm
+  when:
+    - os_name|lower == 'centos'
+    - os_version == '7.6'
+  ignore_errors: true
+
+- name: install unzip - ubuntu
+  shell: dpkg --force-all -i {{ unzip_dir }}/*.deb
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    DEBIAN_PRIORITY: critical
+  when:
+    - os_name|lower == 'ubuntu'
+    - os_version == '18.04'
+  ignore_errors: true
+
+- name: install unzip - centos
+  shell:  rpm --force -ivh {{ unzip_dir }}/*.rpm
+  when:
+    - os_name|lower == 'centos'
+    - os_version == '7.6'
+  ignore_errors: true

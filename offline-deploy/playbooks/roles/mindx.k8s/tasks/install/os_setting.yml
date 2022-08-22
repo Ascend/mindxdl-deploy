@@ -1,0 +1,11 @@
+- name: disable swap
+  shell: swapoff -a
+
+- name: set swap in fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    state: absent
+    regexp: '.*?swap.*?'
+
+- name: start bridge nf call iptables
+  shell: sysctl -w net.bridge.bridge-nf-call-iptables=1 && sysctl -w net.bridge.bridge-nf-call-ip6tables=1

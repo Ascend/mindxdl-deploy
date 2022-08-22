@@ -1,0 +1,74 @@
+- name: create log directories
+  file:
+    path: /var/log/mindx-dl
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: create log directories for "{{DL_USR}}"
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{DL_USR}}"
+    group: "{{DL_GRP}}"
+    mode: 0750
+  loop:
+    - /var/log/mindx-dl/hccl-controller
+    - /var/log/mindx-dl/volcano-controller
+    - /var/log/mindx-dl/volcano-scheduler
+  when:
+    - inventory_hostname in groups['master_backup'] or inventory_hostname in groups['master']
+
+- name: create volcano logrotate file
+  blockinfile:
+    path: /etc/logrotate.d/volcano
+    block: |
+      /var/log/mindx-dl/volcano-*/*.log{
+           daily
+           rotate 8
+           size 50M
+           compress
+           dateext
+           missingok
+           notifempty
+           copytruncate
+           create 0640 hwMindX hwMindX
+           sharedscripts
+           postrotate
+               chmod 640 /var/log/mindx-dl/volcano-*/*.log
+               chmod 440 /var/log/mindx-dl/volcano-*/*.log-*
+           endscript
+      }
+    state: present
+    create: yes
+    mode: 640
+    owner: root
+    group: root
+  when:
+    - inventory_hostname in groups['master_backup'] or inventory_hostname in groups['master']
+
+- name: create log directories for "{{DL_USR}}"
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{DL_USR}}"
+    group: "{{DL_GRP}}"
+    mode: 0750
+  loop:
+    - /var/log/mindx-dl/noded
+  when:
+    - inventory_hostname in groups['worker']
+
+- name: create log directories for root
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "root"
+    group: "root"
+    mode: 0750
+  loop:
+    - /var/log/mindx-dl/devicePlugin
+    - /var/log/mindx-dl/npu-exporter
+  when:
+    - inventory_hostname in groups['worker']

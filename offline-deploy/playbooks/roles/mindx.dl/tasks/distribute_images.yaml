@@ -1,0 +1,86 @@
+# 分发镜像
+- name: include vars
+  include_vars: ../defaults/main.yml
+
+# 在远端创建mindxdl目录
+- name: create mindxdl directory
+  file:
+    path: "{{mindxdl_dir}}/{{ansible_architecture}}"
+    state: directory
+    mode: 0750
+  when:
+    - ansible_connection != "local"
+
+- name: list mindxdl x86_64 images
+  shell: "cd {{mindxdl_dir}}/x86_64/ && ls *.tar || true"
+  register: x86_images
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
+
+- name: list mindxdl aarch64 images
+  shell: "cd {{mindxdl_dir}}/aarch64/ && ls *.tar || true"
+  register: aarch64_images
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
+
+# 复制x86镜像到其余master
+- name: copy x86_64 hccl-controller/volcano images to remote master_backup
+  copy:
+    src: "{{mindxdl_dir}}/x86_64/{{item}}"
+    dest: "{{mindxdl_dir}}/x86_64/"
+    mode: 0640
+    owner: "{{ansible_user_id}}"
+    group: "{{ansible_user_id}}"
+  loop: "{{x86_images.stdout_lines}}"
+  when:
+    - x86_images is defined and (x86_images.stdout_lines| length > 0)
+    - ansible_architecture == "x86_64"
+    - (HCCL in item or VOLCANO in item)
+    - inventory_hostname in groups['master_backup']
+
+# 复制aarch64镜像到其余master
+- name: copy aarch64 hccl-controller/volcano images to remote master_backup
+  copy:
+    src: "{{mindxdl_dir}}/aarch64/{{item}}"
+    dest: "{{mindxdl_dir}}/aarch64/"
+    mode: 0640
+    owner: "{{ansible_user_id}}"
+    group: "{{ansible_user_id}}"
+  loop: "{{aarch64_images.stdout_lines}}"
+  when:
+    - aarch64_images is defined and (aarch64_images.stdout_lines| length > 0)
+    - ansible_architecture == "aarch64"
+    - (HCCL in item or VOLCANO in item)
+    - inventory_hostname in groups['master_backup']
+
+# 复制x86镜像到其余worker
+- name: copy x86_64 noded/deviceplugin/npu-exporter images to remote worker
+  copy:
+    src: "{{mindxdl_dir}}/x86_64/{{item}}"
+    dest: "{{mindxdl_dir}}/x86_64/"
+    mode: 0640
+    owner: "{{ansible_user_id}}"
+    group: "{{ansible_user_id}}"
+  loop: "{{x86_images.stdout_lines}}"
+  when:
+    - x86_images.stdout_lines| length > 0
+    - ansible_connection != "local"
+    - ansible_architecture == "x86_64"
+    - (NODED in item or ASCEND_DEVICE_PLUGIN in item or NPU_EXPORTER in item)
+    - (inventory_hostname in groups['worker'] and inventory_hostname not in groups['other_build_image'])
+
+# 复制aarch64镜像到其余worker
+- name: copy aarch64 noded/deviceplugin/npu-exporter images to remote worker
+  copy:
+    src: "{{mindxdl_dir}}/aarch64/{{item}}"
+    dest: "{{mindxdl_dir}}/aarch64/"
+    mode: 0640
+    owner: "{{ansible_user_id}}"
+    group: "{{ansible_user_id}}"
+  loop: "{{aarch64_images.stdout_lines}}"
+  when:
+    - aarch64_images.stdout_lines| length > 0
+    - ansible_connection != "local"
+    - ansible_architecture == "aarch64"
+    - (NODED in item or ASCEND_DEVICE_PLUGIN in item or NPU_EXPORTER in item)
+    - (inventory_hostname in groups['worker'] and inventory_hostname not in groups['other_build_image'])

@@ -1,0 +1,36 @@
+---
+# 创建日志目录和用户hwMindX，以及namespace
+- hosts:
+    - master
+    - master_backup
+    - worker
+  tasks:
+    - include_tasks: roles/mindx.dl/tasks/create_user.yaml
+    - include_tasks: roles/mindx.dl/tasks/create_log_dir.yaml
+
+# 分发mindxdl安装包，并制作镜像
+- hosts:
+    - master
+    - other_build_image
+  tasks:
+    - include_tasks: roles/mindx.dl/tasks/distribute_soft_package.yaml
+    - include_tasks: roles/mindx.dl/tasks/build_collect_images.yaml
+
+# 从master节点分发mindxdl镜像，加载镜像，打标签
+- hosts:
+    - master
+    - master_backup
+    - worker
+  tasks:
+    - include_tasks: roles/mindx.dl/tasks/distribute_images.yaml
+    - include_tasks: roles/mindx.dl/tasks/load_image.yaml
+    - include_tasks: roles/mindx.dl/tasks/autolabel.yaml
+
+# 启动mindx dl
+- hosts:
+    - master
+  tasks:
+    - include_tasks: roles/mindx.dl/tasks/start.yaml
+
+
+

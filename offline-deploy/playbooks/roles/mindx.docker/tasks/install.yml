@@ -1,0 +1,23 @@
+- name: load docker install task
+  include_tasks: ubuntu_18.04.yml
+  when:
+    - os_name == 'Ubuntu'
+    - os_version == '18.04'
+
+- name: load docker install task
+  include_tasks: centos_7.6.yml
+  when:
+    - os_name == 'CentOS'
+    - os_version == '7.6'
+
+- name: config docker
+  template:
+    src: daemon.json.j2
+    dest: "/etc/docker/daemon.json"
+    mode: 0600
+
+- name: "restart docker"
+  systemd:
+    name: "docker"
+    enabled: true
+    state: restarted

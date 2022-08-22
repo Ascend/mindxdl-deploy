@@ -1,0 +1,9 @@
+---
+# install basic packages
+- hosts:
+    - master
+    - worker
+    - master_backup
+  tasks:
+  - include_tasks: roles/mindx.basic/tasks/main.yml
+

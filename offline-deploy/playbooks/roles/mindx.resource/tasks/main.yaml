@@ -1,0 +1,47 @@
+- name: create resource directory
+  file:
+    path: "{{resource_dir}}"
+    state: directory
+    mode: 0750
+  when:
+    - ansible_connection != "local"
+
+- name: archive on localhost
+  local_action:
+    module: archive
+    path: "{{resource_dir}}/{{ item }}"
+    dest: "{{resource_dir}}/{{ item }}.tar.gz"
+    mode: 0640
+  loop: "{{resource_list}}"
+  when:
+    - not item.endswith("tgz")
+    - no_copy_flag != "true"
+    - not (host_count == "1" and first_host == "localhost")
+  run_once: true
+
+# 复制通用包到远端并解压软件安装包
+- name: unarchive common on remote
+  ansible.builtin.unarchive:
+    src: "{{resource_dir}}/{{item}}.tar.gz"
+    dest: "{{resource_dir}}"
+    mode: 0750
+    copy: yes
+  loop: "{{resource_list}}"
+  when:
+    - item.startswith("linux")
+    - ansible_connection != "local"
+    - no_copy_flag != "true"
+    - ansible_architecture in item
+
+# 按照系统类型、版本、架构组合成包名 复制包到远端并解压
+- name: unarchive on remote
+  ansible.builtin.unarchive:
+    src: "{{resource_dir}}/{{item | lower}}_{{os_version}}_{{ansible_architecture}}.tar.gz"
+    dest: "{{resource_dir}}"
+    mode: 0750
+    copy: yes
+  loop: "{{ support_os }}"
+  when:
+    - ansible_connection != "local"
+    - no_copy_flag != "true"
+    - os_name == item

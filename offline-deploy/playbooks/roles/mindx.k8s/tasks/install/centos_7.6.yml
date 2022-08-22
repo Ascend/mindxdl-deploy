@@ -1,0 +1,8 @@
+- name: stop firewalld
+  systemd:
+    name: "firewalld"
+    enabled: no
+    state: stopped
+
+- name: install sys
+  shell: rpm -i {{ sys_dir }}/*.rpm --nodeps --force

@@ -1,0 +1,24 @@
+- name: list images
+  shell: "cd {{mindxdl_dir}}/{{ansible_architecture}}/ && ls *.tar"
+  register: image_items
+
+- name: load hccl-controller/volcano image on master_backup
+  shell:
+    cmd:
+      docker load -i {{mindxdl_dir}}/{{ansible_architecture}}/{{ item }};
+  loop: "{{ image_items.stdout_lines }}"
+  when:
+    - image_items.stdout_lines| length > 0
+    - (HCCL in item or VOLCANO in item)
+    - (inventory_hostname in groups['master_backup'] and inventory_hostname not in groups['other_build_image'])
+
+- name: load noded/deviceplugin/npu-exporter image on worker
+  shell:
+    cmd:
+      docker load -i {{mindxdl_dir}}/{{ansible_architecture}}/{{ item }};
+  loop: "{{ image_items.stdout_lines }}"
+  when:
+    - image_items.stdout_lines| length > 0
+    - ansible_connection != "local"
+    - (NODED in item or ASCEND_DEVICE_PLUGIN in item or NPU_EXPORTER in item)
+    - (inventory_hostname in groups['worker'] and inventory_hostname not in groups['other_build_image'])
