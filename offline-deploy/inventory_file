@@ -1,0 +1,37 @@
+# 以下为全局变量配置区域
+[all:vars]
+
+# k8s apiserver的地址
+K8S_API_SERVER_IP=""
+# 不使用多master场景不用配置；多master场景下配置的虚拟的IP，kube_vip需跟k8s集群节点ip在同一子网，且为闲置、未被他人使用的ip
+KUBE_VIP=""
+
+# k8s集群使用的IP网段，如果与服务器IP网段重合，需要修改下面的值为其他私有网段。如：10.0.0.0/16
+POD_NETWORK_CIDR="192.168.0.0/16"
+
+# 需要安装的组件，支持安装mindxdl,docker,k8s以英文逗号分隔
+INSTALL_COMPONENT="mindxdl,docker,k8s"
+
+
+# 以下为主机变量配置区域
+
+# 1. k8s要求集群内节点(master、worker、master_backup）的hostname不一样，因此
+#    建议执行安装前设置所有设备使用不同的hostname。如果未统一设置且存在相同hostname的设备，
+#    那么可在本文件中主机组中设置set_hostname主机变量，set_hostname的值会作为作为K8s集群中的NodeName。
+#    set_hostname的值需满足k8s和ansible的格式要求，建议用“[a-z]-[0-9]”的格式，如“worker-1”,配置示例：set_hostname=master-1
+# 2. 在多master场景下，需要在每台master主机后增加变量kube_interface，用来指明每台主机使用虚拟IP的网卡名（每台服务器的网卡名可能不同），选择网卡需要保证主机之间网络能够互通
+#
+# 示例：
+# [master]
+# localhost ansible_connection=local set_hostname=master-1 kube_interface=enp125s0f0
+
+[master]
+localhost ansible_connection=local
+
+[worker]
+
+# 多master场景下，其他master节点的主机
+[master_backup]
+
+# k8s集群中存在与master节点架构不一致的服务器时，并且该节点(或多个异构节点)会部署MindX DL，任选其中一台异构节点配置到如下主机组即可
+[other_build_image]

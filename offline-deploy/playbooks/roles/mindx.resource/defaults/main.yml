@@ -1,0 +1,5 @@
+---
+# defaults file for mindx.resource
+host_count: "{{ ansible_play_hosts_all | length }}"
+first_host: "{{ ansible_play_hosts_all[0] }}"
+no_copy_flag: "{{ NO_COPY | default('false') }}"

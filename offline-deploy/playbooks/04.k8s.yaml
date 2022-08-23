@@ -1,0 +1,53 @@
+---
+# install k8s
+- hosts:
+    - master
+    - worker
+    - master_backup
+  vars_files:
+    - roles/mindx.k8s/defaults/main.yml
+    - roles/mindx.k8s/vars/main.yml
+  tasks:
+    - include_tasks: roles/mindx.k8s/tasks/install/os_setting.yml
+    - include_tasks: roles/mindx.k8s/tasks/install/install.yml
+
+# init kubevip
+- hosts:
+    - master
+  vars_files:
+    - roles/mindx.k8s/defaults/main.yml
+    - roles/mindx.k8s/vars/main.yml
+  tasks:
+    - include_tasks: roles/mindx.k8s/tasks/kubevip/main.yml
+      when:
+        - "'master_backup' in groups"
+        - "groups['master_backup'] | length != 0"
+
+# k8s master init
+- hosts: master
+  vars_files:
+    - roles/mindx.k8s/defaults/main.yml
+    - roles/mindx.k8s/vars/main.yml
+  tasks:
+    - include_tasks: roles/mindx.k8s/tasks/master/main.yml
+
+# master_backup join k8s
+- hosts: master_backup
+  vars_files:
+    - roles/mindx.k8s/defaults/main.yml
+    - roles/mindx.k8s/vars/main.yml
+  tasks:
+    - include_tasks: roles/mindx.k8s/tasks/master_backup/main.yml
+    - include_tasks: roles/mindx.k8s/tasks/kubevip/main.yml
+      when:
+        - "'master_backup' in groups"
+        - "groups['master_backup'] | length != 0"
+
+# worker join k8s
+- hosts: worker
+  vars_files:
+    - roles/mindx.k8s/defaults/main.yml
+    - roles/mindx.k8s/vars/main.yml
+  tasks:
+    - include_tasks: roles/mindx.k8s/tasks/worker/main.yml
+      when: ansible_connection != "local" and inventory_hostname not in groups['master_backup']

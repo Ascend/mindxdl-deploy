@@ -1,0 +1,14 @@
+# mindxdl组件在k8s中使用的命名空间，请勿修改
+K8S_NAMESPACE: "mindx-dl"
+
+# mindx user请勿修改
+MINDX_USER: hwMindX
+MINDX_USER_ID: 9000
+MINDX_GROUP: hwMindX
+MINDX_GROUP_ID: 9000
+
+# HwHiAiUser group请勿修改
+HIAI_GROUP: HwHiAiUser
+
+# 离线资源包路径
+resource_dir: "~/resources"

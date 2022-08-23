@@ -1,0 +1,6 @@
+os_dict:
+  centos: "CentOS"
+  ubuntu: "Ubuntu"
+os_version_dict:
+  centos:
+    "7": "7.6"

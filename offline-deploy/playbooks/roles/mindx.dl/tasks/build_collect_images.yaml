@@ -1,0 +1,83 @@
+# 制作mindx dl镜像
+- name: list mindxdl component dir
+  command: "ls {{mindxdl_dir}}/{{ansible_architecture}}"
+  register: component_list
+
+# 制作 noded npu-exporter deviceplugin hccl-controller镜像
+- name: build mindxdl image
+  shell:
+    cmd:
+      img="$(cd {{mindxdl_dir}}/{{ansible_architecture}}/{{item}} && cat $(find . -name "*.yaml" -type f | grep -v "without" | head -n 1) |grep 'image:')";
+      img_tag="$(echo "${img#*image:}" | sed 's/[ \s\t]*//')";
+      cd {{mindxdl_dir}}/{{ansible_architecture}}/{{item}} && docker build -t "$img_tag" .;
+      cd {{mindxdl_dir}}/{{ansible_architecture}} && docker save -o "$(echo "$img_tag" | awk -F":" '{print $1}')_{{ansible_architecture}}.tar" "$img_tag";
+  loop: "{{component_list.stdout_lines}}"
+  when:
+    - not item.endswith("tar")
+    - item.count('volcano') == 0
+
+# 制作volcano镜像
+- name: build volcano image
+  shell:
+    cmd:
+      sche_img="$(cd {{mindxdl_dir}}/{{ansible_architecture}}/{{item}} && cat $(find . -name "*.yaml" -type f | grep -v "without" | head -n 1) |grep 'image:' | grep "scheduler")";
+      sche_img_tag="$(echo "${sche_img#*image:}" | sed 's/[ \s\t]*//')";
+      cd {{mindxdl_dir}}/{{ansible_architecture}}/{{item}} && docker build -t "$sche_img_tag" -f Dockerfile-scheduler .;
+      cd {{mindxdl_dir}}/{{ansible_architecture}} && docker save -o "{{VOLCANO_SCHEDULER_PREFIX}}_{{ansible_architecture}}.tar" "$sche_img_tag";
+
+      ctr_img="$(cd {{mindxdl_dir}}/{{ansible_architecture}}/{{item}} && cat $(find . -name "*.yaml" -type f | grep -v "without" | head -n 1) |grep 'image:' | grep "controller")";
+      ctr_img_tag="$(echo "${ctr_img#*image:}" | sed 's/[ \s\t]*//')";
+      cd {{mindxdl_dir}}/{{ansible_architecture}}/{{item}} && docker build -t "$ctr_img_tag" -f Dockerfile-controller .;
+      cd {{mindxdl_dir}}/{{ansible_architecture}} && docker save -o "{{VOLCANO_CONTROLLER_PREFIX}}_{{ansible_architecture}}.tar" "$ctr_img_tag";
+  loop: "{{component_list.stdout_lines}}"
+  when:
+    - not item.endswith("tar")
+    - item.count('volcano') != 0
+
+# 拷贝所有的yaml到固定目录下
+- name: create yamls dir
+  file:
+    path: "{{mindxdl_dir}}/{{ansible_architecture}}/yamls"
+    state: directory
+    mode: 0750
+  when:
+    - ansible_connection == "local"
+
+- name: copy yamls
+  shell:
+    cmd:
+      cd {{mindxdl_dir}}/{{ansible_architecture}}/{{item}} && cp -f *.yaml {{mindxdl_dir}}/{{ansible_architecture}}/yamls/;
+  loop: "{{component_list.stdout_lines}}"
+  when:
+    - ansible_connection == "local"
+    - not item.endswith("tar")
+    - item.count("yaml") == 0
+
+
+# 在master节点创建与master节点架构不同的文件目录，用来保存异构服务的镜像
+- name: create heterogeneous folder
+  file:
+    path: "{{mindxdl_dir}}/{{ HETEROGENEOUS_DIR }}"
+    state: directory
+    mode: 0750
+  when:
+    - ansible_connection == "local"
+
+# 列出远端异构服务器制作的镜像
+- name: list heterogeneous mindxdl component dir
+  command: "ls {{mindxdl_dir}}/{{HETEROGENEOUS_DIR}}"
+  register: heterogeneous_component_list
+
+# 从异构服务器上拷贝mindx dl镜像到master节点
+- name: fetch heterogeneous mindxdl images
+  fetch:
+    dest: "{{mindxdl_dir}}/{{ HETEROGENEOUS_DIR }}/"
+    src: "{{mindxdl_dir}}/{{ HETEROGENEOUS_DIR }}/{{item}}"
+    mode: 0640
+    flat: true
+    owner: "{{ansible_user_id}}"
+    group: "{{ansible_user_id}}"
+  loop: "{{heterogeneous_component_list.stdout_lines}}"
+  when:
+    - ansible_connection != "local"
+    - item.endswith("tar")
