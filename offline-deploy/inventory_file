@@ -1,8 +1,5 @@
 # 以下为全局变量配置区域
 [all:vars]
-
-# k8s apiserver的地址
-K8S_API_SERVER_IP=""
 # 不使用多master场景不用配置；多master场景下配置的虚拟的IP，kube_vip需跟k8s集群节点ip在同一子网，且为闲置、未被他人使用的ip
 KUBE_VIP=""
 
@@ -23,7 +20,7 @@ INSTALL_COMPONENT="mindxdl,docker,k8s"
 #
 # 示例：
 # [master]
-# localhost ansible_connection=local set_hostname=master-1 kube_interface=enp125s0f0
+# localhost ansible_connection=local set_hostname=master-1 kube_interface=enp125s0f0 k8s_api_server_ip=192.168.255.11
 
 [master]
 localhost ansible_connection=local

@@ -31,9 +31,9 @@
 
 - name: set apiserver_advertise_address
   set_fact:
-    addr_cmd: "--apiserver-advertise-address={{ K8S_API_SERVER_IP }}"
+    addr_cmd: "--apiserver-advertise-address={{ k8s_api_server_ip }}"
   when:
-    - K8S_API_SERVER_IP != ""
+    - k8s_api_server_ip != ""
 
 - name: set control-plane-endpoint
   set_fact:

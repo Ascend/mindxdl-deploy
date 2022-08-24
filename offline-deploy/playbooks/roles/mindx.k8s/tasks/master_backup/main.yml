@@ -48,6 +48,12 @@
   run_once: true
   register: cert_cmd
 
+- name: set master_backup apiserver_advertise_address
+  set_fact:
+    addr_cmd: "--apiserver-advertise-address={{ k8s_api_server_ip }}"
+  when:
+    - k8s_api_server_ip != ""
+
 - name: load k8s images on master
   shell: "docker load -i {{ item }}"
   with_fileglob:
@@ -58,7 +64,7 @@
     - "{{ k8s_image }}/pause*.tar.gz"
 
 - name: join cluster
-  shell: "{{ token_cmd.stdout }} --control-plane --certificate-key {{ cert_cmd.stdout.split('key:\n')[-1] }} --node-name={{NODE_NAME}}"
+  shell: "{{ token_cmd.stdout }} {{ addr_cmd }} --control-plane --certificate-key {{ cert_cmd.stdout.split('key:\n')[-1] }} --node-name={{NODE_NAME}}"
   environment:
     http_proxy: ""
     https_proxy: ""

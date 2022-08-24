@@ -3879,7 +3879,7 @@ spec:
               value: "{{ POD_NETWORK_CIDR }}"
             # Disable file logging so `kubectl logs` works.
             - name: IP_AUTODETECTION_METHOD
-              value: "can-reach={{ K8S_API_SERVER_IP }}"
+              value: "can-reach={{ k8s_api_server_ip }}"
             - name: CALICO_DISABLE_FILE_LOGGING
               value: "true"
             # Set Felix endpoint to host default action to ACCEPT.
