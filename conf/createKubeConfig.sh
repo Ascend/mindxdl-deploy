@@ -114,6 +114,9 @@ rules:
   - apiGroups: ["batch.volcano.sh"]
     resources: ["jobs"]
     verbs: ["get", "list", "create", "watch", "delete"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get"]
 EOF
 }
 
