@@ -162,7 +162,7 @@ rules:
     verbs: ["get","patch"]
   - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["get", "list","watch"]
+    verbs: ["get", "create", "delete", "update"]
 EOF
 }
 
