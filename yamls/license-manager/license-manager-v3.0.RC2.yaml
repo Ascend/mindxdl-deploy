@@ -82,9 +82,12 @@ spec:
         - name: keystore-kmc
           hostPath:
             path: /etc/mindx-dl/kmc_primary_store
+            type: Directory
         - name: keystore-kmcfg
           hostPath:
             path: /etc/mindx-dl/.config
+            type: Directory
         - name: keystore-license
           hostPath:
             path: /etc/mindx-dl/license-manager
+            type: Directory
