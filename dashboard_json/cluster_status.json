@@ -178,7 +178,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "count(up{job=\"kubernetes-nodes\"})",
+          "expr": "sum(kube_node_status_condition{condition=\"Ready\"})",
           "instant": true,
           "interval": "",
           "legendFormat": "集群总节点数",
@@ -186,7 +186,7 @@
         },
         {
           "exemplar": true,
-          "expr": "count(kubelet_node_name)",
+          "expr": "sum(kube_node_status_condition{condition=\"Ready\",status=\"true\"})",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -456,5 +456,5 @@
   "timezone": "",
   "title": "集群状态",
   "uid": "Bb7S5M5nk",
-  "version": 10
+  "version": 5
 }
