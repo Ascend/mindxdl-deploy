@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: resnetinfer1-1-deploy
+  name: resnetinfer1-1-deploy-1usoc
   labels:
       app: infers
 spec:
@@ -19,6 +19,7 @@ spec:
       schedulerName: volcano 
       nodeSelector:
         host-arch: huawei-arm           # Select the cpu arch. If the cpu arch is arm, change it to huawei-arm.
+        servertype: soc                 # Cannot be delete. And node should be labeled with this label.
       containers:
       - image: ubuntu-infer:v1                  # Inference image name
         imagePullPolicy: IfNotPresent
