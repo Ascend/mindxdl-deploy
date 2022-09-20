@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resnetinfer1-1-deploy
+  labels:
+      app: infers
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: infers
+  template:
+    metadata: 
+      labels:
+         app: infers
+         host-arch: huawei-arm         # Select the cpu arch. If the cpu arch is arm, change it to huawei-arm.
+         fault-scheduling: grace       # Add this Labels, will reschedule pods in the event of chip failures.
+    spec:
+      schedulerName: volcano 
+      nodeSelector:
+        host-arch: huawei-arm           # Select the cpu arch. If the cpu arch is arm, change it to huawei-arm.
+      containers:
+      - image: ubuntu-infer:v1                  # Inference image name
+        imagePullPolicy: IfNotPresent
+        name: resnet50infer
+        resources:
+          requests:
+            huawei.com/Ascend310P: 1             # Number of the Ascend 310 Processors. If the Ascend 310P Processor is used, change it to huawei.com/Ascend310P.
+          limits:
+            huawei.com/Ascend310P: 1             # The value should be the same as that of requests . If the Ascend 310P Processor is used, change it to huawei.com/Ascend310P.
+        volumeMounts:
+        - name: slog
+          mountPath: /var/log/npu/conf/slog/    #Log path
+        - name: localtime                       #The container time must be the same as the host time.
+          mountPath: /etc/localtime
+        - name: dmp
+          mountPath: /var/dmp_daemon
+        - name: slogd
+          mountPath: /var/slogd
+        - name: hbasic
+          mountPath: /etc/hdcBasic.cfg
+        - name: sys
+          mountPath: /sys
+        - name: sys-version
+          mountPath: /etc/sys_version.conf
+        - name: hdc
+          mountPath: /var/hdc_ppc
+        - name: aicpu
+          mountPath: /usr/lib64/aicpu_kernels
+        - name: tid
+          mountPath: /var/add_aicpu_tid_to_tasks.sh
+      volumes:
+      - name: slog
+        hostPath:
+          path: /var/log/npu/conf/slog/
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: dmp
+        hostPath:
+          path: /var/dmp_daemon
+      - name: slogd
+        hostPath:
+          path: /var/slogd
+      - name: hbasic
+        hostPath:
+          path: /etc/hdcBasic.cfg
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: sys-version
+        hostPath:
+          path: /etc/sys_version.conf
+      - name: hdc
+        hostPath:
+          path: /var/hdc_ppc
+      - name: aicpu
+        hostPath:
+          path: /usr/lib64/aicpu_kernels
+      - name: tid
+        hostPath:
+          path: /var/add_aicpu_tid_to_tasks.sh
