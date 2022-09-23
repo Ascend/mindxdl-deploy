@@ -1,6 +1,18 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-#   Copyright (C)  2022. Huawei Technologies Co., Ltd. All rights reserved.
+# coding: utf-8
+
+# Copyright(C) 2022. Huawei Technologies Co.,Ltd. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import os
 import glob
 import re
@@ -11,9 +23,9 @@ from mindspore import Model
 from mindspore import load_param_into_net, load_checkpoint
 from mindspore import restore_group_info_list
 from mindspore.train.callback import Callback, ModelCheckpoint
+import mindspore.communication.management as D
 
 from mindx_elastic.logger.log import run_log, srv_log, is_running_over_modelarts_platform
-from mindx_elastic.utils.utils import get_device_id
 from mindx_elastic.terminating_message import ExceptionCheckpoint
 from mindx_elastic.ms_wrapper.wrapper_function import _save_final_ckpt
 from mindx_elastic.restore_module import RestoreManager
@@ -34,7 +46,7 @@ class ElasticModel:
         # check training platform is ModelArts Or MindXDL
         self._is_ma_platform = is_running_over_modelarts_platform()
 
-        self._device_id = get_device_id()
+        self._device_id = self._get_device_id()
 
     def __hack(self, callbacks=Optional[List[Callback]]) -> None:
         """
@@ -322,6 +334,13 @@ class ElasticModel:
             run_log.info("Decorator of mindspore.model._train has benn replaced.")
         except ValueError as exp:
             run_log.error(f"Failed to replace the decorator of mindspore.model._train, msg: {exp}")
+
+    def _get_device_id(self) -> int:
+        """
+        Get device id used for current training task
+        """
+        D.init()
+        return D.get_rank()
 
     def train(self, epoch, train_dateset, callbacks=None, dataset_sink_mode=True, sink_size=-1):
         """
