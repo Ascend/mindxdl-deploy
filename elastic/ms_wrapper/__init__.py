@@ -1,4 +1,6 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# coding: utf-8
+
+# Copyright(C) 2022. Huawei Technologies Co.,Ltd. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,16 +13,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ============================================================================
-import sys
-
-from k8s_client.config_map import ConfigMap
-
-if __name__ == "__main__":
-    config_map_handler = ConfigMap()
-    fault_ranks_timestamp_flag = \
-        config_map_handler.get_fault_ranks_timestamp(namespace="vcjob")
-    if fault_ranks_timestamp_flag:
-        sys.exit(0)
-    else:
-        sys.exit(1)
