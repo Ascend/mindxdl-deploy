@@ -34,7 +34,7 @@ spec:
       hostNetwork: true
       schedulerName: volcano         # Use the Volcano scheduler to schedule jobs.
       nodeSelector:
-        host-arch: huawei-x86        # Configure the label based on the actual job.
+        host-arch: huawei-arm        # Configure the label based on the actual job.
       containers:
         - image: torch:b035          # Training framework image, which can be modified.
           imagePullPolicy: IfNotPresent
