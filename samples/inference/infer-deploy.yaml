@@ -13,13 +13,13 @@ spec:
     metadata: 
       labels:
          app: infers
-         host-arch: huawei-x86         # Select the cpu arch. If the cpu arch is arm, change it to huawei-arm.
+         host-arch: huawei-arm         # Select the os arch. If the os arch is arm, change it to huawei-x86.
          npu-310-strategy: card        # Select the 310 scheduling policy. If choose to schedule by chip, change it to chip.
          fault-scheduling: grace       # Add this Labels, will reschedule pods in the event of chip failures.
     spec:
       schedulerName: volcano
       nodeSelector:
-        host-arch: huawei-x86           # Select the cpu arch. If the cpu arch is arm, change it to huawei-arm.
+        host-arch: huawei-arm           # Select the os arch. If the os arch is arm, change it to huawei-x86.
       containers:
       - image: ubuntu-infer:v1                  # Inference image name
         imagePullPolicy: IfNotPresent
