@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       nodeSelector:
-        accelerator: huawei-Ascend310           # Select the inference processor node. If the Ascend 310P Processor is used, change it to huawei-Ascend310P.
+        host-arch: huawei-arm                   # Select the os arch. If the os arch is arm, change it to huawei-x86.
       containers:
       - image: ubuntu-infer:v1                  # Inference image name
         imagePullPolicy: IfNotPresent

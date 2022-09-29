@@ -6,8 +6,8 @@ spec:
   template:
     spec:
       nodeSelector:
-        accelerator: huawei-Ascend310P           # Select the inference processor node. If the Ascend 310P Processor is used, change it to huawei-Ascend310P.
-        servertype: soc                 # Cannot be delete. And node should be labeled with this label.
+        host-arch: huawei-arm
+        servertype: soc                         # Cannot be delete. And node should be labeled with this label.
       containers:
       - image: ubuntu-infer:v1                  # Inference image name
         imagePullPolicy: IfNotPresent

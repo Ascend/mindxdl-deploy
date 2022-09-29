@@ -53,14 +53,14 @@ spec:
           - "/bin/bash"
           - "-c"
           # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
-          - "cd /job/code/ResNet50_for_TensorFlow_1.7_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_TensorFlow_1.7_code/ /job/output/logs src/mains/res50.py --config_file=res50_256bs_8p --max_train_steps=4000 --iterations_per_loop=100 --debug=True --eval=False --data_path=/job/data/resnet50/imagenet_TF"
+          - "cd /job/code/ResNet50_for_TensorFlow_1.7_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_TensorFlow_1.7_code/ /job/output/logs src/mains/res50.py --config_file=res50_256bs_8p --max_train_steps=1000 --iterations_per_loop=100 --debug=True --eval=False --data_path=/job/data/resnet50/imagenet_TF"
           #args: [ "while true; do sleep 30000; done;"  ]      # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                                # The command is 'kubectl exec -it -n {namespace} {podname} bash'
           resources:
             requests:
-              huawei.com/Ascend910: 1             # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
+              huawei.com/Ascend910: 8             # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
             limits:
-              huawei.com/Ascend910: 1             # The value must be consistent with that in requests.
+              huawei.com/Ascend910: 8             # The value must be consistent with that in requests.
           volumeMounts:
           - name: ascend-910-config
             mountPath: /user/serverid/devindex/config

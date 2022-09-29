@@ -59,14 +59,14 @@ spec:
           - "/bin/bash"
           - "-c"
           # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
-          - "cd /job/code/ResNet50_for_MindSpore_1.4_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_MindSpore_1.4_code/ /job/output/logs train.py --net=resnet50 --dataset=imagenet2012 --run_distribute=True --device_num=8 --dataset_path=/job/data/imagenet/train"
+          - "cd /job/code/ResNet50_for_MindSpore_1.4_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_MindSpore_1.4_code/ /job/output/logs train.py --net=resnet50 --dataset=imagenet2012 --device_num=1 --dataset_path=/job/data/imagenet/train"
           #args: [ "while true; do sleep 30000; done;"  ]     # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                               # The command is 'kubectl exec -it -n {namespace} {podname} bash'
           resources:
             requests:
-              huawei.com/Ascend910: 8                 # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
+              huawei.com/Ascend910: 1                 # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
             limits:
-              huawei.com/Ascend910: 8                 # The value must be consistent with that in requests.
+              huawei.com/Ascend910: 1                 # The value must be consistent with that in requests.
           volumeMounts:
           - name: ascend-910-config
             mountPath: /user/serverid/devindex/config

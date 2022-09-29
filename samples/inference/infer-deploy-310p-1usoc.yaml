@@ -13,12 +13,12 @@ spec:
     metadata: 
       labels:
          app: infers
-         host-arch: huawei-arm         # Select the cpu arch. If the cpu arch is arm, change it to huawei-arm.
+         host-arch: huawei-arm
          fault-scheduling: grace       # Add this Labels, will reschedule pods in the event of chip failures.
     spec:
       schedulerName: volcano 
       nodeSelector:
-        host-arch: huawei-arm           # Select the cpu arch. If the cpu arch is arm, change it to huawei-arm.
+        host-arch: huawei-arm
         servertype: soc                 # Cannot be delete. And node should be labeled with this label.
       containers:
       - image: ubuntu-infer:v1                  # Inference image name
