@@ -87,11 +87,11 @@ spec:
       - name: data
         nfs:
           server: 127.0.0.1
-          path: "/data/atlas_dls/public/dataset/dataset_MS"  # Configure the path of the training set.
+          path: "/data/atlas_dls/public/dataset"             # Configure the path of the training set.
       - name: output
         nfs:
           server: 127.0.0.1
-          path: "/data/atlas_dls/output/"           # Configure the path for saving the configuration model, which is related to the script.
+          path: "/data/atlas_dls/output/"                    # Configure the path for saving the configuration model, which is related to the script.
       - name: ascend-driver
         hostPath:
           path: /usr/local/Ascend/driver                     # Configure the NPU driver and mount it to Docker.
