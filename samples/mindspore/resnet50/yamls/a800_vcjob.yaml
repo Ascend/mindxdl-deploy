@@ -10,6 +10,7 @@ data:
     {
         "status":"initializing"
     }
+  checkCode: ""
 ---
 apiVersion: batch.volcano.sh/v1alpha1
 kind: Job
