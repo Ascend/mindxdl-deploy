@@ -15,7 +15,7 @@ export PYTHONUNBUFFERED=1
 
 # use utils.sh env and functions
 source utils.sh
-echo $@ |grep -q -E '^[ 0-9a-zA-Z./:_=-]*$'
+echo $@ |grep -q -E '^[ 0-9a-zA-Z,./:_=-]*$'
 ret=$?
 if [ "${ret}" -ne 0 ]; then
   echo "params error!"
@@ -155,10 +155,11 @@ function get_env_for_pytorch_multi_node_job() {
   export MASTER_ADDR=${first_server_ip}
   export WORLD_SIZE=${server_count}
   export RANK=${server_id}
-  set_env
 }
 
 DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
+# set training env
+set_env
 
 # 单节点训练场景
 if [[ "${server_count}" -eq 1 ]]; then
