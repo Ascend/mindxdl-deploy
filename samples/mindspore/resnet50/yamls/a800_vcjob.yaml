@@ -10,6 +10,17 @@ data:
     {
         "status":"initializing"
     }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fault-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
+  namespace: vcjob                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
+data:
+  fault-npus: |
+    {
+        "status":"initializing"
+    }
   checkCode: ""
 ---
 apiVersion: batch.volcano.sh/v1alpha1
