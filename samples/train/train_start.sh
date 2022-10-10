@@ -158,7 +158,7 @@ function get_env_for_pytorch_multi_node_job() {
 }
 
 function check_return_code() {
-    if [[ $? -eq 0 ]]; then
+    if [[ $? -ne 0 ]]; then
       logger "running job failed." | tee ${log_url}
       exit 1
     fi
@@ -232,8 +232,10 @@ if [[ "${server_count}" -ge 1 ]]; then
       echo "start training for rank ${RANK_ID}, device ${DEVICE_ID}"
       if [ "${i}" -eq 0 ]; then
           ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} && tee ${log_url}
+          check_return_code
           if [[ $@ =~ need_freeze ]]; then
             ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} && tee ${log_url}
+            check_return_code
           fi
       else
           ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> ${log_url} &
