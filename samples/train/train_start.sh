@@ -157,6 +157,13 @@ function get_env_for_pytorch_multi_node_job() {
   export RANK=${server_id}
 }
 
+function check_return_code() {
+    if [[ $? -ne 0 ]]; then
+      logger "running job failed." | tee ${log_url}
+      exit 1
+    fi
+}
+
 DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
 # set training env
 set_env
@@ -166,9 +173,11 @@ if [[ "${server_count}" -eq 1 ]]; then
   server_id=0
   if [ "${device_count}" -eq 1 ]; then
     get_env_for_1p_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 | tee ${log_url}
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${log_url}
+    check_return_code
     if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 | tee ${log_url}
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${log_url}
+      check_return_code
     fi
     chmod 440 ${log_url}
     exit 0
@@ -187,9 +196,11 @@ if [[ "${server_count}" -ge 1 ]]; then
   logger "server id is: ""${server_id}"
   if [ "${framework}" == "PyTorch" ]; then
     get_env_for_pytorch_multi_node_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK}| tee ${log_url}
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
+    check_return_code
     if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK}| tee ${log_url}
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
+      check_return_code
     fi
   elif [ "${framework}" == "Tensorflow" ]; then
     # CPU核心数
@@ -203,9 +214,11 @@ if [[ "${server_count}" -ge 1 ]]; then
       # 设置绑定范围，如:0-11
       core_range="$((i*${core_num}/8))-$(((i+1)*${core_num}/8-1))"
       if [ "${i}" -eq 0 ]; then
-          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} | tee ${log_url}
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} && tee ${log_url}
+          check_return_code
           if [[ $@ =~ need_freeze ]]; then
-            taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee ${log_url}
+            taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} && tee ${log_url}
+            check_return_code
           fi
       else
           taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> ${log_url} &
@@ -218,9 +231,11 @@ if [[ "${server_count}" -ge 1 ]]; then
       get_env_for_multi_card_job
       echo "start training for rank ${RANK_ID}, device ${DEVICE_ID}"
       if [ "${i}" -eq 0 ]; then
-          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} | tee ${log_url}
+          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} && tee ${log_url}
+          check_return_code
           if [[ $@ =~ need_freeze ]]; then
-            ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} | tee ${log_url}
+            ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} && tee ${log_url}
+            check_return_code
           fi
       else
           ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> ${log_url} &
