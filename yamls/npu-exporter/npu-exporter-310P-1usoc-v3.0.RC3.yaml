@@ -111,6 +111,9 @@ spec:
           - name: hbasic
             mountPath: /etc/hdcBasic.cfg
             readOnly: true
+          - name: slogconf
+            mountPath: /var/log/npu/conf/slog/slog.conf
+            readOnly: true
       volumes:
         - name: log-npu-exporter
           hostPath:
@@ -160,4 +163,8 @@ spec:
         - name: hbasic
           hostPath:
             path: /etc/hdcBasic.cfg
+            type: File
+        - name: slogconf
+          hostPath:
+            path: /var/log/npu/conf/slog/slog.conf
             type: File

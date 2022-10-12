@@ -12,19 +12,22 @@ fi
 umask 027
 
 echo -e "[INFO]\t $(date +"%F %T:%N")\t create driver's related directory"
-mkdir -p /var/dmp
-mkdir -p /home/drv/hdc_ppc
-mkdir -p /usr/slog
+mkdir -m 750 /var/driver -m 750 /var/dmp -m 750 /usr/slog -p -m 750 /home/drv/hdc_ppc
 
-export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/add-ons:/usr/local/Ascend/driver/lib64:/usr/local/dcmi
-export TMOUT=0
+echo -e "[INFO]\t $(date +"%F %T:%N")\t modify owner and permission"
+chown HwDmUser:HwDmUser /var/dmp
+chown HwHiAiUser:HwHiAiUser /var/driver
+chown HwHiAiUser:HwHiAiUser /home/drv/hdc_ppc
+chown HwHiAiUser:HwHiAiUser /usr/slog
+
 # log process run in background
 echo -e "[INFO]\t $(date +"%F %T:%N")\t start slogd server in background"
-/var/slogd &
+su - HwHiAiUser -c "export LD_LIBRARY_PATH=/usr/local/Ascend/driver/lib64/ && /var/slogd &"
 echo -e "[INFO]\t $(date +"%F %T:%N")\t start dmp_daemon server in background"
 # dcmi interface process run in background
-/var/dmp_daemon -I -U 8087 &
+su - HwDmUser -c "export LD_LIBRARY_PATH=/usr/local/Ascend/driver/lib64/ && /var/dmp_daemon -I -M -U 8087 &"
 
+export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/add-ons:/usr/local/Ascend/driver/lib64:/usr/local/dcmi
 echo -e "[INFO]\t $(date +"%F %T:%N")\t start ascend device plugin server"
 /usr/local/bin/device-plugin -useAscendDocker=true -volcanoType=true -presetVirtualDevice=true -logFile=/var/log/mindx-dl/devicePlugin/devicePlugin.log -logLevel=0
 
