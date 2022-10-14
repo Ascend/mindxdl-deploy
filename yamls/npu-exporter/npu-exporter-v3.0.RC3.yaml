@@ -57,7 +57,7 @@ spec:
         workerselector: dls-worker-node
       containers:
       - name: npu-exporter
-        image: npu-exporter:v3.0.RC2
+        image: npu-exporter:v3.0.RC3
         resources:
           requests:
               memory: 1000Mi
