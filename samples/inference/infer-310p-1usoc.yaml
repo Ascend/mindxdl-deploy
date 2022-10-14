@@ -14,12 +14,15 @@ spec:
         name: resnet50infer
         resources:
           requests:
-            huawei.com/Ascend310P: 1             # Number of the Ascend 310 Processors. If the Ascend 310P Processor is used, change it to huawei.com/Ascend310P.
+            huawei.com/Ascend310P: 1             # Number of the Ascend 310P Processors.
           limits:
-            huawei.com/Ascend310P: 1             # The value should be the same as that of requests . If the Ascend 310P Processor is used, change it to huawei.com/Ascend310P.
+            huawei.com/Ascend310P: 1             # The value should be the same as that of requests .
         volumeMounts:
+        - name: hiai-driver
+          mountPath: /usr/local/Ascend/driver
+          readOnly: true
         - name: slog
-          mountPath: /var/log/npu/conf/slog/    #Log path
+          mountPath: /var/log/npu/conf/slog/slog.conf
         - name: localtime                       #The container time must be the same as the host time.
           mountPath: /etc/localtime
         - name: dmp
@@ -28,20 +31,19 @@ spec:
           mountPath: /var/slogd
         - name: hbasic
           mountPath: /etc/hdcBasic.cfg
-        - name: sys
-          mountPath: /sys
         - name: sys-version
           mountPath: /etc/sys_version.conf
-        - name: hdc
-          mountPath: /var/hdc_ppc
         - name: aicpu
           mountPath: /usr/lib64/aicpu_kernels
-        - name: tid
-          mountPath: /var/add_aicpu_tid_to_tasks.sh
+        - name: tfso
+          mountPath: /usr/lib64/libtensorflow.so
       volumes:
+      - name: hiai-driver
+        hostPath:
+          path: /usr/local/Ascend/driver
       - name: slog
         hostPath:
-          path: /var/log/npu/conf/slog/
+          path: /var/log/npu/conf/slog/slog.conf
       - name: localtime
         hostPath:
           path: /etc/localtime
@@ -54,19 +56,13 @@ spec:
       - name: hbasic
         hostPath:
           path: /etc/hdcBasic.cfg
-      - name: sys
-        hostPath:
-          path: /sys
       - name: sys-version
         hostPath:
           path: /etc/sys_version.conf
-      - name: hdc
-        hostPath:
-          path: /var/hdc_ppc
       - name: aicpu
         hostPath:
           path: /usr/lib64/aicpu_kernels
-      - name: tid
+      - name: tfso
         hostPath:
-          path: /var/add_aicpu_tid_to_tasks.sh
+          path: /usr/lib64/libtensorflow.so
       restartPolicy: OnFailure
