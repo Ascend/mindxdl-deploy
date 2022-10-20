@@ -34,7 +34,7 @@
 - name: apply device plugin 310P yaml
   shell:
     cmd:
-      ((kubectl get nodes --show-labels | grep "huawei.com/Ascend310P" 1>/dev/null) && (ls {{YAMLS_DIR}}/*310P-volcano*yaml | head -n 1 | xargs -n 1 kubectl apply -f)) || true
+      ((kubectl get nodes --show-labels | grep "huawei-Ascend310P" 1>/dev/null) && (ls {{YAMLS_DIR}}/*310P-volcano*yaml | head -n 1 | xargs -n 1 kubectl apply -f)) || true
   environment:
     http_proxy: ""
     https_proxy: ""
@@ -46,7 +46,7 @@
 - name: apply device plugin 310 yaml
   shell:
     cmd:
-      ((kubectl get nodes --show-labels | grep -w "huawei.com/Ascend310" 1>/dev/null) && (ls {{YAMLS_DIR}}/*310-volcano*yaml | head -n 1 | xargs -n 1 kubectl apply -f)) || true
+      ((kubectl get nodes --show-labels | grep -w "huawei-Ascend310" 1>/dev/null) && (ls {{YAMLS_DIR}}/*310-volcano*yaml | head -n 1 | xargs -n 1 kubectl apply -f)) || true
   environment:
     http_proxy: ""
     https_proxy: ""
@@ -58,7 +58,7 @@
 - name: apply device plugin 910 yaml
   shell:
     cmd:
-      ((kubectl get nodes --show-labels | grep "huawei.com/Ascend910" 1>/dev/null) && (ls {{YAMLS_DIR}}/device-plugin-volcano*yaml | head -n 1 | xargs -n 1 kubectl apply -f)) || true
+      ((kubectl get nodes --show-labels | grep "huawei-Ascend910" 1>/dev/null) && (ls {{YAMLS_DIR}}/device-plugin-volcano*yaml | head -n 1 | xargs -n 1 kubectl apply -f)) || true
   environment:
     http_proxy: ""
     https_proxy: ""

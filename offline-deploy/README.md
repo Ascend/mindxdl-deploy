@@ -53,7 +53,7 @@
 
 1.下载批量部署脚本，可使用git clone和下载zip方法，下载地址为：[Ascend/mindxdl-deploy](https://gitee.com/ascend/mindxdl-deploy)。，请放置在/root目录下，安装部署脚本在master分支的offline-deploy目录下。
 
-2.然后获得开源软件的[resources.tar.gz](https://mindx.obs.cn-south-1.myhuaweicloud.com/MindXDL/resources.tar.gz)离线安装包，将离线安装包解压在/root目录下。按如下方式放置
+2.然后获得开源软件的[resources.tar.gz](https://cann-camp.obs.cn-north-4.myhuaweicloud.com:443/resources.tar.gz?AccessKeyId=JVGDRD4RF2155LDZKGSV&Expires=1696757752&Signature=3DrHcy3MWqYXXFS66SZe46mWoys%3D)离线安装包，将离线安装包解压在/root目录下。按如下方式放置
 
 ```bash
 root@master:~# ls
@@ -147,7 +147,7 @@ localhost ansible_connection=local  set_hostname="master"  kube_interface="enp12
 | KUBE_VIP            | 不使用多master场景不用配置；多master场景下配置的虚拟的IP，kube_vip需跟k8s集群节点ip在同一子网，且为闲置、未被他人使用的ip |
 | POD_NETWORK_CIDR    | k8s集群使用的IP网段，如果与服务器IP网段重合，需要修改下面的值为其他私有网段。如：10.0.0.0/16 |
 | INSTALL_COMPONENT   | 需要安装的组件，可选择安装，支持安装mindxdl,docker,k8s以英文逗号分隔 |
-| [master]            | master节点ip，只能为本机localhost，不可更改<br />1. localhost ansible_connection=local: 表示本机，不可修改<br />2. set_hostname：设置主机名字，建议用“[a-z]-[0-9]”的格式，如“worker-1”,配置示例：set_hostname=master-1 <br />3. kube_interface="enp125s0f0"：设置使用的网卡<br />4. k8s_api_server_ip="192.0.3.100" 网卡对应的ip地址，用作apiserver的入口地址 |
+| [master]            | master节点ip，只能为本机localhost，不可更改<br />1. localhost ansible_connection=local: 表示本机，不可修改<br />2. set_hostname：设置主机名字，建议用“[a-z]-[0-9]”的格式，如“worker-1”,配置示例：set_hostname=master-1 <br />3. k8s_api_server_ip="192.0.3.100" 网卡对应的ip地址，用作apiserver的入口地址<br />4. kube_interface="enp125s0f0"：设置使用的网卡，单master节点可以不设置 |
 | [worker]            | work节点ip。默认无，即为无worker节点集群。可更改为其他服务器ip。如果这里包括master或master_backup组的ip，即把该ip的节点同时作为master和worker节点 |
 | [master_backup]     | master_backup节点ip。默认无，即为单master集群。如需部署master高可用集群，这里至少需要配置2个或2个以上的节点ip(建议这里为偶数，因为k8s奇数台控制平面节点有利于机器故障或网络分区时进行重新选主）。不可包括master节点，即不可包括localhost。master_backup节点需要与master节点的系统架构一致<br />1. <ip>: 表示本机的ip地址<br />2. set_hostname：设置主机名字，建议用“[a-z]-[0-9]”的格式，如“worker-1”,配置示例：set_hostname=master-1 <br />3. kube_interface="enp125s0f0"：设置使用的网卡<br />4. k8s_api_server_ip="192.0.3.100" 网卡对应的ip地址，用作apiserver的入口地址 |
 | [other_build_image] | k8s集群中存在与master节点架构不一致的服务器时，并且该节点(或多个异构节点)会部署MindX DL，任选其中一台异构节点配置到如下主机组即可 |
@@ -156,13 +156,7 @@ localhost ansible_connection=local  set_hostname="master"  kube_interface="enp12
 
 ### 步骤3：检查集群状态
 
-1. 各个节点的时间应保持同步，不然可能会出现不可预知异常。手动将各个节点的时间设置为一致，可参考执行如下命令，'2022-06-01 08:00:00'请改成当前实际时间
-
-   ```
-   root@master:~/mindxdl-deploy/offline-deploy# ansible -i inventory_file all -m shell -a "date -s '2022-06-01 08:00:00'; hwclock -w"
-   ```
-
-2. 设置了ssh的连接方式请跳过，如果未设置可以参考以下方式设置ssh连接
+1. 设置了ssh的连接方式请跳过，如果未设置可以参考以下方式设置ssh连接
 
    ```
    ssh-keygen #一直按回车   
@@ -171,25 +165,28 @@ localhost ansible_connection=local  set_hostname="master"  kube_interface="enp12
 
    注意事项: 请用户注意ssh密钥和密钥密码在使用和保管过程中的风险,安装完成后请删除控制节点~/.ssh/目录下的id_rsa和id_rsa_pub文件，和其他节点~/.ssh目录下的authorized_keys文件。
 
-3. 在工具目录中执行：
+2. 在工具目录中执行：
 
-```bash
-root@master:~/mindxdl-deploy/offline-deploy# ansible -i inventory_file all -m ping
+   ```
+   root@master:~/mindxdl-deploy/offline-deploy# ansible -i inventory_file all -m ping
+   
+   localhost | SUCCESS => {
+       "changed": false,
+       "ping": "pong"
+   }
+   192.168.56.103 | SUCCESS => {
+       "changed": false,
+       "ping": "pong"
+   }
+   ```
 
-localhost | SUCCESS => {
-    "changed": false,
-    "ping": "pong"
-}
-192.168.56.103 | SUCCESS => {
-    "changed": false,
-    "ping": "pong"
-}
+   当所有设备都能ping通，则表示inventory中所有设备连通性正常。否则，请检查设备的ssh连接和inventory文件配置是否正确
+
+3. 各个节点的时间应保持同步，不然可能会出现不可预知异常。手动将各个节点的时间设置为一致，可参考执行如下命令，'2022-06-01 08:00:00'请改成当前实际时间
 
 ```
-
-当所有设备都能ping通，则表示inventory中所有设备连通性正常。否则，请检查设备的ssh连接和inventory文件配置是否正确
-
-
+root@master:~/mindxdl-deploy/offline-deploy# ansible -i inventory_file all -m shell -a "date -s '2022-06-01 08:00:00'; hwclock -w"
+```
 
 ### 步骤4：下载MindX DL基础组件
 
