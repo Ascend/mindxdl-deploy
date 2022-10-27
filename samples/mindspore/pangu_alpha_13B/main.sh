@@ -16,6 +16,11 @@
 
 ulimit -u unlimited
 ROOT_PATH=$(cd "`dirname $0`" || exit; pwd)
+export REPEAT_TUNE=false
+export TE_PARALLEL_COMPILER=10
+export ENABLE_TUNE_BANK=True
+export MS_COMM_COMPILER_OPT=5000
+export MS_COMPILER_CACHE_PATH=/job/code
 
 # 单机多卡和分布式
 if [ $# == 5 ]; then
