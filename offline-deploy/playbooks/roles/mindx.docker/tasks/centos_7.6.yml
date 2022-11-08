@@ -1,8 +1,0 @@
-- name: install docker-ce
-  shell: rpm -i {{ docker_pkg_dir }}/*.rpm --nodeps --force
-
-- name: create directory
-  file:
-    path: "/etc/docker"
-    state: directory
-    mode: 0750

@@ -1,0 +1,36 @@
+- name: create k8s pkg directory
+  file:
+    path: "{{ k8s_pkg_dir }}"
+    state: directory
+    mode: 0750
+  when:
+    - inventory_hostname != "localhost"
+    - no_copy_flag != "true"
+
+# 压缩k8s软件包
+- name: archive k8s software on localhost
+  local_action:
+    module: archive
+    path: "{{ k8s_pkg_dir }}/{{ item }}"
+    dest: "{{ k8s_pkg_dir }}/{{ item }}.tar.gz"
+    mode: 0640
+  loop:
+    - aarch64
+    - x86_64
+  when:
+    - inventory_hostname == "localhost"
+    - not (host_count == "1" and first_host == "localhost")
+    - no_copy_flag != "true"
+  run_once: true
+
+# 复制k8s软件包到远端并解压
+- name: unarchive k8s software on remote
+  ansible.builtin.unarchive:
+    src: "{{ k8s_pkg_dir }}/{{ ansible_architecture }}.tar.gz"
+    dest: "{{ k8s_pkg_dir }}"
+    mode: 0750
+    copy: yes
+  when:
+    - inventory_hostname != "localhost"
+    - not (host_count == "1" and first_host == "localhost")
+    - no_copy_flag != "true"

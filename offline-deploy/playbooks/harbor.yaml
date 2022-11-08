@@ -1,0 +1,7 @@
+- hosts:
+    - localhost
+    - master
+    - worker
+    - master_backup
+  roles:
+    - role: mindx.harbor

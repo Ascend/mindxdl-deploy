@@ -3,13 +3,17 @@
 
 - import_playbook: playbooks/02.basic.yaml
 
-- import_playbook: playbooks/03.docker.yaml
+- import_playbook: playbooks/docker.yaml
   when:
-    - INSTALL_COMPONENT.count("docker") > 0
+    - "DOCKER_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"
 
-- import_playbook: playbooks/04.k8s.yaml
+- import_playbook: playbooks/harbor.yaml
   when:
-    - INSTALL_COMPONENT.count("k8s") > 0
+    - use_harbor
+
+- import_playbook: playbooks/k8s.yaml
+  when:
+    - "K8S_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"
 
 - import_playbook: playbooks/05.mindxdl.yaml
   when:
