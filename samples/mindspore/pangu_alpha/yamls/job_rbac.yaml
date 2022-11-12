@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: train-manager
+  namespace: vcjob
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pods-train-role
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps"]
+  verbs: ["get", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: train-role-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: train-manager
+  namespace: vcjob
+roleRef:
+  kind: ClusterRole
+  name: pods-train-role
+  apiGroup: rbac.authorization.k8s.io
