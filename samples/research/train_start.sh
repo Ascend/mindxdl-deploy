@@ -82,8 +82,8 @@ config_yaml_path=/job/code/resnet/resnet50_imagenet2012_config.yaml
 recovery_ckpt_path=/job/code/output/checkpoint/ckpt
 output_path="/job/code/output"
 
-#读取富安设置的故障芯片的环境变量Fault_ranks_id
-#读取fault_ranks_config map
+#读取设置的故障芯片的环境变量Fault_ranks_id
+#或者读取fault_ranks_config map
 fault_ranks=`python get_fault_ranks.py`
 if [[ $? -eq 1 ]]; then
   echo "get fault ranks failed"

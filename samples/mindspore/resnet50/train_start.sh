@@ -79,68 +79,36 @@ fi
 # 根据实际情况进行修改，全局配置参数：数据集路径，配置参数文件路径
 dataset_path=/job/data/imagenet_full/train
 config_yaml_path=/job/code/resnet/resnet50_imagenet2012_config.yaml
-recovery_ckpt_path=/job/code/output/checkpoint/ckpt
-output_path="/job/code/output"
 
-#读取富安设置的故障芯片的环境变量Fault_ranks_id
-#读取fault_ranks_config map
-fault_ranks=`python get_fault_ranks.py`
-if [[ $? -eq 1 ]]; then
-  echo "get fault ranks failed"
-  exit 1
-fi
+# 单节点训练场景
+if [[ "$server_count" == "1" ]]; then
+    server_id=0
+    if [ ${device_count} -eq 1 ]; then
+        bash main.sh ${dataset_path} ${config_yaml_path}
+        if [[ $? -eq 1 ]]; then
+            echo "running job failed." | tee log
+            exit 1
+        fi
+    fi
+    if [ ${device_count} -gt 1 ]; then
+        bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
+        if [[ $? -eq 1 ]]; then
+            echo "running job failed." | tee log
+            exit 1
+        fi
+    fi
 
-if [[ "${fault_ranks}" == "" ]]; then
-  echo "training start."
-
-  # 单节点训练场景
-  if [[ "$server_count" == "1" ]]; then
-      server_id=0
-      if [ ${device_count} -eq 1 ]; then
-          bash main.sh ${dataset_path} ${config_yaml_path}
-          if [[ $? -eq 1 ]]; then
-              echo "running job failed." | tee log
-              exit 1
-          fi
-      fi
-      if [ ${device_count} -gt 1 ]; then
-          bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
-          if [[ $? -eq 1 ]]; then
-              echo "running job failed." | tee log
-              exit 1
-          fi
-      fi
-
-  # 分布式训练场景
-  else
-      server_id=$(get_server_id)
-      if [ $? -eq 1 ];then
-          echo "get server id failed."
-          exit 1
-      fi
-      echo "server id is: "${server_id}
-      bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
-      if [[ $? -eq 1 ]]; then
-          echo "running job failed." | tee log
-          exit 1
-      fi
-  fi
+# 分布式训练场景
 else
-  fault_ranks_list=(${fault_ranks//,/ })
-  # shellcheck disable=SC2068
-  for rank in ${fault_ranks_list[@]}
-  do
-    cd ${ROOT_PATH}/train_parallel${rank} || exit
-    export MS_ENABLE_RECOVERY=1
-    export MS_ROLE=MS_WORKER
-    export MS_RECOVERY_PATH=${recovery_ckpt_path}
-    export RANK_ID=${rank}
-    export DEVICE_ID=${rank}
-    export RANK_TABLE_FILE=${RANK_TABLE_FILE}
-    export RANK_SIZE=${device_count}
-    device_each_server=$((device_count / server_count))
-    python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${device_each_server} --data_path=${dataset_path} --config_path=${config_yaml_path} --output_path=${output_path} &> new_log &
-  done
+    server_id=$(get_server_id)
+    if [ $? -eq 1 ];then
+        echo "get server id failed."
+        exit 1
+    fi
+    echo "server id is: "${server_id}
+    bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
+    if [[ $? -eq 1 ]]; then
+        echo "running job failed." | tee log
+        exit 1
+    fi
 fi
-
-
