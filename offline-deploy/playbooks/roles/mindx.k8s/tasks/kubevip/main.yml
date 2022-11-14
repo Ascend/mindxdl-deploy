@@ -24,7 +24,9 @@
   ignore_errors: true
 
 - name: load kube-vip images on master
-  shell: "docker load -i {{ k8s_image }}/kube-vip*.tar.gz"
+  shell: "docker load -i {{ k8s_image_dir }}/{{ ansible_architecture }}/kube-vip*.tar.gz"
+  when:
+    - not use_harbor
 
 - name: generate kube-vip.yaml
   shell: |
@@ -41,7 +43,7 @@
   ansible.builtin.lineinfile:
     path: /etc/kubernetes/manifests/kube-vip.yaml
     regexp: "^    image: {{ ORIGIN_KUBE_VIP_IMAGE }}:{{ KVVERSION }}$"
-    line: "    image: {{ KUBE_VIP_IMAGE }}:{{ KVVERSION }}"
+    line: "    image: {{ HARBOR_SERVER+'/' if use_harbor else '' }}{{ KUBE_VIP_IMAGE }}:{{ KVVERSION }}"
     state: present
 
 - name: modify kube-vip.yaml image pull policy
