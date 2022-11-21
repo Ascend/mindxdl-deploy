@@ -1,15 +1,102 @@
-# 使用dpkg作为包管理器
 - name: install k8s
-  shell: dpkg --force-all -i {{ k8s_pkg_dir }}/{{ ansible_architecture }}/*.deb
-  environment:
-    DEBIAN_FRONTEND: noninteractive
-    DEBIAN_PRIORITY: critical
-  when: not use_rpm_command
+  copy:
+    src: "{{k8s_dir}}/{{ item }}"
+    dest: "/usr/bin/{{ item }}"
+    mode: "0750"
+    remote_src: yes
+  with_items:
+    - kubeadm
+    - kubelet
+    - kubectl
+    - kube-proxy
 
-# 使用rpm作为包管理器
-- name: install k8s
-  shell: rpm -iUv {{ k8s_pkg_dir }}/{{ ansible_architecture }}/*.rpm --nodeps --force
-  when: use_rpm_command
+- name: create directory
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0750
+  with_items:
+    - /etc/systemd/system/kubelet.service.d
+    - /opt/cni/bin
+
+- name: set kubelet service
+  copy:
+    src : "../../files/kubelet.service"
+    dest: /lib/systemd/system/kubelet.service
+    mode: "0640"
+
+- name: set kubeadm conf
+  copy:
+    src : "../../files/10-kubeadm.conf"
+    dest: /etc/systemd/system/kubelet.service.d
+    mode: "0640"
+
+- name: find cni-plugin*.tgz
+  find:
+    paths: "{{ resource_dir }}/linux_{{ ansible_architecture }}"
+    recurse: no
+    file_type: file
+    patterns: "cni-plugin*.tgz"
+  register: cni_plugin
+
+- name: unarchive cni plugin
+  ansible.builtin.unarchive:
+    src: "{{ cni_plugin.files[0].path }}"
+    dest: /opt/cni/bin
+    mode: 0750
+    remote_src: yes
+
+- name: find cni-plugin*.tgz
+  find:
+    paths: "{{ resource_dir }}/linux_{{ ansible_architecture }}"
+    recurse: no
+    file_type: file
+    patterns: "crictl*.tar.gz"
+  register: crictl
+
+- name: unarchive crictl
+  ansible.builtin.unarchive:
+    src: "{{ crictl.files[0].path }}"
+    dest: /usr/bin
+    mode: 0750
+    remote_src: yes
+
+- name: unarchive k8s images on localhost
+  ansible.builtin.unarchive:
+    src: "{{ k8s_image }}.tar.gz"
+    dest: "{{resource_dir}}/images/"
+    mode: 0750
+  when:
+    - ansible_connection == "local"
+    - no_copy_flag != "true"
+
+- name: create k8s images directory on remote
+  file:
+    path: "{{resource_dir}}/images/"
+    state: directory
+    mode: 0750
+  when:
+    - ansible_connection != "local"
+
+- name: unarchive k8s images on remote
+  ansible.builtin.unarchive:
+    src: "{{ k8s_image }}.tar.gz"
+    dest: "{{resource_dir}}/images/"
+    mode: 0750
+    copy: yes
+  when:
+    - ansible_connection != "local"
+    - no_copy_flag != "true"
+
+- include_tasks: centos_7.6.yml
+  when:
+    - os_name == 'CentOS'
+    - os_version == '7.6'
+
+- include_tasks: ubuntu_18.04.yml
+  when:
+    - os_name == 'Ubuntu'
+    - os_version == '18.04'
 
 - name: enable kubelet
   systemd:
