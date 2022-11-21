@@ -7,20 +7,7 @@ KUBE_VIP=""
 POD_NETWORK_CIDR="192.168.0.0/16"
 
 # 需要安装的组件，支持安装mindxdl,docker,k8s以英文逗号分隔
-SCENE_NUM=1
-EXTRA_COMPONENT="npu-exporter,noded"
-
-# 以下为harbor相关配置
-# harbor服务地址，格式为ip:port，不含协议，如"192.0.0.1:1234"
-HARBOR_SERVER=""
-# 配置harbor管理员账号信息，用于在harbor中创建名为项目，以及推送、拉取k8s相关、MindX DL相关的镜像
-HARBOR_ADMIN_USER=""
-HARBOR_ADMIN_PASSWORD=""
-# 推送的k8s相关、MindX DL相关镜像的项目公开状态，默认为私有，可选值false或true
-HARBOR_PUBLIC_PROJECT="false"
-HARBOR_CA_FILE=""
-HARBOR_CRT_FILE=""
-HARBOR_KEY_FILE=""
+INSTALL_COMPONENT="mindxdl,docker,k8s"
 
 
 # 以下为主机变量配置区域

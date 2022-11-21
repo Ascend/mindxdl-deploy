@@ -1,31 +1,15 @@
 ---
-# 检查K8s是否初始化了
-# 分发软件包
-# 基础设置
-- hosts:
-    - localhost
-    - master
-    - worker
-    - master_backup
-  vars_files:
-    - roles/mindx.k8s/vars/main.yml
-  tasks:
-    - include_tasks: roles/mindx.k8s/tasks/install/main.yml
-
-# 安装K8s
+# install k8s
 - hosts:
     - master
     - worker
     - master_backup
   vars_files:
+    - roles/mindx.k8s/defaults/main.yml
     - roles/mindx.k8s/vars/main.yml
   tasks:
-    - include_tasks: roles/mindx.k8s/tasks/install/install.yml
-      when:
-        - not k8s_installed
     - include_tasks: roles/mindx.k8s/tasks/install/os_setting.yml
-      when:
-        - not k8s_installed
+    - include_tasks: roles/mindx.k8s/tasks/install/install.yml
 
 # init kubevip
 - hosts:
@@ -38,7 +22,6 @@
       when:
         - "'master_backup' in groups"
         - "groups['master_backup'] | length != 0"
-        - not k8s_installed
 
 # k8s master init
 - hosts: master
@@ -47,8 +30,6 @@
     - roles/mindx.k8s/vars/main.yml
   tasks:
     - include_tasks: roles/mindx.k8s/tasks/master/main.yml
-      when:
-        - not k8s_installed
 
 # master_backup join k8s
 - hosts: master_backup
@@ -61,7 +42,6 @@
       when:
         - "'master_backup' in groups"
         - "groups['master_backup'] | length != 0"
-        - not k8s_installed
 
 # worker join k8s
 - hosts: worker
@@ -70,6 +50,4 @@
     - roles/mindx.k8s/vars/main.yml
   tasks:
     - include_tasks: roles/mindx.k8s/tasks/worker/main.yml
-      when:
-        - inventory_hostname not in (groups['master_backup'] + groups['master'])
-        - not k8s_installed
+      when: ansible_connection != "local" and inventory_hostname not in groups['master_backup']
