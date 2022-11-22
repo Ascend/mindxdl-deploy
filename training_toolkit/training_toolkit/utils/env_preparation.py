@@ -234,7 +234,6 @@ def set_task_env(args) -> tuple:
                                                                      config.HCCL_CONNECT_TIMEOUT_ENV_VALUE)
     os.environ[config.HCCL_EXEC_TIMEOUT_ENV_KEY] = os.environ.get(config.HCCL_EXEC_TIMEOUT_ENV_KEY,
                                                                   config.HCCL_EXEC_TIMEOUT_ENV_VALUE)
-    add_one_env_path(config.PYTHONPATH_ENV_KEY, os.getcwd(), insert_head=True)
 
     if args.platform == config.PlatformType.TensorFlow.value:
         set_tensorflow_env()
