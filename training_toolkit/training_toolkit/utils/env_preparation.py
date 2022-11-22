@@ -175,7 +175,7 @@ def get_device_rank_str(device_num) -> str:
 
 
 def set_tensorflow_env():
-    os.environ[config.JOB_ID_ENV_KEY] = os.environ.get(config.JOB_ID_ENV_KEY, str(os.getpid()))
+    os.environ[config.JOB_ID_ENV_KEY] = os.environ.get(config.JOB_ID_ENV_KEY, "123456789")
 
 
 def set_pytorch_env(master_ip, server_index, device_num):

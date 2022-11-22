@@ -238,3 +238,7 @@ class ProcessManager:
                 run_log.info(f"send kill signal to process: {task.training_process.pid}")
 
             os.killpg(task.training_process.pid, signal.SIGKILL)
+            if task.log_redirect_process is not None:
+                os.killpg(task.log_redirect_process.pid, signal.SIGKILL)
+
+        time.sleep(config.CHECK_INTERVAL)
