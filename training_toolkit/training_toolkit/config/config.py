@@ -69,3 +69,4 @@ class PlatformType(Enum):
     Pytorch: str = "pt"
     MindSpore: str = "ms"
     TensorFlow: str = "tf"
+    TensorFlow2: str = "tf2"
