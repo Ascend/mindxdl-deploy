@@ -1,0 +1,42 @@
+apiVersion: batch.volcano.sh/v1alpha1   # The value cannot be changed. The volcano API must be used.
+kind: Job                               # Only the job type is supported at present.
+metadata:
+  name: train-env-quick-validation
+spec:
+  minAvailable: 1                       # The value of minAvailable is 1 in a single-node scenario and N in an N-node distributed scenario.
+  schedulerName: volcano                # Use the Volcano scheduler to schedule jobs.
+  maxRetry: 1
+  queue: default
+  tasks:
+  - name: "default-test"
+    replicas: 1                              # The value of replicas is 1 in a single-node scenario and N in an N-node scenario. The number of NPUs in the requests field is 8 in an N-node scenario.
+    template:
+      metadata:
+        labels:
+          app: train
+      spec:
+        containers:
+        - image: ascend-k8sdeviceplugin:v3.0.0       # Training framework image, which can be modified.
+          name: train-env-quick-validation
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-c", "npu-smi info"]
+          resources:
+            requests:
+              huawei.com/Ascend910: 1                 # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
+            limits:
+              huawei.com/Ascend910: 1                 # The value must be consistent with that in requests.
+          volumeMounts:
+          - name: ascend-driver
+            mountPath: /usr/local/Ascend/driver
+          - name: npu-smi
+            mountPath: /usr/local/bin/npu-smi
+        nodeSelector:
+          host-arch: huawei-arm                       # Select the os arch. If the os arch is x86, change it to huawei-x86.
+        volumes:
+        - name: ascend-driver
+          hostPath:
+            path: /usr/local/Ascend/driver
+        - name: npu-smi
+          hostPath:
+            path: /usr/local/bin/npu-smi
+        restartPolicy: OnFailure

@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: infer-env-quick-validation
+spec:
+  template:
+    spec:
+      nodeSelector:
+        host-arch: huawei-arm                   # Select the os arch. If the os arch is x86, change it to huawei-x86.
+        servertype: soc
+      containers:
+      - image: ascend-k8sdeviceplugin:v3.0.0    # Inference image name
+        imagePullPolicy: IfNotPresent
+        name: infer-env-quick-validation
+        command: ["/bin/bash", "-c", "npu-smi info"]
+        resources:
+          requests:
+            huawei.com/Ascend310P: 1             # Number of the Ascend 310 Processors. If the Ascend 310P Processor is used, change it to huawei.com/Ascend310P.
+          limits:
+            huawei.com/Ascend310P: 1             # The value should be the same as that of requests . If the Ascend 310P Processor is used, change it to huawei.com/Ascend310P.
+        volumeMounts:
+        - name: ascend-driver
+          mountPath: /usr/local/Ascend/driver
+        - name: npu-smi
+          mountPath: /usr/local/bin/npu-smi
+      volumes:
+        - name: ascend-driver
+          hostPath:
+            path: /usr/local/Ascend/driver
+        - name: npu-smi
+          hostPath:
+            path: /usr/local/bin/npu-smi
+      restartPolicy: OnFailure
