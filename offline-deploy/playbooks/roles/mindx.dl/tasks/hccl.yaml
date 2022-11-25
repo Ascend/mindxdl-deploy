@@ -1,0 +1,111 @@
+- name: include vars
+  include_vars: ../defaults/main.yml
+
+- name: include vars
+  include_tasks: create_user.yaml
+
+# 在远端创建mindxdl镜像目录
+- name: create mindxdl images directory on remote
+  file:
+    path: "{{mindxdl_images_dir}}/{{ansible_architecture}}"
+    state: directory
+    mode: 0750
+  when:
+    - not use_harbor
+
+- name: list hccl images
+  shell: "ls {{mindxdl_images_dir}}/{{ansible_architecture}} | grep {{HCCL_COMPONENT}}"
+  delegate_to: localhost
+  delegate_facts: true
+  register: hccl_images
+  when:
+    - not use_harbor
+
+# 复制hccl镜像到master and master_backup
+- name: copy hccl images to master and master_backup
+  copy:
+    src: "{{mindxdl_images_dir}}/{{ansible_architecture}}/{{item}}"
+    dest: "{{mindxdl_images_dir}}/{{ansible_architecture}}/"
+    mode: 0640
+    owner: "{{ansible_user_id}}"
+    group: "{{ansible_user_id}}"
+  loop: "{{hccl_images.stdout_lines}}"
+  when:
+    - not use_harbor
+
+# 在控制节点加载hccl镜像
+- name: load volcano images
+  shell: "docker load -i {{mindxdl_images_dir}}/{{ansible_architecture}}/{{item}}"
+  loop: "{{hccl_images.stdout_lines}}"
+  when:
+    - not use_harbor
+
+- name: label dls master
+  shell: |
+    kubectl label --overwrite node {{ NODE_NAME }} masterselector=dls-master-node
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+
+- name: create log directories
+  file:
+    path: /var/log/mindx-dl
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: create log directories for "{{DL_USR}}"
+  file:
+    path: "/var/log/mindx-dl/hccl-controller"
+    state: directory
+    owner: "{{DL_USR}}"
+    group: "{{DL_GRP}}"
+    mode: 0750
+
+- name: create mindx-dl image pull secret
+  shell: |
+    kubectl create namespace mindx-dl >/dev/null 2>&1 || echo 0;
+    kubectl create secret generic {{ MINDX_DL_SECRET_FOR_HARBOR }} --from-file=.dockerconfigjson=/root/.docker/config.json --type=kubernetes.io/dockerconfigjson -n mindx-dl >/dev/null 2>&1 || echo 0;
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  ignore_errors: true
+  when:
+    - use_harbor
+    - inventory_hostname in inventory_hostname in groups['master']
+
+- name: modify hccl yaml
+  shell: "ls {{mindxdl_yaml_dir}} | grep {{HCCL_COMPONENT}} | grep -v 'without'"
+  register: yaml_file
+  when:
+    - inventory_hostname in inventory_hostname in groups['master']
+
+- name: modify hccl yaml
+  shell: |
+    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\        - name: {{MINDX_DL_SECRET_FOR_HARBOR}}' {{ mindxdl_yaml_dir }}/{{ item }};
+  loop: "{{ yaml_file.stdout_lines }}"
+  when:
+    - use_harbor
+    - inventory_hostname in inventory_hostname in groups['master']
+
+# 部署hccl应用
+- name: apply hccl component
+  shell:
+    cmd:
+      kubectl apply -f {{mindxdl_yaml_dir}}/{{ item }}
+  loop: "{{ yaml_file.stdout_lines }}"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when:
+    - inventory_hostname in inventory_hostname in groups['master']

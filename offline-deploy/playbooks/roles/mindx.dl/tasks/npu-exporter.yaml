@@ -1,0 +1,118 @@
+- name: include vars
+  include_vars: ../defaults/main.yml
+
+- name: include vars
+  include_tasks: create_user.yaml
+
+# 在远端创建mindxdl镜像目录
+- name: create mindxdl images directory on remote
+  file:
+    path: "{{ mindxdl_images_dir }}/{{ ansible_architecture }}"
+    state: directory
+    mode: 0750
+  when:
+    - not use_harbor
+
+- name: list npu-exporter images
+  shell: "ls {{mindxdl_images_dir}}/{{ansible_architecture}} | grep {{NPU_EXPORTER_COMPONENT}}"
+  delegate_to: localhost
+  delegate_facts: true
+  register: npu_exporter_images
+  when:
+    - not use_harbor
+
+# 复制npu-exporter镜像到master_backup
+- name: copy npu-exporter images to remote worker
+  copy:
+    src: "{{mindxdl_images_dir}}/{{ ansible_architecture }}//{{item}}"
+    dest: "{{mindxdl_images_dir}}/{{ ansible_architecture }}/"
+    mode: 0640
+    owner: "{{ansible_user_id}}"
+    group: "{{ansible_user_id}}"
+  loop: "{{npu_exporter_images.stdout_lines}}"
+  when:
+    - not use_harbor
+
+# 在worker节点加载npu-exporter镜像
+- name: load npu-exporter images
+  shell: "docker load -i {{mindxdl_images_dir}}/{{ansible_architecture}}/{{item}}"
+  loop: "{{npu_exporter_images.stdout_lines}}"
+  when:
+    - not use_harbor
+
+- name: label worker
+  shell: |
+    kubectl label --overwrite node {{ NODE_NAME }} node-role.kubernetes.io/worker=worker
+    kubectl label --overwrite node {{ NODE_NAME }} workerselector=dls-worker-node
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
+
+- name: create log directories
+  file:
+    path: /var/log/mindx-dl
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: create log directories for root
+  file:
+    path: "/var/log/mindx-dl/npu-exporter"
+    state: directory
+    owner: "root"
+    group: "root"
+    mode: 0750
+
+- name: create npu-exporter image pull secret
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  shell: |
+    kubectl create namespace npu-exporter >/dev/null 2>&1 || echo 0;
+    kubectl create secret generic {{ NPU_EXPORTER_SECRET_FOR_HARBOR }} --from-file=.dockerconfigjson=/root/.docker/config.json --type=kubernetes.io/dockerconfigjson -n npu-exporter >/dev/null 2>&1 || echo 0;
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  ignore_errors: true
+  when:
+    - use_harbor
+
+- name: list npu-exporter yaml
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  shell: "ls {{mindxdl_yaml_dir}} | grep {{NPU_EXPORTER_COMPONENT}}"
+  register: yaml_file
+
+- name: modify npu-exporter yaml
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  delegate_facts: true
+  shell: |
+    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\        - name: {{NPU_EXPORTER_SECRET_FOR_HARBOR}}' {{ mindxdl_yaml_dir }}/{{ item }};
+  loop: "{{ yaml_file.stdout_lines }}"
+  when:
+    - use_harbor
+
+# 部署npu-exporter应用
+- name: apply npu-exporter component
+  shell:
+    cmd:
+      kubectl apply -f {{mindxdl_yaml_dir}}/{{ item }}
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
+  run_once: true
+  loop: "{{ yaml_file.stdout_lines }}"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""

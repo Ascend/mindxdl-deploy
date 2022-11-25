@@ -11,21 +11,6 @@
     - item == groups['master'][0]
   loop: "{{ groups['master_backup'] }}"
 
-- name: check k8s
-  shell: "kubectl cluster-info 2>&1 | grep 'is running at' | wc -l"
-  environment:
-    http_proxy: ""
-    https_proxy: ""
-    HTTP_PROXY: ""
-    HTTPS_PROXY: ""
-  register: cluster_info
-
-- name: message
-  debug:
-    msg: "k8s is running already, please check"
-  failed_when: true
-  when: cluster_info.stdout != "0"
-
 - name: get token
   shell: kubeadm token create --print-join-command
   environment:
@@ -53,15 +38,6 @@
     addr_cmd: "--apiserver-advertise-address={{ k8s_api_server_ip }}"
   when:
     - k8s_api_server_ip != ""
-
-- name: load k8s images on master
-  shell: "docker load -i {{ item }}"
-  with_fileglob:
-    - "{{ k8s_image }}/calico*.tar.gz"
-    - "{{ k8s_image }}/kube*.tar.gz"
-    - "{{ k8s_image }}/coredns*.tar.gz"
-    - "{{ k8s_image }}/etcd*.tar.gz"
-    - "{{ k8s_image }}/pause*.tar.gz"
 
 - name: join cluster
   shell: "{{ token_cmd.stdout }} {{ addr_cmd }} --control-plane --certificate-key {{ cert_cmd.stdout.split('key:\n')[-1] }} --node-name={{NODE_NAME}}"

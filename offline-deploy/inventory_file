@@ -1,34 +1,52 @@
-# 以下为全局变量配置区域
-[all:vars]
-# 不使用多master场景不用配置；多master场景下配置的虚拟的IP，kube_vip需跟k8s集群节点ip在同一子网，且为闲置、未被他人使用的ip
-KUBE_VIP=""
+#           *********************主机变量配置区域*********************
+# 配置信息示例:10.10.10.10 set_hostname=master-1 k8s_api_server_ip=10.10.10.10 kube_interface=enp125s0f0
+# 示例说明:
+# 10.10.10.10:服务器的ip地址。
+# set_hostname:设置节点在K8s集群中的节点名字,建议用“[a-z]-[0-9]”的格式。
+# k8s_api_server_ip:k8s对外提供服务的入口，配置为master节点的IP地址。
+# kube_interface:对应服务器ip地址网卡名字，单master场景下可以不设置
 
-# k8s集群使用的IP网段，如果与服务器IP网段重合，需要修改下面的值为其他私有网段。如：10.0.0.0/16
+# master控制节点信息，配置参考注释
+[master]
+#10.10.10.10 set_hostname=master-1 k8s_api_server_ip=10.10.10.10 kube_interface=enp125s0f0
+
+# 多master场景配置，配置多个master节点信息，每个节点信息占据一行，配置参考注释
+[master_backup]
+#10.10.10.11 set_hostname=master-2 k8s_api_server_ip=10.10.10.11 kube_interface=enp125s0f0
+#10.10.10.12 set_hostname=master-3 k8s_api_server_ip=10.10.10.12 kube_interface=enp125s0f0
+
+# worker,工作节点信息，可以配置多个工作节点，每个节点信息占据一行，配置参考注释
+[worker]
+#10.10.10.13 set_hostname=worker-1
+#10.10.10.14 set_hostname=worker-2
+
+# k8s集群中存在与master节点架构不一致的服务器时，并且该节点(或多个异构节点)会部署MindX DL，任选其中一台异构节点配置到如下主机组即可，配置参考注释
+[other_build_image]
+#10.10.10.11
+
+#           *********************以下为全局变量配置区域**************************
+[all:vars]
+# 场景1安装组件: Docker, Kubernetes, Toolbox, Ascend Device Plugin, Volcano, HCCL-Controller, NodeD, NPU-Exporter
+# 场景2安装组件: Toolbox, Ascend Device Plugin, Volcano，HCCL-Controller(可选), NodeD(可选), NPU-Exporter(可选)
+# 场景3安装组件: Toolbox, Ascend Device Plugin, NPU-Exporter(可选)
+# SCENE_NUM:安装场景选择，可选1，2，3场景,默认场景1
+# EXTRA_COMPONENT: 为可选组件，组件间逗号隔开,示例:EXTRA_COMPONENT="npu-exporter,noded,hccl-controller"
+SCENE_NUM=1
+EXTRA_COMPONENT=""
+
+# k8s集群使用的子网IP网段，如果与服务器IP网段重合，需要修改下面的值为其他私有网段。如：192.168.0.0/16
 POD_NETWORK_CIDR="192.168.0.0/16"
 
-# 需要安装的组件，支持安装mindxdl,docker,k8s以英文逗号分隔
-INSTALL_COMPONENT="mindxdl,docker,k8s"
+# 多master场景下配置虚拟IP，kube_vip需跟k8s集群节点ip在同一子网，且为闲置、未被他人使用的ip
+KUBE_VIP=""
 
-
-# 以下为主机变量配置区域
-
-# 1. k8s要求集群内节点(master、worker、master_backup）的hostname不一样，因此
-#    建议执行安装前设置所有设备使用不同的hostname。如果未统一设置且存在相同hostname的设备，
-#    那么可在本文件中主机组中设置set_hostname主机变量，set_hostname的值会作为作为K8s集群中的NodeName。
-#    set_hostname的值需满足k8s和ansible的格式要求，建议用“[a-z]-[0-9]”的格式，如“worker-1”,配置示例：set_hostname=master-1
-# 2. 在多master场景下，需要在每台master主机后增加变量kube_interface，用来指明每台主机使用虚拟IP的网卡名（每台服务器的网卡名可能不同），选择网卡需要保证主机之间网络能够互通
-#
-# 示例：
-# [master]
-# localhost ansible_connection=local set_hostname=master-1 kube_interface=enp125s0f0 k8s_api_server_ip=192.168.255.11
-
-[master]
-localhost ansible_connection=local
-
-[worker]
-
-# 多master场景下，其他master节点的主机
-[master_backup]
-
-# k8s集群中存在与master节点架构不一致的服务器时，并且该节点(或多个异构节点)会部署MindX DL，任选其中一台异构节点配置到如下主机组即可
-[other_build_image]
+# 使用harbor镜像仓时配置
+# harbor服务地址，格式为ip:port，不含协议，如"192.0.0.1:1234"
+HARBOR_SERVER=""
+# 配置harbor管理员账号信息，用于在harbor中创建名为项目，以及推送、拉取k8s相关、MindX DL相关的镜像
+HARBOR_ADMIN_USER=""
+HARBOR_ADMIN_PASSWORD=""
+# MindX DL相关镜像的项目公开状态，默认为私有，可选值false或true
+HARBOR_PUBLIC_PROJECT="false"
+# 使用https协议时，配置harbor镜像仓根CA文件路径
+HARBOR_CA_FILE=""
