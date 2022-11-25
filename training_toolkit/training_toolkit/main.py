@@ -16,7 +16,7 @@ def prepare_args() -> Namespace:
                         type=str,
                         default="",
                         choices=["", PlatformType.MindSpore.value, PlatformType.Pytorch.value,
-                                 PlatformType.TensorFlow.value],
+                                 PlatformType.TensorFlow.value, PlatformType.TensorFlow2.value],
                         help="test a training task can be run or not over specific framework.")
 
     parser.add_argument("--wo-ranktable",

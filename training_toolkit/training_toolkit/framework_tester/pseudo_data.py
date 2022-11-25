@@ -15,5 +15,5 @@ def gen_linear_regression_data(data_num, k, b, derivation):
     """
     np.random.seed(0)
     train_x = np.asarray(list(range(data_num)))
-    train_y = np.asarray([[np.random.normal(k * i, derivation)] for i in range(data_num)]) + b
+    train_y = np.asarray([np.random.normal(k * i, derivation) for i in range(data_num)]) + b
     return train_x.tolist(), train_y.tolist()

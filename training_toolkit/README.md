@@ -65,17 +65,17 @@ pip install mindx_training_toolkit-1.0.0-py3-none-any.whl
 
 ## 参数说明
 
-| 参数名称           | 参数说明 |参数类型|可选值|默认值|
-|----------------|---|---|---|---|
-| --test         |进行框架训练流程验证，支持单机和分布式验证|string|ms,tf,pt|空串：表示不进行验证|
-| --wo-ranktable |是否适用ranktable进行训练环境配置；默认使用；如不使用，启动参数添加该参数即可|无|无|无|
-| --platform     |训练任务使用的框架|string|ms,tf,pt|ms|
-| --cd           |切换训练进程的工作目录|string|合法且存在的目录|空串：表示不切换工作目录，训练进程的工作目录为使用本工具时的目录|
-|--cmd|训练命令|string|可执行的训练命令，请用户确认命令的**可行性和安全性**，本工具**不做相关校验**|空串：如无指定--test进行框架验证，直接退出工具|
-|--log-dir|训练进程日志保存目录|string|合法且存在的目录|空串：使用默认路径"当前工作目录/training_toolkit_default_log_dir/"|
-|--disable-log|禁用日志重定向，**用户自行**处理训练进程日志；如需禁用，启动参数添加该参数即可|无|无|无|
-|--bind-cpu|为训练进程绑定指定的cpu，默认不绑核，如需使用，启动参数添加该参数即可。Pytorch不支持|无|无|无|
-|--extra-env|为训练进程添加额外的自定义环境变量。例如，在使用MindSpore进行分布式训练时，为每个训练进程指定通信域信息存储路径GROUP_INFO_FILE（详细介绍清参考MindSpore文档），可使用"--extra-env=GROUP_INFO_FILE=/xxx/xxx/rank_%RANK_ID%/group_info.pb"进行设置，工具会根据每个进程分配的芯片rank自动替换"%RANK_ID%"为对应的值。该参数可多次使用，以添加多个环境变量|string|无|无|
+| 参数名称           | 参数说明                                                                                                                                                                                                                                 | 参数类型   | 可选值                                        | 默认值                                                 |
+|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|--------------------------------------------|-----------------------------------------------------|
+| --test         | 进行框架训练流程验证，支持单机和分布式验证                                                                                                                                                                                                                | string | ms,tf,tf2,pt                               | 空串：表示不进行验证                                          |
+| --wo-ranktable | 是否适用ranktable进行训练环境配置；默认使用；如不使用，启动参数添加该参数即可                                                                                                                                                                                          | 无      | 无                                          | 无                                                   |
+| --platform     | 训练任务使用的框架                                                                                                                                                                                                                            | string | ms,tf,pt                                   | ms                                                  |
+| --cd           | 切换训练进程的工作目录                                                                                                                                                                                                                          | string | 合法且存在的绝对路径                                 | 空串：表示不切换工作目录，训练进程的工作目录为使用本工具时的目录                    |
+| --cmd          | 训练命令                                                                                                                                                                                                                                 | string | 可执行的训练命令，请用户确认命令的**可行性和安全性**，本工具**不做相关校验** | 空串：如无指定--test进行框架验证，直接退出工具                          |
+| --log-dir      | 训练进程日志保存目录                                                                                                                                                                                                                           | string | 合法且存在的目录                                   | 空串：使用默认路径"当前工作目录/training_toolkit_default_log_dir/" |
+| --disable-log  | 禁用日志重定向，**用户自行**处理训练进程日志；如需禁用，启动参数添加该参数即可                                                                                                                                                                                            | 无      | 无                                          | 无                                                   |
+| --bind-cpu     | 为训练进程绑定指定的cpu，默认不绑核，如需使用，启动参数添加该参数即可。Pytorch不支持                                                                                                                                                                                      | 无      | 无                                          | 无                                                   |
+| --extra-env    | 为训练进程添加额外的自定义环境变量。例如，在使用MindSpore进行分布式训练时，为每个训练进程指定通信域信息存储路径GROUP_INFO_FILE（详细介绍清参考MindSpore文档），可使用"--extra-env=GROUP_INFO_FILE=/xxx/xxx/rank_%RANK_ID%/group_info.pb"进行设置，工具会根据每个进程分配的芯片rank自动替换"%RANK_ID%"为对应的值。该参数可多次使用，以添加多个环境变量 | string | 无                                          | 无                                                   |
 
 ## 环境变量说明
 
@@ -106,7 +106,7 @@ pip install mindx_training_toolkit-1.0.0-py3-none-any.whl
 
 | 环境变量名           | 取值样例        | 变量说明                                                    | 用户可指定 | 默认值       |
 |-----------------|-------------|---------------------------------------------------------|-------|-----------|
-| JOB_ID          | 12345       | 训练任务ID，用户自定义。仅支持大小写字母，数字，中划线，下划线。不建议使用以0开始的纯数字作为JOB_ID。 | 是     | 工具启动进程PID |
+| JOB_ID          | 12345       | 训练任务ID，用户自定义。仅支持大小写字母，数字，中划线，下划线。不建议使用以0开始的纯数字作为JOB_ID。 | 是     | 123456789 |
 | CM_CHIEF_IP     | 192.168.1.1 | master rank所在node的ip地址。当**不使用ranktable**时，由**用户自行**指定   | 是     | 无：必须由用户传入 |
 | CM_CHIEF_PORT   | 9678        | master node使用的socket端口。当**不使用ranktable**时，由**用户自行**指定   | 是     | 无：必须由用户传入 |
 | CM_CHIEF_DEVICE | 0           | master rank使用的device id。当**不使用ranktable**时，由**用户自行**指定  | 是     | 无：必须由用户传入 |
@@ -175,7 +175,8 @@ yaml基于[mindxdl-deploy](https://gitee.com/ascend/mindxdl-deploy/tree/master/s
 1. 验证训练环境可用性：
    - 验证MindSpore：`command: ["/bin/bash", "-c", "training-toolkit --test ms"]`
    - 验证Pytorch：`command: ["/bin/bash", "-c", "training-toolkit --test pt"]`
-   - 验证TensorFlow：`command: ["/bin/bash", "-c", "training-toolkit --test tf"]`
+   - 验证TensorFlow 1.15：`command: ["/bin/bash", "-c", "training-toolkit --test tf"]`
+   - 验证TensorFlow 2.6.5：`command: ["/bin/bash", "-c", "training-toolkit --test tf2"]`
 2. 模型训练：
    1. MindSpore：
       1. ResNet50：源码来自MindSpore开源[ModelZoo](https://gitee.com/mindspore/models)（样例于r1.9分支进行验证）： 

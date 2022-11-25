@@ -14,9 +14,14 @@ def set_manager(manager: ProcessManager, platform: str):
     elif platform == PlatformType.Pytorch.value:
         script_path = f"{WORK_DIR}/framework_tester/pytorch_tester.py"
         manager.log_dir = os.path.join(LOG_PATH, "pt_test_log")
-    else:
+    elif platform == PlatformType.TensorFlow.value:
         script_path = f"{WORK_DIR}/framework_tester/tensorflow_tester.py"
         manager.log_dir = os.path.join(LOG_PATH, "tf_test_log")
+        manager.platform = PlatformType.TensorFlow.value
+    else:
+        script_path = f"{WORK_DIR}/framework_tester/tensorflow2_tester.py"
+        manager.log_dir = os.path.join(LOG_PATH, "tf2_test_log")
+        manager.platform = PlatformType.TensorFlow.value
 
     manager.cmd = f"/usr/bin/python {script_path}"
     if os.path.exists(manager.log_dir):

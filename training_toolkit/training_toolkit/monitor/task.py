@@ -6,9 +6,9 @@ from contextlib import ContextDecorator
 from training_toolkit.utils.validator import DirValidator
 from training_toolkit.utils.ranktable import Device
 from training_toolkit.config.config import ASCEND_DEVICE_ID_ENV_KEY, DEVICE_ID_ENV_KEY, RANK_ID_ENV_KEY, \
-    PYTORCH_RANK_ENV_KEY, PlatformType, DEVICE_INDEX_ENV_KEY, DEFAULT_LOG_SUB_DIR
+    PYTORCH_RANK_ENV_KEY, PlatformType, DEVICE_INDEX_ENV_KEY, DEFAULT_LOG_SUB_DIR, PYTHONPATH_ENV_KEY
 from training_toolkit.logger.log import run_log
-from training_toolkit.utils.common import get_host_ip, substitute_arg_with_env
+from training_toolkit.utils.common import get_host_ip, substitute_arg_with_env, add_one_env_path
 
 
 class CDContextManager(ContextDecorator):
@@ -53,8 +53,9 @@ class Task:
         self.envs = None
         self.log_file_path = None
 
-    def _get_env_for_current_task(self):
+    def _get_env_for_current_task(self, cwd: str):
         self.envs = os.environ.copy()
+        add_one_env_path(PYTHONPATH_ENV_KEY, cwd, env=self.envs, insert_head=True)
         if self.device is not None:
             self.envs[ASCEND_DEVICE_ID_ENV_KEY] = self.device.device_id
             self.envs[DEVICE_ID_ENV_KEY] = self.device.device_id
@@ -107,11 +108,12 @@ class Task:
         self.log_file_path = os.path.join(log_dir, log_name)
 
     def run(self, log_dir: str, platform: str, enable_stdout: bool, cd_dir: str, extra_env: Optional[List[str]]):
-        self._get_env_for_current_task()
-        self._add_extra_envs(extra_env)
-
         with CDContextManager(cd_dir) as cd:
+            self._get_env_for_current_task(cd.cwd)
+            self._add_extra_envs(extra_env)
+
             self.cmd = substitute_arg_with_env(self.cmd, self.envs)
+
             # os.setsid set process group. SIGTERM that send to parent process, also can be received by all processes
             # in this group.
             self.training_process = subprocess.Popen(self.cmd.split(),
