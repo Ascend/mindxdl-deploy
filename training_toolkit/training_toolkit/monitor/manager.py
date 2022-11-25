@@ -37,9 +37,9 @@ def signal_handler(func):
         """
         try:
             c_pid, status = os.waitpid(-1, os.WNOHANG)
-            run_log.info(f"child pid: {c_pid} exist, status: {status}")
+            print(f"child pid: {c_pid} exist, status: {status}")
         except OSError as e:
-            run_log.warning(f"failed to wait child process exist, errno: {e.errno}")
+            print(f"failed to wait child process exist, errno: {e.errno}")
 
     def handle_func(self, *args, **kwargs):
         signal.signal(signal.SIGCHLD, wait_child)
