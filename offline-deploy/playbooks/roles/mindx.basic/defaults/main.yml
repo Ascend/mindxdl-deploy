@@ -1,3 +1,2 @@
 # defaults file for mindx.basic
-haveged_dir: "{{resource_dir}}/{{os_name | lower}}_{{os_version}}_{{ansible_architecture}}/haveged"
-unzip_dir: "{{resource_dir}}/{{os_name | lower}}_{{os_version}}_{{ansible_architecture}}/unzip"
+unzip_dir: "{{resource_dir}}/basic/{{ os_name }}_{{os_version}}/{{ansible_architecture}}/unzip"

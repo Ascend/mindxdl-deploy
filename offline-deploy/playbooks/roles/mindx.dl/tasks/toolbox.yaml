@@ -1,0 +1,53 @@
+- name: include vars
+  include_vars: ../defaults/main.yml
+
+- name: check if the driver is installed
+  shell: "npu-smi info"
+  register: shell_run_result
+  ignore_errors: True
+
+- name: message
+  fail:
+    msg: "driver is not installed, please install driver"
+  when:
+    - shell_run_result.rc != 0
+
+# 在远端创建mindxdl镜像目录
+- name: create mindxdl dlDeployPackage directory on remote
+  file:
+    path: "{{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/"
+    state: directory
+    mode: 0750
+
+- name: list toolbox package
+  shell: "ls {{mindxdl_deploy_package_dir}}/{{ansible_architecture}} | grep {{TOOLBOX_COMPONENT}} | grep run"
+  delegate_to: localhost
+  delegate_facts: true
+  register: toolbox_package
+
+# 复制noded镜像到worker
+- name: copy toolbox to remote
+  copy:
+    src: "{{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/{{item}}"
+    dest: "{{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/"
+    mode: 0640
+    owner: "{{ansible_user_id}}"
+    group: "{{ansible_user_id}}"
+  loop: "{{toolbox_package.stdout_lines}}"
+
+- name: create log directories
+  file:
+    path: "/var/log/ascend-docker-runtime"
+    state: directory
+    owner: root
+    group: root
+    mode: 0750
+
+# 安装toolbox
+- name: install toolbox
+  shell:
+    cmd:
+      cd {{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/ && bash $(ls | grep {{TOOLBOX_COMPONENT}} | grep run) --uninstall;
+      cd {{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/ && bash $(ls | grep {{TOOLBOX_COMPONENT}} | grep run) --install;
+      systemctl daemon-reload;
+      systemctl restart docker

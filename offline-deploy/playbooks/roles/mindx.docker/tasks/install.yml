@@ -1,23 +1,29 @@
-- name: load docker install task
-  include_tasks: ubuntu_18.04.yml
-  when:
-    - os_name == 'Ubuntu'
-    - os_version == '18.04'
+# 使用dpkg作为包管理器
+- name: install docker-ce
+  shell: dpkg --force-all -i {{ docker_pkg_dir }}/{{ ansible_architecture }}/*.deb
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    DEBIAN_PRIORITY: critical
+  when: not use_rpm_command
 
-- name: load docker install task
-  include_tasks: centos_7.6.yml
-  when:
-    - os_name == 'CentOS'
-    - os_version == '7.6'
+# 使用rpm作为包管理器
+- name: install docker-ce
+  shell: rpm -iUv {{ docker_pkg_dir }}/{{ ansible_architecture }}/*.rpm --nodeps --force
+  when: use_rpm_command
+
+- name: create directory
+  file:
+    path: "/etc/docker"
+    state: directory
+    mode: 0750
 
 - name: config docker
   template:
-    src: daemon.json.j2
+    src: "../templates/daemon.json.j2"
     dest: "/etc/docker/daemon.json"
     mode: 0600
+  when:
+    - os_name|lower == 'ubuntu'
 
-- name: "restart docker"
-  systemd:
-    name: "docker"
-    enabled: true
-    state: restarted
+- name: docker load config and restart
+  shell: systemctl daemon-reload && systemctl restart docker

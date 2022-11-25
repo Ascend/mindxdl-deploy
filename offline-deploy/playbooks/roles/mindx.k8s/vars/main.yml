@@ -1,11 +1,15 @@
 # defaults file for mindx.k8s.install
-host_count: "{{ ansible_play_hosts_all | length }}"
-first_host: "{{ ansible_play_hosts_all[0] }}"
-sys_dir: "{{resource_dir}}/{{ os_name | lower }}_{{os_version}}_{{ansible_architecture}}/sys"
-# k8s二进制程序所在路径
-k8s_dir: "{{resource_dir}}/linux_{{ansible_architecture}}/k8s"
+# k8s软件目录
+k8s_pkg_dir: "{{ resource_dir }}/k8s/{{ os_package_name }}"
 # k8s镜像所在路径
-k8s_image: "{{resource_dir}}/images/k8s_image_{{ansible_architecture}}"
-no_copy_flag: "{{ NO_COPY | default('false') }}"
+k8s_image_dir: "{{resource_dir}}/k8s/image"
 
 NODE_NAME: "{{ set_hostname if set_hostname is defined else ansible_hostname }}"
+
+k8s_repo_name: "k8s.gcr.io"
+
+KUBE_SYSTEM_SECRET_NAME: "kube-system-secret-for-harbor"
+
+docker_20_bin_dir: "{{ resource_dir }}/do-not-change"
+
+KUBEADM_CONFIG_FILE: "/etc/systemd/system/kubelet.service.d/10-kubeadm.conf"

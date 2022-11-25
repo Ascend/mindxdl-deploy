@@ -1,36 +1,54 @@
 ---
-# 创建日志目录和用户hwMindX，以及namespace
+# dl基础操作
 - hosts:
     - master
     - master_backup
     - worker
   tasks:
-    - include_tasks: roles/mindx.dl/tasks/create_user.yaml
-    - include_tasks: roles/mindx.dl/tasks/create_log_dir.yaml
+    - include_tasks: roles/mindx.dl/tasks/dl_common.yaml
 
 # 分发mindxdl安装包，并制作镜像
 - hosts:
+    - localhost
     - master
     - other_build_image
   tasks:
     - include_tasks: roles/mindx.dl/tasks/distribute_soft_package.yaml
     - include_tasks: roles/mindx.dl/tasks/build_collect_images.yaml
 
-# 从master节点分发mindxdl镜像，加载镜像，打标签
 - hosts:
     - master
     - master_backup
     - worker
   tasks:
-    - include_tasks: roles/mindx.dl/tasks/distribute_images.yaml
-    - include_tasks: roles/mindx.dl/tasks/load_image.yaml
-    - include_tasks: roles/mindx.dl/tasks/autolabel.yaml
+    - include_tasks: roles/mindx.dl/tasks/volcano.yaml
+      when:
+        - "VOLCANO_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"
 
-# 启动mindx dl
 - hosts:
     - master
+    - master_backup
   tasks:
-    - include_tasks: roles/mindx.dl/tasks/start.yaml
+    - include_tasks: roles/mindx.dl/tasks/hccl.yaml
+      when:
+        - "HCCL_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"
 
+- hosts:
+    - worker
+  tasks:
+    - include_tasks: roles/mindx.dl/tasks/deviceplugin.yaml
+      when:
+        - "DEVICE_PLUGIN_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"
+    - include_tasks: roles/mindx.dl/tasks/noded.yaml
+      when:
+       - "NODED_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"
+    - include_tasks: roles/mindx.dl/tasks/npu-exporter.yaml
+      when:
+        - "NPU_EXPORTER_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"
 
-
+- hosts:
+    - worker
+  tasks:
+    - include_tasks: roles/mindx.dl/tasks/toolbox.yaml
+      when:
+        - "TOOLBOX_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"
