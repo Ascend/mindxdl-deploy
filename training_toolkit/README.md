@@ -7,11 +7,8 @@ MindXDL training toolkit是配合MindXDL使用的训练工具，主要有以下�
 
 ## 约束
 
-1.
-
-用户需要按照配套关系，完成计算节点昇腾NPU固件、驱动的安装，并按照[MindXDL指南](https://www.hiascend.com/document/detail/zh/mindx-dl/30rc3/overview/index.html)
+1. 用户需要按照配套关系，完成计算节点昇腾NPU固件、驱动的安装，并按照[MindXDL指南](https://www.hiascend.com/document/detail/zh/mindx-dl/30rc3/overview/index.html)
 完成相关组件的安装与配置。
-
 2. 从昇腾社区获取，或自行构建相应训练框架的训练镜像。
 3. 容器中运行环境相关的软件包：驱动、NNAE、TFPlugin等需要安装在默认路径下，即：/usr/local/Ascend
 
