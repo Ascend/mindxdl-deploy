@@ -1,16 +1,14 @@
-# 快速入门
+### 快速入门
 
 本文主要介绍如何使用ansible安装MindX DL软件及其依赖的开源软件
 
-# 版本说明
+### 版本说明
 
-| 版本     | 版本说明                                                     |
-| -------- | ------------------------------------------------------------ |
-| V3.0.RC3 | 场景一：基础全量安装场景。<br />       安装组件包括：Docker, Kubernetes, Toolbox, Ascend Device Plugin, Volcano, HCCL-Controller, NodeD, NPU-Exporter<br/>场景二：已有Kubernetes集群，使用volcano调度器<br/>       安装组件包括：Toolbox, Ascend Device Plugin, Volcano, HCCL-Controller(可选), NodeD(可选), NPU-Exporter(可选)<br/>场景三：已有Kubernetes集群，不使用volcano调度器<br/>       在计算节点上安装组件包括: Toolbox, Ascend Device Plugin,  NPU-Exporter(可选) |
+| 版本   | 版本说明                                                     |
+| ------ | ------------------------------------------------------------ |
+| V3.0.0 | 1.MindX DL按场景安装方式，可选择场景一、二、三方式安装组件，部分组件可选装。<br/>2.适配ubuntu，openEuler操作系统，并且支持x86_64和aarch64。<br/>3.增加使用harbor镜像仓拉取镜像的方式 <br/>4.支持部署高可用kubernetes集群 |
 
-
-
-## 软件描述
+### 软件描述
 
 本文主要介绍如何使用ansible安装MindX DL所需开源软件安装。其中包含如下开源软件,具体功能请参考官网。
 
@@ -25,7 +23,7 @@
 | HCCL-Controller | mindx-dl基础组件 |
 | ToolBox | mindx-dl基础组件 |
 
-## 环境要求
+### 环境要求
 
 ### 支持的操作系统说明
 
@@ -50,6 +48,14 @@
 | 服务器（插Atlas 300I Duo 推理卡） |
 | 服务器（插Atlas 300V Pro 视频解析卡） |
 | 服务器（插Atlas 300V 训练解析卡） |
+
+### 安装方式说明
+
+| 安装场景                                        | 安装组件                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| 场景一：基础全量安装场景                        | Docker, Kubernetes, Toolbox, Ascend Device Plugin, Volcano, HCCL-Controller, NodeD, NPU-Exporter |
+| 场景二：已有Kubernetes集群，使用volcano调度器   | Toolbox, Ascend Device Plugin, Volcano, HCCL-Controller(可选), NodeD(可选), NPU-Exporter(可选) |
+| 场景三：已有Kubernetes集群，不使用volcano调度器 | Toolbox, Ascend Device Plugin, NPU-Exporter(可选)            |
 
 
 
@@ -110,7 +116,7 @@ sed -i "s?#fact_caching_connection=/tmp?fact_caching_connection=/etc/ansible/fac
 scp -r /root/resources/basic/OpenEuler_20.03_LTS/${arch}/libselinux root@192.168.110.135:/root/resources/basic/OpenEuler_20.03_LTS/${arch}/
 
 # 在所有的openeuler上执行以下命令，其中${arch}为系统架构
-rpm -i /root/resources/basic/OpenEuler_20.03_LTS/${arch}/*.rpm --nodeps --force
+rpm -i /root/resources/basic/OpenEuler_20.03_LTS/${arch}/libselinux/*.rpm --nodeps --force
 ```
 
 
