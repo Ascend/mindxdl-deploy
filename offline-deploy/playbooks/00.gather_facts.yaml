@@ -78,7 +78,6 @@
         cacheable: yes
       changed_when: false
 
-
 - hosts: localhost
   tasks:
     - name: set facts_cache dir permission

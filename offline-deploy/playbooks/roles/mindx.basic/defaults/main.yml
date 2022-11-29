@@ -1,2 +1,3 @@
 # defaults file for mindx.basic
-unzip_dir: "{{resource_dir}}/basic/{{ os_name }}_{{os_version}}/{{ansible_architecture}}/unzip"
+base_dir: "{{ resource_dir }}/basic"
+unzip_dir: "{{ base_dir }}/{{ os_package_name }}/{{ansible_architecture}}/unzip"

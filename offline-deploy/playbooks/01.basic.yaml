@@ -1,6 +1,7 @@
 ---
 # install basic packages
 - hosts:
+    - localhost
     - master
     - worker
     - master_backup

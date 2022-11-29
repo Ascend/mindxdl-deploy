@@ -1,4 +1,6 @@
 ---
+- import_playbook: playbooks/00.gather_facts.yaml
+
 - import_playbook: playbooks/01.basic.yaml
 
 - import_playbook: playbooks/02.docker.yaml
