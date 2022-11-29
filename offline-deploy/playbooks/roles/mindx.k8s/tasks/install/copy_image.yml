@@ -29,7 +29,7 @@
     src: "{{ k8s_image_dir }}/{{ ansible_architecture }}.tar.gz"
     dest: "{{ k8s_image_dir }}"
     mode: 0750
-    copy: yes
+    remote_src: yes
   when:
     - inventory_hostname != "localhost"
     - not (host_count == "1" and first_host == "localhost")

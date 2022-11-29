@@ -22,7 +22,7 @@
 
 - name: message
   fail:
-    msg: "k8s is running already. The script won't install docker."
+    msg: "k8s is running already. The script won't install k8s."
   when: k8s_installed
   ignore_errors: true
 

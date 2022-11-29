@@ -28,7 +28,7 @@
     src: "{{ docker_pkg_dir }}/{{ ansible_architecture }}.tar.gz"
     dest: "{{ docker_pkg_dir }}"
     mode: 0750
-    copy: yes
+    remote_src: yes
   when:
     - inventory_hostname != "localhost"
     - not (host_count == "1" and first_host == "localhost")
