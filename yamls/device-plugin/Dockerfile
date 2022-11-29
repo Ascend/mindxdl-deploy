@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
 RUN useradd -d /home/HwHiAiUser -u 1000 -m -s /usr/sbin/nologin HwHiAiUser && \
-    useradd root -s /usr/sbin/nologin
+    usermod root -s /usr/sbin/nologin
 
 ENV USE_ASCEND_DOCKER true
 
