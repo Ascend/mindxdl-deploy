@@ -95,7 +95,7 @@
     src: "{{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/{{item}}"
     dest: "{{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/{{item | replace('.zip', '')}}/"
     mode: 0750
-    remote_src: no
+    remote_src: yes
   loop: "{{dl_package.stdout_lines}}"
   when:
     - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master']

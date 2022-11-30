@@ -20,4 +20,52 @@
   when:
     - os_name|lower == 'ubuntu'
     - os_version == '18.04'
+    - inventory_hostname != "localhost"
+  ignore_errors: true
+
+# 压缩libselinux软件包
+- name: archive libselinux software on localhost
+  local_action:
+    module: archive
+    path: "{{ base_dir }}/{{ os_package_name }}/{{ item }}"
+    dest: "{{ base_dir }}/{{ os_package_name }}/{{ item }}.tar.gz"
+    mode: 0640
+  loop:
+    - aarch64
+    - x86_64
+  when:
+    - inventory_hostname == "localhost"
+    - os_package_name == 'OpenEuler_20.03_LTS'
+    - no_copy_flag != "true"
+  run_once: true
+
+- name: create k8s image directory
+  file:
+    path: "{{ base_dir }}/{{ os_package_name }}"
+    state: directory
+    mode: 0750
+  when:
+    - inventory_hostname != "localhost"
+    - no_copy_flag != "true"
+
+# 复制libselinux软件包到远端并解压
+- name: unarchive libselinux software on remote
+  ansible.builtin.unarchive:
+    src: "{{ base_dir }}/{{ os_package_name }}/{{ ansible_architecture }}.tar.gz"
+    dest: "{{ base_dir }}/{{ os_package_name }}"
+    mode: 0750
+    remote_src: no
+  when:
+    - os_package_name == 'OpenEuler_20.03_LTS'
+    - inventory_hostname != "localhost"
+    - no_copy_flag != "true"
+
+- name: install libselinux openEuler
+  shell: rpm -iUv {{ base_dir }}/{{ os_package_name }}/{{ ansible_architecture }}/libselinux/*.rpm --nodeps --force
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    DEBIAN_PRIORITY: critical
+  when:
+    - os_package_name == 'OpenEuler_20.03_LTS'
+    - inventory_hostname != "localhost"
   ignore_errors: true

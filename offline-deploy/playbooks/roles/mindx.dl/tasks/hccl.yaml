@@ -77,13 +77,13 @@
   ignore_errors: true
   when:
     - use_harbor
-    - inventory_hostname in inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 - name: modify hccl yaml
   shell: "ls {{mindxdl_yaml_dir}} | grep {{HCCL_COMPONENT}} | grep -v 'without'"
   register: yaml_file
   when:
-    - inventory_hostname in inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 - name: modify hccl yaml
   shell: |
@@ -94,7 +94,7 @@
   loop: "{{ yaml_file.stdout_lines }}"
   when:
     - use_harbor
-    - inventory_hostname in inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 # 部署hccl应用
 - name: apply hccl component
@@ -108,4 +108,4 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
   when:
-    - inventory_hostname in inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']

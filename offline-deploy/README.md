@@ -63,7 +63,7 @@
 
 1.下载批量部署脚本，可使用git clone和下载zip方法，下载地址为：[Ascend/mindxdl-deploy](https://gitee.com/ascend/mindxdl-deploy)。，请放置在/root目录下，安装部署脚本在master分支的offline-deploy目录下。
 
-2.找工程师获得开源软件的离线安装包resources.tar.gz，将离线安装包解压在/root目录下。按如下方式放置
+2.下载开源软件的离线安装包[resources.tar.gz](https://ascend-repo-modelzoo.obs.cn-east-2.myhuaweicloud.com/MindXDL/resources.tar.gz)，将离线安装包解压在/root目录下。按如下方式放置
 
 ```bash
 root@master:~# ls
@@ -89,37 +89,10 @@ ssh-copy-id <ip>   # 将管理节点的公钥拷贝到所有节点的机器上(�
 
 如果已安装ansible，请跳过这一步骤：
 
-ubuntu安装ansible方式，执行以下命令
-
 ```bash
-#进入到ansible的安装目录，其中${arch}为系统架构
-cd ~/resources/ansible/Ubuntu_18.04/${arch}
-
-dpkg -i --force-all *.deb 
-sed -i "s?#gathering = implicit?gathering = smart?" /etc/ansible/ansible.cfg 
-sed -i "s?#fact_caching = memory?fact_caching = jsonfile?" /etc/ansible/ansible.cfg
-sed -i "s?#fact_caching_connection=/tmp?fact_caching_connection=/etc/ansible/facts-cache?" /etc/ansible/ansible.cfg
+#在代码脚本的offline-deploy目录下执行以下命令
+root@master:~/mindxdl-deploy/offline-deploy# bash install_ansible.sh
 ```
-
-openeuler安装ansible方式
-
-```bash
-#进入到ansible的安装目录，其中${arch}为对应操作系统的名字和架构
-cd ~/resources/ansible//OpenEuler_20.03_LTS/${arch}
-
-rpm -i *.rpm --nodeps --force
-sed -i "s?#gathering = implicit?gathering = smart?" /etc/ansible/ansible.cfg 
-sed -i "s?#fact_caching = memory?fact_caching = jsonfile?" /etc/ansible/ansible.cfg
-sed -i "s?#fact_caching_connection=/tmp?fact_caching_connection=/etc/ansible/facts-cache?" /etc/ansible/ansible.cfg
-
-#将ansible依赖包拷贝到所有openeuler操作系统上，其中${arch}为系统架构
-scp -r /root/resources/basic/OpenEuler_20.03_LTS/${arch}/libselinux root@192.168.110.135:/root/resources/basic/OpenEuler_20.03_LTS/${arch}/
-
-# 在所有的openeuler上执行以下命令，其中${arch}为系统架构
-rpm -i /root/resources/basic/OpenEuler_20.03_LTS/${arch}/libselinux/*.rpm --nodeps --force
-```
-
-
 
 ### 步骤3：检查集群状态
 
@@ -183,8 +156,6 @@ root@ubuntu-1:~/mindxdl-deploy/offline-deploy# vi inventory_file
 在代码脚本的offline-deploy目录下执行以下命令：
 
 ```bash
-#采集所有主机的信息
-root@master:~/mindxdl-deploy/offline-deploy# ansible-playbook -i inventory_file playbooks/00.gather_facts.yaml
 #安装集群环境
 root@master:~/mindxdl-deploy/offline-deploy# ansible-playbook -i inventory_file all.yaml
 ```

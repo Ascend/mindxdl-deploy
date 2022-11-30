@@ -144,7 +144,7 @@
     HTTPS_PROXY: ""
   when:
     - use_harbor
-    - inventory_hostname in inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 - name: list volcano yaml
   shell: "ls {{mindxdl_yaml_dir}} | grep {{VOLCANO_COMPONENT}} | grep -v 'device-plugin'"
@@ -161,7 +161,7 @@
   loop: "{{ yaml_file.stdout_lines }}"
   when:
     - use_harbor
-    - inventory_hostname in inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 # 部署volcano应用
 - name: apply volcano component
@@ -175,4 +175,4 @@
     HTTPS_PROXY: ""
   loop: "{{ yaml_file.stdout_lines }}"
   when:
-    - inventory_hostname in inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']

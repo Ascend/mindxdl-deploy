@@ -1,17 +1,6 @@
 - name: include vars
   include_vars: ../defaults/main.yml
 
-- name: check if the driver is installed
-  shell: "npu-smi info"
-  register: shell_run_result
-  ignore_errors: True
-
-- name: message
-  fail:
-    msg: "driver is not installed, please install driver"
-  when:
-    - shell_run_result.rc != 0
-
 # 在远端创建mindxdl镜像目录
 - name: create mindxdl dlDeployPackage directory on remote
   file:
