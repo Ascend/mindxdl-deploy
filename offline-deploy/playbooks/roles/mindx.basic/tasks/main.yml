@@ -1,6 +1,28 @@
 - name: include vars
   include_vars: ../defaults/main.yml
 
+- name: check if the driver is installed
+  shell: "npu-smi info"
+  register: shell_run_result
+  ignore_errors: True
+  when:
+    - inventory_hostname in groups['worker']
+
+- name: if driver is not installed, set unique variables
+  delegate_to: localhost
+  delegate_facts: true
+  set_fact:
+    is_driver_installed: "false"
+  when:
+    - inventory_hostname in groups['worker']
+    - shell_run_result.rc != 0
+
+- name: check driver failed
+  fail:
+    msg: "please check that all worker nodes have the driver installed."
+  when:
+    - hostvars['localhost']['is_driver_installed'] is defined and hostvars['localhost']['is_driver_installed'] == false
+
 # 复制unzip包到ubuntu上
 - name: copy unzip package to remote
   copy:
@@ -39,7 +61,7 @@
     - no_copy_flag != "true"
   run_once: true
 
-- name: create k8s image directory
+- name: create base package directory
   file:
     path: "{{ base_dir }}/{{ os_package_name }}"
     state: directory

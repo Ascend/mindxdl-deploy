@@ -44,6 +44,7 @@
   shell: |
     kubectl label --overwrite node {{ NODE_NAME }} node-role.kubernetes.io/worker=worker
     kubectl label --overwrite node {{ NODE_NAME }} workerselector=dls-worker-node
+    kubectl label --overwrite node {{ NODE_NAME }} nodeDEnable=on
   environment:
     http_proxy: ""
     https_proxy: ""
