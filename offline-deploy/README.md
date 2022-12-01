@@ -94,7 +94,15 @@ ssh-copy-id <ip>   # 将管理节点的公钥拷贝到所有节点的机器上(�
 root@master:~/mindxdl-deploy/offline-deploy# bash install_ansible.sh
 ```
 
-### 步骤3：检查集群状态
+### 步骤3：配置集群信息
+
+在代码脚本的offline-deploy目录下修改配置文件参数，用户可根据配置文件注释自行设置
+
+```bash
+root@ubuntu-1:~/mindxdl-deploy/offline-deploy# vi inventory_file
+```
+
+### 步骤4：检查集群状态
 
 2. 在工具目录中执行：
 
@@ -119,9 +127,9 @@ root@master:~/mindxdl-deploy/offline-deploy# bash install_ansible.sh
    root@master:~/mindxdl-deploy/offline-deploy# ansible -i inventory_file all -m shell -a "date -s '2022-06-01 08:00:00'; hwclock -w"
    ```
 
-4. 请先安装NPU硬件对应的驱动和固件，才能构建昇腾NPU的训练和推理任务。
+4. **请先安装NPU硬件对应的驱动和固件，才能构建昇腾NPU的训练和推理任务。**
 
-### 步骤4：下载MindX DL基础组件
+### 步骤5：下载MindX DL基础组件
 
 1. 下载mindxdl基础组件
 
@@ -134,20 +142,9 @@ root@master:~/mindxdl-deploy/offline-deploy# bash install_ansible.sh
    Ascend-mindx-toolbox_{version}_{os}-{arch}.run
    ```
 
-   注：ToolBox为run后缀包
+   **注：ToolBox为run后缀包**
 
 2. 将MindX DL基础组件放在~/resource/mindxdl/dlPackage/{arch}目录中。如果k8s集群中包含异构节点，需要将异构节点的安装包放在同目录对应架构一下。
-
-
-
-
-### 步骤5：配置集群信息
-
-在代码脚本的offline-deploy目录下修改配置文件参数，用户可根据配置文件注释自行设置
-
-```bash
-root@ubuntu-1:~/mindxdl-deploy/offline-deploy# vi inventory_file
-```
 
 
 
