@@ -20,12 +20,15 @@
     - not (host_count == "1" and first_host == "localhost")
     - no_copy_flag != "true"
 
-# 只加载基础镜像，如果有多master，kube-vip镜像在其他步骤执行
-- name: load k8s images on master
-  shell: "docker load -i {{ item }}"
-  with_fileglob:
-    - "{{ k8s_image_dir }}/{{ ansible_architecture }}/calico*.tar.gz"
-    - "{{ k8s_image_dir }}/{{ ansible_architecture }}/kube*.tar.gz"
-    - "{{ k8s_image_dir }}/{{ ansible_architecture }}/coredns*.tar.gz"
-    - "{{ k8s_image_dir }}/{{ ansible_architecture }}/etcd*.tar.gz"
-    - "{{ k8s_image_dir }}/{{ ansible_architecture }}/pause*.tar.gz"
+- name: list k8s images
+  shell: "ls {{ k8s_image_dir }}/{{ ansible_architecture }}"
+  register: k8s_image
+  when:
+    - inventory_hostname != "localhost"
+
+# 加载k8s镜像
+- name: load k8s images
+  shell: "docker load -i {{ k8s_image_dir }}/{{ ansible_architecture }}/{{ item }}"
+  loop: "{{ k8s_image.stdout_lines }}"
+  when:
+    - inventory_hostname != "localhost"
