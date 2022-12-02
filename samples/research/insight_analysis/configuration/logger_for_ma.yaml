@@ -1,0 +1,31 @@
+version: 1
+formatters:
+  simpleFmt:
+    format: '[%(asctime)s][%(levelname)s][%(message)s]'
+  wholeFmt:
+    format: '[%(asctime)s][%(levelname)s][%(message)s][%(filename)s, %(funcName)s:%(lineno)d][%(process)d, %(thread)d]'
+handlers:
+  srvHandler:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: wholeFmt
+    stream: ext://sys.stdout
+  runHandler:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: simpleFmt
+    stream: ext://sys.stdout
+
+loggers:
+  logService:
+    level: INFO
+    handlers: [srvHandler]
+    propagate: no
+  logRun:
+    level: INFO
+    handlers: [runHandler]
+    propagate: no
+
+root:
+  level: INFO
+  handlers: [srvHandler]
