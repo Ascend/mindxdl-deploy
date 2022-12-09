@@ -118,6 +118,24 @@ if [[ "${server_count}" == "" ]]; then
   exit 1
 fi
 
+# 获取device_list
+device_list=""
+device_list_len=${device_count}
+
+if [[ "${server_count}" -gt 1 ]]; then
+  device_list_len=$((device_count / server_count))
+fi
+for ((i = 1; i <= ${device_list_len}; i++)); do
+  dev_id=$(get_json_value ${RANK_TABLE_FILE} rank_id ${i})
+  if [[ "${i}" -eq 1 ]]; then
+    device_list="${dev_id}"
+  else
+    device_list="${device_list},${dev_id}"
+  fi
+done
+
+echo "device_list: ${device_list}"
+
 function get_env_for_1p_job() {
   export DEVICE_NUM=1
   export DEVICE_ID=0
