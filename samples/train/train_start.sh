@@ -197,6 +197,7 @@ if [[ "${server_count}" -ge 1 ]]; then
   if [ "${framework}" == "PyTorch" ]; then
     get_env_for_pytorch_multi_node_job
     ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
+
     check_return_code
     if [[ $@ =~ need_freeze ]]; then
       ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
