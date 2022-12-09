@@ -121,6 +121,7 @@ fi
 # 获取device_list
 device_list=""
 device_list_len=${device_count}
+
 if [[ "${server_count}" -gt 1 ]]; then
   device_list_len=$((device_count / server_count))
 fi
@@ -132,6 +133,7 @@ for ((i = 1; i <= ${device_list_len}; i++)); do
     device_list="${device_list},${dev_id}"
   fi
 done
+
 echo "device_list: ${device_list}"
 
 function get_env_for_1p_job() {
@@ -212,7 +214,8 @@ if [[ "${server_count}" -ge 1 ]]; then
   logger "server id is: ""${server_id}"
   if [ "${framework}" == "PyTorch" ]; then
     get_env_for_pytorch_multi_node_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --device-list=${device_list}   && tee ${log_url}
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
+
     check_return_code
     if [[ $@ =~ need_freeze ]]; then
       ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
