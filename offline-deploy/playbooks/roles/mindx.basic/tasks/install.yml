@@ -1,27 +1,25 @@
-- name: create base package directory not rpm
+- name: create base package directory
   file:
-    path: "{{ unzip_dir }}"
+    path: "{{ base_dir }}"
     state: directory
     mode: 0750
   when:
-    - not use_rpm_command
     - inventory_hostname != "localhost"
     - no_copy_flag != "true"
 
-# 复制unzip软件包到远端并解压
-- name: unarchive unzip software on remote
+# 复制工具包软件包到远端并解压
+- name: unarchive unzip software on remote - dpkg
   ansible.builtin.unarchive:
-    src: "{{ unzip_dir }}/{{ ansible_architecture }}.tar.gz"
-    dest: "{{ unzip_dir }}"
-    mode: 0750
+    src: "{{ base_dir }}/{{ ansible_architecture }}.tar.gz"
+    dest: "{{ base_dir }}"
     remote_src: no
   when:
     - not use_rpm_command
     - inventory_hostname != "localhost"
     - no_copy_flag != "true"
 
-- name: install unzip - not rpm
-  shell: dpkg --force-all -i {{ unzip_dir }}/{{ ansible_architecture }}/*.deb
+- name: install tools on remote - dpkg
+  shell: dpkg --force-all -i {{ base_dir }}/{{ ansible_architecture }}/*.deb
   environment:
     DEBIAN_FRONTEND: noninteractive
     DEBIAN_PRIORITY: critical
@@ -30,30 +28,19 @@
     - inventory_hostname != "localhost"
   ignore_errors: true
 
-- name: create base package directory - rpm
-  file:
-    path: "{{ libselinux_dir }}"
-    state: directory
-    mode: 0750
-  when:
-    - use_rpm_command
-    - inventory_hostname != "localhost"
-    - no_copy_flag != "true"
-
-# 复制libselinux软件包到远端并解压
-- name: unarchive libselinux software on remote
+# 复制工具包软件包到远端并解压
+- name: unarchive tools software on remote - rpm
   ansible.builtin.unarchive:
-    src: "{{ libselinux_dir }}/{{ ansible_architecture }}.tar.gz"
-    dest: "{{ libselinux_dir }}"
-    mode: 0750
+    src: "{{ base_dir }}/{{ ansible_architecture }}.tar.gz"
+    dest: "{{ base_dir }}"
     remote_src: no
   when:
     - use_rpm_command
     - inventory_hostname != "localhost"
     - no_copy_flag != "true"
 
-- name: install libselinux openEuler
-  shell: rpm -iUv {{ libselinux_dir }}/{{ ansible_architecture }}/*.rpm --nodeps --force
+- name: install tools on remote - rpm
+  shell: rpm -iUv {{ base_dir }}/{{ ansible_architecture }}/*.rpm --nodeps --force
   environment:
     DEBIAN_FRONTEND: noninteractive
     DEBIAN_PRIORITY: critical
