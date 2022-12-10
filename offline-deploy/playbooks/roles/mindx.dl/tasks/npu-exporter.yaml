@@ -86,7 +86,7 @@
 - name: list npu-exporter yaml
   delegate_to: "{{ groups['master'][0] }}"
   run_once: true
-  shell: "ls {{mindxdl_yaml_dir}} | grep {{NPU_EXPORTER_COMPONENT}}"
+  shell: "ls {{mindxdl_yaml_dir}} | grep {{NPU_EXPORTER_COMPONENT}} | grep -v '1usoc'"
   register: yaml_file
 
 - name: modify npu-exporter yaml
