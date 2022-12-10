@@ -20,3 +20,12 @@
     - include_tasks: roles/mindx.docker/tasks/install.yml
       when:
         - not docker_installed
+
+- hosts:
+    - master
+    - worker
+  gather_facts: false
+  vars_files:
+    - roles/mindx.docker/vars/main.yml
+  tasks:
+    - include_tasks: roles/mindx.docker/tasks/post_install.yml

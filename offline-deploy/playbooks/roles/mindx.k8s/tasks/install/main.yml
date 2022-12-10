@@ -40,4 +40,5 @@
       ls /etc/resolv.conf 2>/dev/null || touch /etc/resolv.conf && chmod 644 /etc/resolv.conf
   changed_when: false
   when:
+    - inventory_hostname != "localhost"
     - not k8s_initialized
