@@ -5,7 +5,6 @@
     state: directory
     mode: 0750
   when:
-    - inventory_hostname != "localhost"
     - no_copy_flag != "true"
 
 # 复制k8s镜像包到远端并解压
@@ -16,19 +15,14 @@
     mode: 0750
     remote_src: no
   when:
-    - inventory_hostname != "localhost"
     - not (host_count == "1" and first_host == "localhost")
     - no_copy_flag != "true"
 
 - name: list k8s images
   shell: "ls {{ k8s_image_dir }}/{{ ansible_architecture }}"
   register: k8s_image
-  when:
-    - inventory_hostname != "localhost"
 
 # 加载k8s镜像
 - name: load k8s images
   shell: "docker load -i {{ k8s_image_dir }}/{{ ansible_architecture }}/{{ item }}"
   loop: "{{ k8s_image.stdout_lines }}"
-  when:
-    - inventory_hostname != "localhost"

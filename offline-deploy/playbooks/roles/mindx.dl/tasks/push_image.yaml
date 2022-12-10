@@ -50,7 +50,7 @@
 # 根据导入的k8s镜像，创建对应的project
 - name: create harbor project
   uri:
-    url: "{{'http://' if harbor_use_http else 'https://'}}{{ HARBOR_SERVER }}/api/v2.0/projects"
+    url: "{{'http://' if HARBOR_HTTP else 'https://'}}{{ HARBOR_SERVER }}/api/v2.0/projects"
     method: POST
     validate_certs: false
     return_content: yes
@@ -115,7 +115,7 @@
   shell:
     cmd:
       manifest_name="{{ HARBOR_MINDX_PREFIX }}/{{ item.stdout.replace('_'+master_arch+':', ':') }}";
-      docker manifest push --insecure "${manifest_name}";
+      {{ docker_20_bin_dir }}/docker-{{ ansible_architecture }} manifest push -p --insecure "${manifest_name}";
   loop: "{{ master_dl_images['results'] }}"
   environment:
     DOCKER_CLI_EXPERIMENTAL: enabled

@@ -6,15 +6,9 @@
   debug:
     msg: "kube_vip and kube_interface can not be empty in inventory_file, please check"
   failed_when: true
-  when:  KUBE_VIP is not defined or kube_interface is not defined or KUBE_VIP | length == 0 or kube_interface | length == 0
-
-- name: message
-  debug:
-    msg: "master_backup is suggested to contain 2 nodes at least in inventory_file, please check"
-  failed_when: true
   when:
-    - "'master_backup' in groups"
-    - "groups['master_backup'] | length == 1"
+    - KUBE_VIP is not defined or kube_interface is not defined or KUBE_VIP | length == 0 or kube_interface | length == 0
+
 
 - name: create /etc/kubernetes/manifests/
   file:

@@ -2,6 +2,6 @@
     - localhost
     - master
     - worker
-    - master_backup
+  gather_facts: false
   roles:
     - role: mindx.harbor

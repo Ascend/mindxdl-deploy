@@ -21,8 +21,8 @@
   when:
     - not use_harbor
 
-# 复制hccl镜像到master and master_backup
-- name: copy hccl images to master and master_backup
+# 复制hccl镜像到master and other master
+- name: copy hccl images to other master
   copy:
     src: "{{mindxdl_images_dir}}/{{ansible_architecture}}/{{item}}"
     dest: "{{mindxdl_images_dir}}/{{ansible_architecture}}/"
@@ -77,13 +77,13 @@
   ignore_errors: true
   when:
     - use_harbor
-    - inventory_hostname in groups['master']
+    - inventory_hostname in groups['master'][0]
 
 - name: modify hccl yaml
   shell: "ls {{mindxdl_yaml_dir}} | grep {{HCCL_COMPONENT}} | grep -v 'without'"
   register: yaml_file
   when:
-    - inventory_hostname in groups['master']
+    - inventory_hostname in groups['master'][0]
 
 - name: modify hccl yaml
   shell: |
@@ -94,12 +94,13 @@
   loop: "{{ yaml_file.stdout_lines }}"
   when:
     - use_harbor
-    - inventory_hostname in groups['master']
+    - inventory_hostname in groups['master'][0]
 
 # 部署hccl应用
 - name: apply hccl component
   shell:
     cmd:
+      kubectl delete -f {{mindxdl_yaml_dir}}/{{ item }} || true;
       kubectl apply -f {{mindxdl_yaml_dir}}/{{ item }}
   loop: "{{ yaml_file.stdout_lines }}"
   environment:
@@ -108,4 +109,4 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
   when:
-    - inventory_hostname in groups['master']
+    - inventory_hostname in groups['master'][0]

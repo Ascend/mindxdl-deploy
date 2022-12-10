@@ -6,7 +6,7 @@
     - localhost
     - master
     - worker
-    - master_backup
+  gather_facts: false
   vars_files:
     - roles/mindx.k8s/vars/main.yml
   tasks:
@@ -16,7 +16,7 @@
 - hosts:
     - master
     - worker
-    - master_backup
+  gather_facts: false
   vars_files:
     - roles/mindx.k8s/vars/main.yml
   tasks:
@@ -29,47 +29,56 @@
 
 # init kubevip
 - hosts:
-    - master
+    - master[0]
+  gather_facts: false
   vars_files:
     - roles/mindx.k8s/defaults/main.yml
     - roles/mindx.k8s/vars/main.yml
   tasks:
     - include_tasks: roles/mindx.k8s/tasks/kubevip/main.yml
       when:
-        - "'master_backup' in groups"
-        - "groups['master_backup'] | length != 0"
-        - not k8s_installed
+        - groups['master'] | length > 2
+        - not k8s_initialized
 
 # k8s master init
-- hosts: master
+- hosts:
+    - master[0]
+  gather_facts: false
   vars_files:
     - roles/mindx.k8s/defaults/main.yml
     - roles/mindx.k8s/vars/main.yml
   tasks:
     - include_tasks: roles/mindx.k8s/tasks/master/main.yml
       when:
-        - not k8s_installed
+        - not k8s_initialized
 
-# master_backup join k8s
-- hosts: master_backup
+# master join k8s
+- hosts:
+    - master
+  gather_facts: false
   vars_files:
     - roles/mindx.k8s/defaults/main.yml
     - roles/mindx.k8s/vars/main.yml
   tasks:
     - include_tasks: roles/mindx.k8s/tasks/master_backup/main.yml
+      when:
+        - groups['master'] | length > 2
+        - inventory_hostname != groups['master'][0]
+        - not k8s_initialized
     - include_tasks: roles/mindx.k8s/tasks/kubevip/main.yml
       when:
-        - "'master_backup' in groups"
-        - "groups['master_backup'] | length != 0"
-        - not k8s_installed
+        - groups['master'] | length > 2
+        - inventory_hostname != groups['master'][0]
+        - not k8s_initialized
 
 # worker join k8s
 - hosts: worker
+  gather_facts: false
   vars_files:
     - roles/mindx.k8s/defaults/main.yml
     - roles/mindx.k8s/vars/main.yml
   tasks:
     - include_tasks: roles/mindx.k8s/tasks/worker/main.yml
       when:
-        - inventory_hostname not in (groups['master_backup'] + groups['master'])
-        - not k8s_installed
+        - inventory_hostname not in groups['master']
+        - not k8s_initialized

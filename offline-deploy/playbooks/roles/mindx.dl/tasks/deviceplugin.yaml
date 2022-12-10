@@ -160,13 +160,30 @@
   when:
     - use_harbor
 
+- name: register label info
+  shell:
+    cmd:
+      kubectl get nodes --show-labels 2>/dev/null || true
+  register: node_labels
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+
+- name: check label info
+  faile:
+    msg: "{{ cannot get node label info }}"
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  when:
+    - node_labels is not defined or node_labels.stdout == ""
+
 # 执行device plugin的yaml
 - name: apply device plugin 310P yaml
   delegate_to: "{{ groups['master'][0] }}"
   run_once: true
   shell:
     cmd:
-      ((kubectl get nodes --show-labels | grep "huawei-Ascend310P" 1>/dev/null) && (ls {{mindxdl_yaml_dir}}/*310P-volcano*yaml | head -n 1 | xargs -n 1 kubectl apply -f)) || true
+      (( echo "{{ node_labels.stdout }}" | grep "huawei-Ascend310P" 1>/dev/null) && (ls {{mindxdl_yaml_dir}}/*310P-*yaml | grep {{ '' if VOLCANO_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(',')) else '-v' }} volcano | grep -v '1usoc' | head -n 1 | xargs -n 1 kubectl delete -f)) || true;
+      (( echo "{{ node_labels.stdout }}" | grep "huawei-Ascend310P" 1>/dev/null) && (ls {{mindxdl_yaml_dir}}/*310P-*yaml | grep {{ '' if VOLCANO_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(',')) else '-v' }} volcano | grep -v '1usoc' | head -n 1 | xargs -n 1 kubectl apply -f)) || true
   environment:
     http_proxy: ""
     https_proxy: ""
@@ -180,7 +197,8 @@
   run_once: true
   shell:
     cmd:
-      ((kubectl get nodes --show-labels | grep -w "huawei-Ascend310" 1>/dev/null) && (ls {{mindxdl_yaml_dir}}/*310-volcano*yaml | head -n 1 | xargs -n 1 kubectl apply -f)) || true
+      ((echo "{{ node_labels.stdout }}" | grep -w "huawei-Ascend310" 1>/dev/null) && (ls {{mindxdl_yaml_dir}}/*310-*yaml | grep {{ '' if VOLCANO_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(',')) else '-v' }} volcano | head -n 1 | xargs -n 1 kubectl delete -f)) || true;
+      ((echo "{{ node_labels.stdout }}" | grep -w "huawei-Ascend310" 1>/dev/null) && (ls {{mindxdl_yaml_dir}}/*310-*yaml | grep {{ '' if VOLCANO_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(',')) else '-v' }} volcano | head -n 1 | xargs -n 1 kubectl apply -f)) || true
   environment:
     http_proxy: ""
     https_proxy: ""
@@ -189,12 +207,13 @@
   when:
     - yaml_file.stdout_lines | length > 0
 
-- name: apply device plugin 910 yaml
+- name: apply device plugin 910 yaml with volcano
   delegate_to: "{{ groups['master'][0] }}"
   run_once: true
   shell:
     cmd:
-      ((kubectl get nodes --show-labels | grep "huawei-Ascend910" 1>/dev/null) && (ls {{mindxdl_yaml_dir}}/device-plugin-volcano*yaml | head -n 1 | xargs -n 1 kubectl apply -f)) || true
+      ((echo "{{ node_labels.stdout }}" | grep "huawei-Ascend910" 1>/dev/null) && (ls {{mindxdl_yaml_dir}}/device-plugin-volcano*yaml | head -n 1 | xargs -n 1 kubectl delete -f)) || true;
+      ((echo "{{ node_labels.stdout }}" | grep "huawei-Ascend910" 1>/dev/null) && (ls {{mindxdl_yaml_dir}}/device-plugin-volcano*yaml | head -n 1 | xargs -n 1 kubectl apply -f)) || true
   environment:
     http_proxy: ""
     https_proxy: ""
@@ -202,3 +221,20 @@
     HTTPS_PROXY: ""
   when:
     - yaml_file.stdout_lines | length > 0
+    - VOLCANO_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))
+
+- name: apply device plugin 910 yaml withnot volcano
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  shell:
+    cmd:
+      ((echo "{{ node_labels.stdout }}" | grep "huawei-Ascend910" 1>/dev/null) && (ls {{mindxdl_yaml_dir}}/device-plugin-910*yaml | head -n 1 | xargs -n 1 kubectl delete -f)) || true;
+      ((echo "{{ node_labels.stdout }}" | grep "huawei-Ascend910" 1>/dev/null) && (ls {{mindxdl_yaml_dir}}/device-plugin-910*yaml | head -n 1 | xargs -n 1 kubectl apply -f)) || true
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when:
+    - yaml_file.stdout_lines | length > 0
+    - VOLCANO_COMPONENT not in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))

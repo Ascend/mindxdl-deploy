@@ -1,0 +1,64 @@
+---
+- hosts:
+    - master
+    - worker
+  gather_facts: false
+  tasks:
+    - name: cp renew shell to all node
+      copy:
+        src: /root/offline-deploy/renew_k8s_certs/renew.sh
+        dest: /root
+        mode: 0500
+        owner: root
+        group: root
+        force: yes
+
+    - name: excute renew certs in master first
+      shell:
+        cmd:
+          /bin/bash /root/renew.sh "master"
+      environment:
+        http_proxy: ""
+        https_proxy: ""
+        HTTP_PROXY: ""
+        HTTPS_PROXY: ""
+        KUBECONFIG: "/etc/kubernetes/admin.conf"
+      when:
+        - "groups['master'] | length > 0"
+        - inventory_hostname == groups["master"][0]
+
+    - name: excute renew certs in other master
+      shell:
+        cmd:
+          /bin/bash /root/renew.sh "master"
+      environment:
+        http_proxy: ""
+        https_proxy: ""
+        HTTP_PROXY: ""
+        HTTPS_PROXY: ""
+        KUBECONFIG: "/etc/kubernetes/admin.conf"
+      when:
+        - "groups['master'] | length > 1"
+        - inventory_hostname in groups["master"]
+        - inventory_hostname != groups["master"][0]
+
+    - name: excute renew certs in worker node
+      shell:
+        cmd:
+          /bin/bash /root/renew.sh "worker"
+      environment:
+        http_proxy: ""
+        https_proxy: ""
+        HTTP_PROXY: ""
+        HTTPS_PROXY: ""
+        KUBECONFIG: "/etc/kubernetes/kubelet.conf"
+      when:
+        - "groups['worker'] | length > 0"
+        - inventory_hostname not in groups["master"]
+
+    - name: cp renew shell to all node
+      file:
+        path: /root/renew.sh
+        state: absent
+      ignore_errors: true
+      changed_when: false

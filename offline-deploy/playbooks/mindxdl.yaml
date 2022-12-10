@@ -2,24 +2,25 @@
 # dl基础操作
 - hosts:
     - master
-    - master_backup
     - worker
+  gather_facts: false
   tasks:
     - include_tasks: roles/mindx.dl/tasks/dl_common.yaml
 
 # 分发mindxdl安装包，并制作镜像
 - hosts:
     - localhost
-    - master
+    - master[0]
     - other_build_image
+  gather_facts: false
   tasks:
     - include_tasks: roles/mindx.dl/tasks/distribute_soft_package.yaml
     - include_tasks: roles/mindx.dl/tasks/build_collect_images.yaml
 
 - hosts:
     - master
-    - master_backup
     - worker
+  gather_facts: false
   tasks:
     - include_tasks: roles/mindx.dl/tasks/volcano.yaml
       when:
@@ -27,7 +28,7 @@
 
 - hosts:
     - master
-    - master_backup
+  gather_facts: false
   tasks:
     - include_tasks: roles/mindx.dl/tasks/hccl.yaml
       when:
@@ -35,6 +36,7 @@
 
 - hosts:
     - worker
+  gather_facts: false
   tasks:
     - include_tasks: roles/mindx.dl/tasks/deviceplugin.yaml
       when:
@@ -48,7 +50,8 @@
 
 - hosts:
     - worker
+  gather_facts: false
   tasks:
-    - include_tasks: roles/mindx.dl/tasks/toolbox.yaml
+    - include_tasks: roles/mindx.dl/tasks/docker-runtime.yaml
       when:
-        - "TOOLBOX_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"
+        - "DOCKER_RUNTIME_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"

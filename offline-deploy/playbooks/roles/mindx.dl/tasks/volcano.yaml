@@ -4,7 +4,7 @@
 - name: create user
   include_tasks: create_user.yaml
   when:
-    - inventory_hostname in groups['master_backup'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 # 在远端创建mindxdl镜像目录
 - name: create mindxdl images directory on remote
@@ -14,7 +14,7 @@
     mode: 0750
   when:
     - not use_harbor
-    - inventory_hostname in groups['master_backup'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 - name: list volcano images
   shell: "ls {{mindxdl_images_dir}}/{{ansible_architecture}} | grep {{VOLCANO_COMPONENT}}"
@@ -23,10 +23,10 @@
   register: volcano_images
   when:
     - not use_harbor
-    - inventory_hostname in groups['master_backup'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 # 复制volcano镜像到master和master_backup
-- name: copy volcano images to master and master_backup
+- name: copy volcano images to master
   copy:
     src: "{{mindxdl_images_dir}}/{{ansible_architecture}}/{{item}}"
     dest: "{{mindxdl_images_dir}}/{{ansible_architecture}}/"
@@ -36,7 +36,7 @@
   loop: "{{volcano_images.stdout_lines}}"
   when:
     - not use_harbor
-    - inventory_hostname in groups['master_backup'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 # 在控制节点加载volcano
 - name: load volcano images
@@ -44,7 +44,7 @@
   loop: "{{volcano_images.stdout_lines}}"
   when:
     - not use_harbor
-    - inventory_hostname in groups['master_backup'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 # 给集群增加volcano标签
 - name: label dls master
@@ -56,7 +56,7 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
   when:
-    - inventory_hostname in groups['master_backup'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 - name: label huawei-x86
   shell: kubectl label --overwrite node {{ NODE_NAME }} host-arch=huawei-x86
@@ -90,7 +90,7 @@
     group: root
     mode: 0755
   when:
-    - inventory_hostname in groups['master_backup'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 - name: create log directories for "{{DL_USR}}"
   file:
@@ -103,7 +103,7 @@
     - /var/log/mindx-dl/volcano-controller
     - /var/log/mindx-dl/volcano-scheduler
   when:
-    - inventory_hostname in groups['master_backup'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 - name: create volcano logrotate file
   blockinfile:
@@ -131,7 +131,7 @@
     owner: root
     group: root
   when:
-    - inventory_hostname in groups['master_backup'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['master']
 
 - name: create volcano pull secret
   shell: |
@@ -144,13 +144,13 @@
     HTTPS_PROXY: ""
   when:
     - use_harbor
-    - inventory_hostname in groups['master']
+    - inventory_hostname in groups['master'][0]
 
 - name: list volcano yaml
   shell: "ls {{mindxdl_yaml_dir}} | grep {{VOLCANO_COMPONENT}} | grep -v 'device-plugin'"
   register: yaml_file
   when:
-    - inventory_hostname in inventory_hostname in groups['master']
+    - inventory_hostname in groups['master'][0]
 
 - name: modify volcano yaml
   shell: |
@@ -161,12 +161,13 @@
   loop: "{{ yaml_file.stdout_lines }}"
   when:
     - use_harbor
-    - inventory_hostname in groups['master']
+    - inventory_hostname in groups['master'][0]
 
 # 部署volcano应用
 - name: apply volcano component
   shell:
     cmd:
+      kubectl delete -f {{mindxdl_yaml_dir}}/{{ item }} || true;
       kubectl apply -f {{ mindxdl_yaml_dir }}/{{ item }}
   environment:
     http_proxy: ""
@@ -175,4 +176,4 @@
     HTTPS_PROXY: ""
   loop: "{{ yaml_file.stdout_lines }}"
   when:
-    - inventory_hostname in groups['master']
+    - inventory_hostname in groups['master'][0]

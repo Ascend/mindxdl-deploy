@@ -1,3 +1,18 @@
 # defaults file for mindx.basic
-base_dir: "{{ resource_dir }}/basic"
-unzip_dir: "{{ base_dir }}/{{ os_package_name }}/{{ansible_architecture}}/unzip"
+base_dir: "{{ resource_dir }}/basic/{{ os_package_name }}"
+
+unzip_dir: "{{ base_dir }}/unzip"
+
+libselinux_dir: "{{ base_dir }}/libselinux"
+
+min_space: 30
+
+max_k8s_version: 21
+
+match: "ok"
+
+not_match: "bad"
+
+os_support: ["Ubuntu_18.04", "OpenEuler_20.03_LTS"]
+
+STDOUT_KEY: "stdout"

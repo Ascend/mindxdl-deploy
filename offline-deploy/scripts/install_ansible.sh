@@ -30,7 +30,6 @@ function install_ansible()
             ;;
         openEuler)
             rpm -i --nodeps --force ~/resources/ansible/OpenEuler_${os_version}_LTS/${arch}/*.rpm
-            rpm -i ~/resources/basic/OpenEuler_${os_version}_LTS/${arch}/libselinux/*.rpm --nodeps --force
             ;;
         esac
     else
