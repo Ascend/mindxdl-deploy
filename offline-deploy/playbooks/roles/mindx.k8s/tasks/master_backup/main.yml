@@ -1,15 +1,6 @@
 - name: message
   debug:
-    msg: "******************************start join k8s on master_backup******************************"
-
-- name: message
-  debug:
-    msg: "master_backup can not contain master in inventory_file, please check"
-  failed_when: true
-  when:
-    - "'master_backup' in groups"
-    - item == groups['master'][0]
-  loop: "{{ groups['master_backup'] }}"
+    msg: "******************************start join k8s on other master******************************"
 
 - name: get token
   shell: kubeadm token create --print-join-command
@@ -33,7 +24,7 @@
   run_once: true
   register: cert_cmd
 
-- name: set master_backup apiserver_advertise_address
+- name: set other master apiserver_advertise_address
   set_fact:
     addr_cmd: "--apiserver-advertise-address={{ k8s_api_server_ip }}"
   when:

@@ -106,6 +106,7 @@
 - name: apply noded component
   shell:
     cmd:
+      kubectl delete -f {{mindxdl_yaml_dir}}/{{ item }} || true;
       kubectl apply -f {{mindxdl_yaml_dir}}/{{ item }}
   delegate_to: "{{ groups['master'][0] }}"
   delegate_facts: true

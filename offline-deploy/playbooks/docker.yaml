@@ -4,7 +4,7 @@
     - localhost
     - master
     - worker
-    - master_backup
+  gather_facts: false
   vars_files:
     - roles/mindx.docker/vars/main.yml
   tasks:
@@ -13,7 +13,7 @@
 - hosts:
     - master
     - worker
-    - master_backup
+  gather_facts: false
   vars_files:
     - roles/mindx.docker/vars/main.yml
   tasks:

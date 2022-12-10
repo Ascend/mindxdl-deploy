@@ -6,12 +6,9 @@
 # k8s_api_server_ip:k8s对外提供服务的入口，配置为master节点的IP地址。
 # kube_interface:对应服务器ip地址网卡名字，单master场景下可以不设置
 
-# master控制节点信息，配置参考注释
+# master控制节点信息,第一行信息为k8s主控节点信息，配置参考注释
 [master]
 #10.10.10.10 set_hostname=master-1 k8s_api_server_ip=10.10.10.10 kube_interface=enp125s0f0
-
-# 多master场景配置，配置多个master节点信息，每个节点信息占据一行，配置参考注释
-[master_backup]
 #10.10.10.11 set_hostname=master-2 k8s_api_server_ip=10.10.10.11 kube_interface=enp125s0f0
 #10.10.10.12 set_hostname=master-3 k8s_api_server_ip=10.10.10.12 kube_interface=enp125s0f0
 
@@ -26,12 +23,17 @@
 
 #           *********************以下为全局变量配置区域**************************
 [all:vars]
-# 场景1安装组件: Docker, Kubernetes, Toolbox, Ascend Device Plugin, Volcano, HCCL-Controller, NodeD, NPU-Exporter
-# 场景2安装组件: Toolbox, Ascend Device Plugin, Volcano，HCCL-Controller(可选), NodeD(可选), NPU-Exporter(可选)
-# 场景3安装组件: Toolbox, Ascend Device Plugin, NPU-Exporter(可选)
+# 场景1安装组件: Docker, Kubernetes, Ascend Docker Runtime, Ascend Device Plugin, Volcano, HCCL-Controller, NodeD, NPU-Exporter
+# 场景2安装组件: Ascend Docker Runtime, Ascend Device Plugin, Volcano，HCCL-Controller(可选), NodeD(可选), NPU-Exporter(可选)
+# 场景3安装组件: Ascend Docker Runtime, Ascend Device Plugin, NPU-Exporter(可选)
 # SCENE_NUM:安装场景选择，可选1，2，3场景,默认场景1
-# EXTRA_COMPONENT: 为可选组件，组件间逗号隔开,示例:EXTRA_COMPONENT="npu-exporter,noded,hccl-controller"
+
 SCENE_NUM=1
+# EXTRA_COMPONENT: 为可选组件，组件间逗号隔开，可选值如下；
+# 	npu-exporter     表示安装NPU-Exporter组件
+# 	noded            表示安装NodeD组件
+# 	hccl-controller  表示安装HCCL-Controller组件
+# 配置示例：EXTRA_COMPONENT="npu-exporter,noded,hccl-controller"
 EXTRA_COMPONENT=""
 
 # k8s集群使用的子网IP网段，如果与服务器IP网段重合，需要修改下面的值为其他私有网段。如：192.168.0.0/16

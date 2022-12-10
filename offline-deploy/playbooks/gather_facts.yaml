@@ -2,7 +2,6 @@
 - hosts:
     - localhost
     - master
-    - master_backup
     - worker
   tasks:
     - name: include vars

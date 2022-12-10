@@ -9,12 +9,12 @@
     mode: 0750
 
 - name: list toolbox package
-  shell: "ls {{mindxdl_deploy_package_dir}}/{{ansible_architecture}} | grep {{TOOLBOX_COMPONENT}} | grep run"
+  shell: "ls {{mindxdl_deploy_package_dir}}/{{ansible_architecture}} | grep {{DOCKER_RUNTIME_COMPONENT}} | grep run"
   delegate_to: localhost
   delegate_facts: true
   register: toolbox_package
 
-# 复制noded镜像到worker
+# 复制docker-runtime镜像到worker
 - name: copy toolbox to remote
   copy:
     src: "{{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/{{item}}"
@@ -32,11 +32,11 @@
     group: root
     mode: 0750
 
-# 安装toolbox
-- name: install toolbox
+# 安装docker-runtime
+- name: install docker-runtime
   shell:
     cmd:
-      cd {{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/ && bash $(ls | grep {{TOOLBOX_COMPONENT}} | grep run) --uninstall;
-      cd {{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/ && bash $(ls | grep {{TOOLBOX_COMPONENT}} | grep run) --install;
+      cd {{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/ && bash $(ls | grep {{DOCKER_RUNTIME_COMPONENT}} | grep run) --uninstall;
+      cd {{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/ && bash $(ls | grep {{DOCKER_RUNTIME_COMPONENT}} | grep run) --install;
       systemctl daemon-reload;
       systemctl restart docker
