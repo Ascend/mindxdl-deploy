@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 readonly arch=$(uname -m)
 
 function get_os_name()
@@ -15,30 +17,32 @@ function get_os_version()
 
 function install_ansible()
 {
+    echo -e "[INFO]\t$(date +"%Y-%m-%d %H:%M:%S")\t start install ansible..."
     local is_ansible_installed=$(checkAnsible)
     if [[ ${is_ansible_installed} != 0 ]];then
-        RESOURCE_DIR=~/resources
+        RESOURCE_DIR=/root/resources
         if [ ! -d $RESOURCE_DIR ];then
-            echo "error: no resource dir $RESOURCE_DIR"
-	        return 1
+            echo -e "[ERROR]\t$(date +"%Y-%m-%d %H:%M:%S")\t error: no resource dir $RESOURCE_DIR"
+            exit 1
         fi
-        echo "resource dir=$RESOURCE_DIR"
 
         case ${os_name} in
         ubuntu)
-            dpkg -i --force-all ~/resources/ansible/Ubuntu_18.04/${arch}/*.deb
+            dpkg -i --force-all ~/resources/ansible/Ubuntu_18.04/${arch}/*.deb 1>/dev/null
             ;;
         openEuler)
-            rpm -i --nodeps --force ~/resources/ansible/OpenEuler_${os_version}_LTS/${arch}/*.rpm
+            rpm -i --nodeps --force ~/resources/ansible/OpenEuler_${os_version}_LTS/${arch}/*.rpm 1>/dev/null
             ;;
         esac
+        echo -e "\n[INFO]\t$(date +"%Y-%m-%d %H:%M:%S")\t successfully installed ansible\n"
     else
-        echo "ansible is already installed"
+        echo -e "[INFO]\t$(date +"%Y-%m-%d %H:%M:%S")\t ansible is already installed\n"
     fi
     sed -i "s?#gathering = implicit?gathering = smart?" /etc/ansible/ansible.cfg
     sed -i "s?#fact_caching = memory?fact_caching = jsonfile?" /etc/ansible/ansible.cfg
     sed -i "s?#fact_caching_connection=/tmp?fact_caching_connection=/etc/ansible/facts-cache?" /etc/ansible/ansible.cfg
 
+    ansible --version
 }
 
 function checkAnsible() {
@@ -50,10 +54,8 @@ function main()
 {
     local os_name=$(get_os_name)
     local os_version=$(get_os_version)
-    echo "OS NAME=${os_name}"
-    echo "OS VERSION=${os_version}"
     install_ansible
 }
 
-main $*
+main
 

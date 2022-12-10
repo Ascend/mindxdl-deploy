@@ -30,7 +30,8 @@
  1. 存放镜像目录的磁盘空间利用率**高于85%**会触发Kubelet的镜像垃圾回收机制，**将导致服务不可用**。请确保每台服务器上存放镜像的目录有足够的磁盘空间，建议≥**1 TB**。
  2. **执行安装命令前，需要提前在服务器安装好昇腾NPU的驱动和固件，并[配置训练服务器NPU的device IP](https://www.hiascend.com/document/detail/zh/canncommercial/60RC1/envdeployment/instg/instg_000039.html)**。
  3. 执行安装脚本前，保证安装Kubernetes的服务器的时间一致，可参考[常用操作1](#常用操作)快速设置各节点时间。
- 4. 安装脚本支持在下表的操作系统运行，脚本支持在如下操作系统上安装MindX DL、Docker、Kubernetes软件。
+ 4. 所有节点需要**已安装Python2.7以上**
+ 5. 安装脚本支持在下表的操作系统运行，脚本支持在如下操作系统上安装MindX DL、Docker、Kubernetes软件。
 	<table>
     <thead>
       <tr>
@@ -201,11 +202,11 @@ ssh-copy-id <ip>   # 将管理节点的公钥拷贝到所有节点的机器上(�
 选择其中一种方式准备离线安装包
 
  - 在Window或其他机器上下载[历史版本](#历史版本)中的resources.tar.gz包，将离线包上传到执行安装命令服务器的/root目录下，然后解压。
- - 登录执行安装命令服务器，将下面`wget`命令后的地址替换成[历史版本](#历史版本)中某个版本的resources.tar.gz的地址，然后执行如下命令
+ - 登录执行安装命令服务器，将下面`wget`命令后的`https://example`替换成[历史版本](#历史版本)中某个版本的resources.tar.gz的地址，然后执行如下命令
 ```bash
 # resources.tar.gz解压出的内容必须放置在/root目录下
 cd /root
-wget https://ascend-repo-modelzoo.obs.cn-east-2.myhuaweicloud.com/MindXDL/resources.tar.gz
+wget https://example
 tar -xf resources.tar.gz
 ```
 
@@ -216,14 +217,16 @@ bash scripts/install_ansible.sh
 ```
 出现类似下面的回显，表示ansible安装成功
 ```
+[INFO]	2022-07-28 22:53:09	 start install ansible...
 ...
+[INFO]	2022-07-28 22:53:24	 successfully installed ansible
+
 ansible 2.9.27
   config file = /etc/ansible/ansible.cfg
   configured module search path = [u'/root/.ansible/plugins/modules', u'/usr/share/ansible/plugins/modules']
   ansible python module location = /usr/lib/python2.7/dist-packages/ansible
   executable location = /usr/bin/ansible
   python version = 2.7.17 (default, Jul  1 2022, 15:56:32) [GCC 7.5.0]
-...
 ```
 
 ## 步骤4：配置安装信息
@@ -344,6 +347,10 @@ bash scripts/renew_certs.sh
  3. 如果安装时选择了使用Harbor仓库，以下情况会修改`/etc/docker/daemon.json`文件，在“insecure-registries”字段中增加Harbor的地址，以保证能够使用Harbor。
      1. Harbor使用HTTPS服务，但inventory_file中未配置Harbor的CA证书路径
      2. Harbor使用HTTP服务
+ 4. 安装脚本会在操作系统上安装如下软件，以方便使用`unzip` `lspci` `bc` `ip` `ifconfig`命令
+ 	```
+    pcituils,bc,net-tools,unzip,iproute
+    ```
 
 
 # 常用操作

@@ -28,7 +28,7 @@ master_num=$(grep -A 100 '\[master\]' inventory_file  | grep -B 200 '\[worker\]'
 # 安装K8s时，如果master数量为偶数，报错
 if [[ $scene_num == "1" ]] && [[ $(($master_num % 2)) == 0 ]]
 then
-    echo "[ERROR]\t$(date +"%Y-%m-%d %H:%M:%S")\t in inventory_file, the number of nodes configured under [master] must be odd, such as 1,3,5,7"
+    echo -e "[ERROR]\t$(date +"%Y-%m-%d %H:%M:%S")\t in inventory_file, the number of nodes configured under [master] must be odd, such as 1,3,5,7"
     exit 1
 fi
 # 检查inventory_file中场景（SCENE_NUM）和额外组件（EXTRA_COMPONENT）的配套关系

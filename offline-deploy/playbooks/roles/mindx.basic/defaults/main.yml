@@ -1,10 +1,6 @@
 # defaults file for mindx.basic
 base_dir: "{{ resource_dir }}/basic/{{ os_package_name }}"
 
-unzip_dir: "{{ base_dir }}/unzip"
-
-libselinux_dir: "{{ base_dir }}/libselinux"
-
 min_space: 30
 
 max_k8s_version: 21

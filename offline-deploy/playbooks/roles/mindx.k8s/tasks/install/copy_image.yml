@@ -12,7 +12,6 @@
   ansible.builtin.unarchive:
     src: "{{ k8s_image_dir }}/{{ ansible_architecture }}.tar.gz"
     dest: "{{ k8s_image_dir }}"
-    mode: 0750
     remote_src: no
   when:
     - not (host_count == "1" and first_host == "localhost")

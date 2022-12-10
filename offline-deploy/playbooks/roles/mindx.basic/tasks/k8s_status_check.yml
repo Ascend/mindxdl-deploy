@@ -105,8 +105,9 @@
 
 - name: need reset master[0]
   fail:
-    msg: "please confirm whether inventory is required_ All nodes under [master] in file form a multi master cluster. If you need to form a multi master cluster, execute the reset command
-     'kubeadm reset -f && rm -rf $HOME/.kube /etc/cni/net.d' manually on the first node under [master] to facilitate the establishment of a multi master cluster"
+    msg: "Please confirm whether it is necessary to use all nodes under [master] in the inventory_file to form a multi master cluster.
+     If you need to form a multi master cluster, execute the reset command kubeadm reset -f && rm -rf $HOME/.kube /etc/cni/net.d' manually on the
+     first node under [master] to facilitate the establishment of a multi master cluster"
   when:
     - inventory_hostname in groups['master']
     - inventory_hostname != groups['master'][0]
