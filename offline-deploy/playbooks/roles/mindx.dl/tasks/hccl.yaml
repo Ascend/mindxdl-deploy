@@ -40,7 +40,38 @@
   when:
     - not use_harbor
 
-- name: label dls master
+- name: get hccl image name when use harbor
+  shell:
+    cmd:
+      hccl_info="$(kubectl get deploy -n {{ MINDXDL_NAMESPACE }} 2>/dev/null | grep 'hccl-controller')";
+      if [ "$hccl_info" = "" ]; then exit 0;fi;
+      for((i=1;i<=$(echo "$hccl_info" | wc -l);i++)); do echo "$(echo -e "$(eval "$(echo "$hccl_info" | sed -n "${i}p" | awk '{print "kubectl describe deploy -n {{ MINDXDL_NAMESPACE }} "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+  register: image_name
+  when:
+    - do_upgrade is defined
+    - use_harbor
+    - inventory_hostname == groups['master'][0]
+
+- name: set fact hccl image name
+  set_fact:
+    hccl_image_name: "{{ image_name['stdout_lines'] | unique  }}"
+    cacheable: yes
+  when:
+    - do_upgrade is defined
+    - image_name is defined and image_name['stdout_lines'] | length > 0
+    - use_harbor
+    - inventory_hostname == groups['master'][0]
+
+- name: pull hccl image
+  shell:
+    cmd:
+      docker pull "{{ item }}"
+  loop: "{{ hostvars[groups['master'][0]].hccl_image_name }}"
+  when:
+    - do_upgrade is defined and hccl_image_name is defined
+    - use_harbor
+
+- name: label dl master
   shell: |
     kubectl label --overwrite node {{ NODE_NAME }} masterselector=dls-master-node
   environment:
@@ -100,7 +131,6 @@
 - name: apply hccl component
   shell:
     cmd:
-      kubectl delete -f {{mindxdl_yaml_dir}}/{{ item }} || true;
       kubectl apply -f {{mindxdl_yaml_dir}}/{{ item }}
   loop: "{{ yaml_file.stdout_lines }}"
   environment:
@@ -109,4 +139,21 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
   when:
+    - inventory_hostname in groups['master'][0]
+
+# 检查并更新hccl应用
+- name: upgrade hccl component
+  shell:
+    cmd:
+      hccl_info="$(kubectl get pods -n {{ MINDXDL_NAMESPACE }} -o wide 2>/dev/null | grep 'hccl-controller-' )";
+      hccl_status=$(echo "$hccl_info" | grep "hccl-controller-.*Running" | wc -l);
+      if [ $hccl_status = 0 ]; then exit 0; fi;
+      for((i=0;i<$hccl_status;i++));do eval "$(echo "$hccl_info" | grep "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n {{ MINDXDL_NAMESPACE }} "$1}')" || true; done
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when:
+    - do_upgrade is defined
     - inventory_hostname in groups['master'][0]

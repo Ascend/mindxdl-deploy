@@ -46,8 +46,40 @@
     - not use_harbor
     - inventory_hostname in groups['master']
 
+- name: get volcano image name when use harbor
+  shell:
+    cmd:
+      volcano_info="$(kubectl get deploy -n volcano-system 2>/dev/null | grep "volcano")";
+      if [ "$volcano_info" = "" ]; then exit 0;fi;
+      for((i=1;i<=$(echo "$volcano_info" | wc -l);i++)); do echo "$(echo -e "$(eval "$(echo "$volcano_info" | sed -n "${i}p" | awk '{print "kubectl describe deploy -n volcano-system "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+  register: image_name
+  when:
+    - do_upgrade is defined
+    - use_harbor
+    - inventory_hostname == groups['master'][0]
+
+- name: set fact volcano image name
+  set_fact:
+    volcano_image_name: "{{ image_name['stdout_lines'] | unique  }}"
+    cacheable: yes
+  when:
+    - do_upgrade is defined
+    - image_name is defined and image_name['stdout_lines'] | length > 0
+    - use_harbor
+    - inventory_hostname == groups['master'][0]
+
+- name: pull volcano image
+  shell:
+    cmd:
+      docker pull "{{ item }}"
+  loop: "{{ hostvars[groups['master'][0]].volcano_image_name }}"
+  when:
+    - do_upgrade is defined and volcano_image_name is defined
+    - use_harbor
+    - inventory_hostname in groups['master']
+
 # 给集群增加volcano标签
-- name: label dls master
+- name: label dl master
   shell: |
     kubectl label --overwrite node {{ NODE_NAME }} masterselector=dls-master-node
   environment:
@@ -69,6 +101,7 @@
     HTTPS_PROXY: ""
   when:
     - ansible_architecture == "x86_64"
+    - inventory_hostname in groups['worker']
 
 - name: label huawei-arm
   shell: kubectl label --overwrite node {{ NODE_NAME }} host-arch=huawei-arm
@@ -81,6 +114,7 @@
     HTTPS_PROXY: ""
   when:
     - ansible_architecture == "aarch64"
+    - inventory_hostname in groups['worker']
 
 - name: create log directories
   file:
@@ -144,13 +178,13 @@
     HTTPS_PROXY: ""
   when:
     - use_harbor
-    - inventory_hostname in groups['master'][0]
+    - inventory_hostname == groups['master'][0]
 
 - name: list volcano yaml
   shell: "ls {{mindxdl_yaml_dir}} | grep {{VOLCANO_COMPONENT}} | grep -v 'device-plugin'"
   register: yaml_file
   when:
-    - inventory_hostname in groups['master'][0]
+    - inventory_hostname == groups['master'][0]
 
 - name: modify volcano yaml
   shell: |
@@ -161,14 +195,13 @@
   loop: "{{ yaml_file.stdout_lines }}"
   when:
     - use_harbor
-    - inventory_hostname in groups['master'][0]
+    - inventory_hostname == groups['master'][0]
 
 # 部署volcano应用
 - name: apply volcano component
   shell:
     cmd:
-      kubectl delete -f {{mindxdl_yaml_dir}}/{{ item }} || true;
-      kubectl apply -f {{ mindxdl_yaml_dir }}/{{ item }}
+      kubectl apply -f {{ mindxdl_yaml_dir }}/{{ item }};
   environment:
     http_proxy: ""
     https_proxy: ""
@@ -176,4 +209,22 @@
     HTTPS_PROXY: ""
   loop: "{{ yaml_file.stdout_lines }}"
   when:
-    - inventory_hostname in groups['master'][0]
+    - inventory_hostname == groups['master'][0]
+
+# 检查并更新volcano应用
+- name: upgrade volcano component
+  shell:
+    cmd:
+      volcano_info="$(kubectl get pods -n volcano-system)";
+      ctr_status=$(echo "$volcano_info" | grep "volcano-controllers-.*Running" | wc -l);
+      sche_status=$(echo "$volcano_info" | grep "volcano-scheduler-.*Running" | wc -l);
+      if [ $ctr_status != 0 ]; then eval "$(echo "$volcano_info" | grep "volcano-controllers-.*Running" | awk '{print "kubectl delete pod -n volcano-system "$1}')" || true; fi;
+      if [ $sche_status != 0 ]; then eval "$(echo "$volcano_info" | grep "volcano-scheduler-.*Running" | awk '{print "kubectl delete pod -n volcano-system "$1}')" || true; fi
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when:
+    - inventory_hostname == groups['master'][0]
+    - do_upgrade is defined
