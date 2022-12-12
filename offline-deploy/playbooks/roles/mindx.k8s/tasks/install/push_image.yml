@@ -9,6 +9,20 @@
   when:
     - "groups['other_build_image'] | length != 0"
 
+- name: unarchive master architecture k8s base images on localhost
+  ansible.builtin.unarchive:
+    src: "{{ k8s_image_dir }}/{{ master_arch }}.tar.gz"
+    dest: "{{ k8s_image_dir }}"
+    remote_src: yes
+
+- name: unarchive heterogeneous architecture k8s base images on localhost
+  ansible.builtin.unarchive:
+    src: "{{ k8s_image_dir }}/{{ heterogeneous_arch }}.tar.gz"
+    dest: "{{ k8s_image_dir }}"
+    remote_src: yes
+  when:
+    - "groups['other_build_image'] | length != 0"
+
 # 查看master节点架构下的k8s镜像
 - name: list k8s component dir
   command: "ls {{k8s_image_dir}}/{{ master_arch }}"
