@@ -4,6 +4,7 @@
     - master
     - worker
   gather_facts: false
+  become: yes
   tasks:
     - include_tasks: roles/mindx.dl/tasks/dl_common.yaml
 
@@ -13,6 +14,7 @@
     - master[0]
     - other_build_image
   gather_facts: false
+  become: yes
   tasks:
     - include_tasks: roles/mindx.dl/tasks/distribute_soft_package.yaml
     - include_tasks: roles/mindx.dl/tasks/build_collect_images.yaml
@@ -21,6 +23,7 @@
     - master
     - worker
   gather_facts: false
+  become: yes
   tasks:
     - include_tasks: roles/mindx.dl/tasks/volcano.yaml
       when:
@@ -29,6 +32,7 @@
 - hosts:
     - master
   gather_facts: false
+  become: yes
   tasks:
     - include_tasks: roles/mindx.dl/tasks/hccl.yaml
       when:
@@ -37,6 +41,7 @@
 - hosts:
     - worker
   gather_facts: false
+  become: yes
   tasks:
     - include_tasks: roles/mindx.dl/tasks/deviceplugin.yaml
       when:
@@ -51,6 +56,7 @@
 - hosts:
     - worker
   gather_facts: false
+  become: yes
   tasks:
     - include_tasks: roles/mindx.dl/tasks/docker-runtime.yaml
       when:

@@ -3,6 +3,7 @@
     - master
     - worker
   gather_facts: false
+  become: yes
   vars_files:
     - roles/mindx.basic/defaults/main.yml
   tasks:
@@ -12,6 +13,7 @@
     - localhost
     - master
     - worker
+  become: yes
   vars_files:
     - roles/mindx.basic/defaults/main.yml
   tasks:

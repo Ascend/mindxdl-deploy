@@ -5,7 +5,7 @@
     - [硬件支持列表](#硬件支持列表)
  - [安装场景](#安装场景)
  - [安装步骤](#安装步骤)
-    - [步骤1：配置ssh免密登录](#步骤1配置ssh免密登录)
+    - [步骤1：准备登录各台服务器的账号](#步骤1准备登录各台服务器的账号)
     - [步骤2：下载离线软件包](#步骤2下载离线软件包)
     - [步骤3：安装Ansible](#步骤3安装ansible)
     - [步骤4：配置安装信息](#步骤4配置安装信息)
@@ -22,7 +22,7 @@
  - [CHANGELOG](#changelog)
 
 # 功能简介
-使用基于Ansible的脚本安装MindX DL、以及运行MindX DL依赖的软件（Docker、kubernetes）。
+使用基于Ansible的脚本安装MindX DL的集群调度组件、以及运行集群调度组件依赖的软件（Docker、kubernetes）。
 
 # 环境依赖
 ## 运行环境要求
@@ -31,7 +31,11 @@
  2. **执行安装命令前，需要提前在服务器安装好昇腾NPU的驱动和固件，并[配置训练服务器NPU的device IP](https://www.hiascend.com/document/detail/zh/canncommercial/60RC1/envdeployment/instg/instg_000039.html)**。
  3. 执行安装脚本前，保证安装Kubernetes的服务器的时间一致，可参考[常用操作1](#常用操作)快速设置各节点时间。
  4. 所有节点需要**已安装Python2.7以上**
- 5. 安装脚本支持在下表的操作系统运行，脚本支持在如下操作系统上安装MindX DL、Docker、Kubernetes软件。
+ 5. 安装部署脚本会在节点创建一个uid和gid为9000的用户hwMindX，请保证各节点上该uid和gid未被占用。
+ 6. 如果用户需要使用Harbor，请保证各节点能够登录Harbor。
+ 7. 如果用户已有K8s集群，则需要在master节点的/root/.kube/config文件中放置能够操作K8s资源的授权内容。
+ 8. 不支持多操作系统混合部署。
+ 5. 安装脚本支持在下表的操作系统运行，脚本支持在如下操作系统上安装MindX DL的集群调度组件、Docker、Kubernetes软件。
 	<table>
     <thead>
       <tr>
@@ -93,7 +97,7 @@
     <td>Ascend Device Plugin</td>
     <td rowspan="6">3.0.0</td>
     <td rowspan="6"><li>aarch64</li><br /><li>x86_64</li></td>
-    <td rowspan="6">MindX DL的组件</td>
+    <td rowspan="6">集群调度组件</td>
   </tr>
   <tr>
     <td>Volcano</td>
@@ -142,7 +146,7 @@
   <tr>
     <td rowspan="8">场景一</td>
     <td rowspan="8"><li>Docker</li><br /><li>Kubernetes</li><br /><li>Ascend Docker Runtime</li><br /><li>Ascend Device Plugin</li><br /><li>Volcano</li><br /><li>NodeD</li><br /><li>HCCL-Controller</li><br /><li>NPU-Exporter</li></td>
-    <td rowspan="8">常用安装场景，包含大多数MindX DL功能</td>
+    <td rowspan="8">常用安装场景，包含大多数MindX DL集群调度组件的功能</td>
   </tr>
   <tr>
   </tr>
@@ -187,16 +191,10 @@
 
 # 安装步骤
 
-## 步骤1：配置ssh免密登录
+## 步骤1：准备登录各台服务器的账号
 
-设置了ssh的连接方式请跳过，如果未设置可以参考以下方式设置ssh连接
+安装部署脚本需要登录各台服务器执行命令，支持使用ssh免密的方式登录，也支持ssh使用账号密码登录的方式。支持账号类型仅为**root账号**和配置了**sudo权限**的**普通账号**。如需使用免密登录的方式，可参考[常用操作5](#常用操作)。
 
-```
-ssh-keygen #一直按回车
-ssh-copy-id <ip>   # 将管理节点的公钥拷贝到所有节点的机器上(包括自己)，<ip>替换成要拷贝到的对应节点的ip。
-```
-
-注意事项: 请用户注意ssh密钥和密钥密码在使用和保管过程中的风险,安装完成后请删除控制节点~/.ssh/目录下的id_rsa和id_rsa_pub文件，和其他节点~/.ssh目录下的authorized_keys文件。
 
 ## 步骤2：下载离线软件包
 选择其中一种方式准备离线安装包
@@ -245,6 +243,7 @@ vi inventory_file
 ```
 bash scripts/install.sh
 ```
+说明：NPU-Exporter可提供HTTPS或HTTP服务，使用安装脚本仅支持HTTP服务，如对安全性需求较高可参考《MindX DL用户指南》中安装NPU-Exporter的章节，手动部署提供HTTPS服务的NPU-Exporter。
 
 # 安装后状态查看
 
@@ -280,11 +279,11 @@ volcano-system   volcano-scheduler-66f75bf89f-94jkx        1/1     Running      
 ```
 
 # 组件升级
-目前**仅支持MindX DL升级**，**不支持**Docker和Kubernetes的升级，并且升级时会按照之前`/root/offline-deploy/inventory_file`中配置的**节点**、**节点类型**、**场景包含的组件**进行升级。
+目前**仅支持MindX DL集群调度组件升级**，**不支持**Docker和Kubernetes的升级，并且升级时会按照之前`/root/offline-deploy/inventory_file`中配置的**节点**、**节点类型**、**场景包含的组件**进行升级。
 
-升级会先卸载旧的MindX DL组件再重新安装，请选择空闲时间进行，避免影响训练或者推理任务。
+升级会先卸载旧的MindX DL集群调度组件再重新安装，请选择空闲时间进行，避免影响训练或者推理任务。
 
-升级MindX DL时需要获取[历史版本](#历史版本)中的resources.tar.gz包，上传到脚本执行节点**非/root目录**(如/root/upgrade)下，执行如下命令先备份旧的resources.tar.gz中的内容。
+升级MindX DL集群调度组件时需要获取[历史版本](#历史版本)中的resources.tar.gz包，上传到脚本执行节点**非/root目录**(如/root/upgrade)下，执行如下命令先备份旧的resources.tar.gz中的内容。
 ```
 # 解压新的resources.tar.gz
 cd /root/upgrade
@@ -365,7 +364,7 @@ bash scripts/renew_certs.sh
     将下面命令中的***2022-06-01 08:00:00***替换成用户需要的时间后，再执行
     ```
     cd /root/offline-deploy
-    ansible -i inventory_file all -m shell -a "date -s '2022-06-01 08:00:00'; hwclock -w"
+    ansible -i inventory_file all -m shell w jiu -a "date -s '2022-06-01 08:00:00'; hwclock -w"
     ```
 
  2. 查看安装脚本执行节点能否访问inventory_file中的其他节点，即检查连通性。
@@ -385,6 +384,17 @@ bash scripts/renew_certs.sh
     Runtimes: ascend runc
     Default Runtime: ascend
     ```
+ 4. 执行如下命令可以将inventory_file中配置的所有节点的k8s都重置（reset）
+	```
+    cd /root/offline-deploy
+    ansible-playbook -i inventory_file yamls/k8s_reset.yaml -vv
+    ```
+ 5. 配置免密登录
+ 	```
+    ssh-keygen # 生成公钥，出现提示消息后一直按回车
+    ssh-copy-id <user>@<ip>   # 将管理节点的公钥拷贝到所有节点的机器上(包括本机)，<user>替换成要登录的账号，<ip>替换成要拷贝到的对应节点的ip。
+    ```
+	注意事项: 请用户注意ssh密钥和密钥密码在使用和保管过程中的风险,安装完成后请删除控制节点~/.ssh/目录下的id_rsa和id_rsa_pub文件，和其他节点~/.ssh目录下的authorized_keys文件。
 
 # 常见问题
 ## 常见安装问题
@@ -451,6 +461,19 @@ bash scripts/renew_certs.sh
     systemctl daemon-reload
     systemctl restart docker
     ```
+ 4. 回显信息出现`Missing sudo password`
+ 	```
+    TASK [create mindx-dl image pull secret]
+    ****************************************************************************************************************************************
+    task path: /root/offline-deploy/tset.yaml:12
+    fatal: [172.0.0.100]: FAILED! => {"msg": "Missing sudo password"}
+    ```
+	**原因**：<br />
+    inventory_file中配置的非root账号登录，且未配置在/etc/sudoers中未配置NOPASSWD，
+
+    **解决方法**：<br />
+    通过命令`docker info`依次查看登录失败的服务器是否配置了代理，回显如下表示本节点配置了代理
+ 5. 如果安装时选择了安装K8s，脚本运行过程中，出现K8s相关错误，建议执行reset命令后再重新安装，reset命令会重置master和worker节点的K8s集群，请谨慎操作，命令执行参考[常用操作4](#常用操作)。
 
 
 ## 其他问题

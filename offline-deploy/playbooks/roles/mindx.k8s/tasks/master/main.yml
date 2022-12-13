@@ -43,17 +43,21 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
 
-- name: create home kube directory
+- name: create home kube directory with root
   file:
-    path: "{{ ansible_env.HOME }}/.kube"
+    path: "/root/.kube"
     state: directory
+    owner: "root"
+    group: "root"
     mode: 0750
 
-- name: set cluster config
+- name: set cluster config with root
   copy:
     src: /etc/kubernetes/admin.conf
-    dest: "{{ ansible_env.HOME }}/.kube/config"
+    dest: "/root/.kube/config"
     mode: "0640"
+    owner: "root"
+    group: "root"
     remote_src: yes
 
 - name: remove coredns loop param

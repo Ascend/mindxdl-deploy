@@ -3,6 +3,7 @@
     - localhost
     - master
     - worker
+  become: yes
   tasks:
     - name: include vars
       include_vars: os_map.yaml
@@ -78,6 +79,7 @@
       changed_when: false
 
 - hosts: localhost
+  become: yes
   tasks:
     - name: set facts_cache dir permission
       shell: chmod -R 640 /etc/ansible/facts-cache/*
