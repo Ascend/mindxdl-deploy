@@ -418,6 +418,39 @@ bash scripts/renew_certs.sh
  	- 训练节点需要配置device IP，可参考[配置训练服务器NPU的device IP](https://www.hiascend.com/document/detail/zh/canncommercial/60RC1/envdeployment/instg/instg_000039.html)
  	- 场景1中，inventory_file配置文件`[master]`下配置的节点个数必须为奇数，如1,3,5...
 
+ 3. 使用Harbor时，docker login失败了，运行日志出现如下内容
+ 	```
+    ...
+    TASK [faild to login] *************************************************************************************************************
+    task path: /root/offline-deploy/tset.yaml:19
+    fatal: [172.0.0.99]: FAILED! => {"changed": false, "msg": "login harbor failed, please check whether docker proxy is set"}
+    ...
+    ```
+
+  	**原因**：<br />
+    节点的Docker配置了代理，`docker login`命令无法连接到Harbor
+
+    **解决方法**：<br />
+    通过命令`docker info`依次查看登录失败的服务器是否配置了代理，回显如下表示本节点配置了代理
+    ```
+    ...
+    HTTP Proxy: http://proxy.example.com:80/
+    HTTPS Proxy: http://proxy.example.com:80/
+    ...
+    ```
+    找到本节点上Docker配置代理的文件，如`/etc/systemd/system/docker.service.d/proxy.conf`，为Harbor地址（如：**192.168.0.2:7443**）配置`NO_PROXY`，示例如下
+    ```
+    [Service]
+    ...
+    Environment="NO_PROXY=192.168.0.2:7443"
+    ...
+    ```
+    然后重启Docker服务，再进行安装
+    ```
+    systemctl daemon-reload
+    systemctl restart docker
+    ```
+
 
 ## 其他问题
 

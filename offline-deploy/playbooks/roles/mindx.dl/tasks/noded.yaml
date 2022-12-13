@@ -40,6 +40,37 @@
   when:
     - not use_harbor
 
+- name: get noded image name when use harbor
+  shell:
+    cmd:
+      noded_info="$(kubectl get ds -n {{ MINDXDL_NAMESPACE }} 2>/dev/null | grep 'noded')";
+      if [ "$noded_info" = "" ]; then exit 0;fi;
+      for((i=1;i<=$(echo "$noded_info" | wc -l);i++)); do echo "$(echo -e "$(eval "$(echo "$noded_info" | sed -n "${i}p" | awk '{print "kubectl describe ds -n {{ MINDXDL_NAMESPACE }} "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+  register: image_name
+  when:
+    - do_upgrade is defined
+    - use_harbor
+    - inventory_hostname == groups['master'][0]
+
+- name: set fact noded image name
+  set_fact:
+    noded_image_name: "{{ image_name['stdout_lines'] | unique  }}"
+    cacheable: yes
+  when:
+    - do_upgrade is defined
+    - image_name is defined and image_name['stdout_lines'] | length > 0
+    - use_harbor
+    - inventory_hostname == groups['master'][0]
+
+- name: pull noded image
+  shell:
+    cmd:
+      docker pull "{{ item }}"
+  loop: "{{ hostvars[groups['master'][0]].noded_image_name }}"
+  when:
+    - do_upgrade is defined and noded_image_name is defined
+    - use_harbor
+
 - name: label worker
   shell: |
     kubectl label --overwrite node {{ NODE_NAME }} node-role.kubernetes.io/worker=worker
@@ -73,7 +104,7 @@
   delegate_to: "{{ groups['master'][0] }}"
   run_once: true
   shell: |
-    kubectl create namespace mindx-dl >/dev/null 2>&1 || echo 0;
+    kubectl create namespace {{ MINDXDL_NAMESPACE }} >/dev/null 2>&1 || echo 0;
     kubectl create secret generic {{ MINDX_DL_SECRET_FOR_HARBOR }} --from-file=.dockerconfigjson=/root/.docker/config.json --type=kubernetes.io/dockerconfigjson -n mindx-dl >/dev/null 2>&1 || echo 0;
   environment:
     http_proxy: ""
@@ -106,7 +137,6 @@
 - name: apply noded component
   shell:
     cmd:
-      kubectl delete -f {{mindxdl_yaml_dir}}/{{ item }} || true;
       kubectl apply -f {{mindxdl_yaml_dir}}/{{ item }}
   delegate_to: "{{ groups['master'][0] }}"
   delegate_facts: true
@@ -117,3 +147,20 @@
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
+
+# 检查并更新noded应用
+- name: upgrade noded component
+  shell:
+    cmd:
+      noded_info="$(kubectl get pods -n {{ MINDXDL_NAMESPACE }} -o wide 2>/dev/null | grep 'noded-')";
+      noded_status=$(echo "$noded_info" | grep "noded-.*Running" | wc -l);
+      if [ $noded_status = 0 ]; then exit 0; fi;
+      for((i=0;i<$noded_status;i++));do eval "$(echo "$noded_info" | grep "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n {{ MINDXDL_NAMESPACE }} "$1}')" || true; done
+  delegate_to: "{{ groups['master'][0] }}"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when:
+    - do_upgrade is defined

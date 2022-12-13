@@ -9,12 +9,46 @@ inventory_content="$(cat $inventory_file_path)"
 # 检查项1
 # 获取harbor server提供的服务类型HTTP还是HTTPS
 # 如果没有Harbor服务，playbook会跳过对应逻辑，这里变量不影响playbook执行
-harbor_server="$(echo "$inventory_content" | grep -E "^HARBOR_SERVER" | awk -F'=' '{print $2}' | sed "s/\"//g")"
-harbor_server_resp=$(curl http://$harbor_server/c/login 2>/dev/null | grep "The plain HTTP request was sent to HTTPS port" | wc -l)
+find_result=false
+function harbor_server_check() {
+    info="$(curl -k https://$harbor_server/c/login 2>&1 || true)"
+    https_rsp=$(echo "$info" | grep "Page Not Found" | wc -l)
+    ssl_err=$(echo "$info" |grep "wrong version number" |wc -l)
+
+    if [[ $https_rsp != 0 ]]
+    then
+        harbor_server_http="false"
+        find_result=true
+    else
+        if [[ $ssl_err != 0 ]]
+        then
+            harbor_server_http="true"
+            find_result=true
+        fi
+        http_rsp="$(curl http://$harbor_server/c/login 2>&1 || true)"
+        https_msg=$(echo "$http_rsp" | grep "The plain HTTP request was sent to HTTPS port" | wc -l)
+        http_msg=$(echo "$http_rsp" | grep "Page Not Found" | wc -l)
+        if [[ $https_msg != 0 ]]
+        then
+            harbor_server_http="false"
+            find_result=true
+        else
+            if [[ $http_msg != 0 ]]
+            then
+                harbor_server_http="true"
+                find_result=true
+            fi
+        fi
+    fi
+}
+
 harbor_server_http="true"
-if [[ $harbor_server_resp != 0  ]]
+harbor_server="$(echo "$inventory_content" | grep -E "^HARBOR_SERVER" | awk -F'=' '{print $2}' | sed "s/\"//g")"
+result="$(harbor_server_check)"
+if [[ $find_result == false ]]
 then
-    harbor_server_http="false"
+    unset http_proxy https_proxy
+    harbor_server_check
 fi
 
 # 检查项2
@@ -65,7 +99,7 @@ do
     then
         arch_str="x86_64"
     fi
-    arch_err_pkg="$(ls $path | grep "$arch_str" | wc -l)"
+    arch_err_pkg=$(ls $path | grep "$arch_str" | wc -l)
     if [[ $arch_err_pkg != 0 ]]
     then
         echo -e "[ERROR]\t$(date +"%Y-%m-%d %H:%M:%S")\t in $path directory, there are some different architecture($arch_str) packages"
@@ -73,3 +107,26 @@ do
     fi
 
 done
+
+sethostname="set_hostname"
+# 检查inventory_file中，同一个节点既在[master]也在[worker]中时，只能在[master]处配置set_hostname
+master_node="$(echo "$inventory_content"  | grep -A 100 -E '\[master\]' | grep -B 1000 -E '\[worker\]' | grep -v "^#" | grep -v "^\[")"
+master_count=$(echo "$master_node" | wc -l)
+worker_node="$(echo "$inventory_content"  | grep -A 100 -E '\[worker\]' | grep -B 1000 -E '\[other_build_image\]' | grep -v "^#" | grep -v "^\[")"
+node_error=false
+for((i=1;i<=$master_count;i++))
+do
+    master_ip="$(echo "$master_node" | sed -n "${i}p" | awk '{print $1}')"
+    in_worker=$(echo "$worker_node" | grep "$master_ip" | wc -l)
+    worker_hostname=$(echo "$worker_node" | grep "$master_ip" | grep "$sethostname" | wc -l)
+    # 同一个节点worker也配置了set_hostname参数
+    if [[ $in_worker != 0 ]] && [[ $worker_hostname != 0 ]]
+    then
+        echo -e "[ERROR]\t$(date +"%Y-%m-%d %H:%M:%S")\t in inventory_file, $master_ip at [worker] cannot set 'set_hostname' parameter"
+        node_error=true
+    fi
+done
+if [[ $node_error == true ]]
+then
+    exit 1
+fi

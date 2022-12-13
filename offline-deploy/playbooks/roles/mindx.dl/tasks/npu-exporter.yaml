@@ -40,6 +40,37 @@
   when:
     - not use_harbor
 
+- name: get npu-exporter image name when use harbor
+  shell:
+    cmd:
+      npu_info="$(kubectl get ds -n npu-exporter 2>/dev/null | grep 'npu-exporter')";
+      if [ "$npu_info" = "" ]; then exit 0;fi;
+      for((i=1;i<=$(echo "$npu_info" | wc -l);i++)); do echo "$(echo -e "$(eval "$(echo "$npu_info" | sed -n "${i}p" | awk '{print "kubectl describe ds -n npu-exporter "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+  register: image_name
+  when:
+    - do_upgrade is defined
+    - use_harbor
+    - inventory_hostname == groups['worker'][0]
+
+- name: set fact npu-exporter image name
+  set_fact:
+    npu_image_name: "{{ image_name['stdout_lines'] | unique  }}"
+    cacheable: yes
+  when:
+    - do_upgrade is defined
+    - image_name is defined and image_name['stdout_lines'] | length > 0
+    - use_harbor
+    - inventory_hostname == groups['worker'][0]
+
+- name: pull npu-exporter image
+  shell:
+    cmd:
+      docker pull "{{ item }}"
+  loop: "{{ hostvars[groups['worker'][0]].npu_image_name }}"
+  when:
+    - do_upgrade is defined and npu_image_name is defined
+    - use_harbor
+
 - name: label worker
   shell: |
     kubectl label --overwrite node {{ NODE_NAME }} node-role.kubernetes.io/worker=worker
@@ -106,7 +137,6 @@
 - name: apply npu-exporter component
   shell:
     cmd:
-      kubectl delete -f {{mindxdl_yaml_dir}}/{{ item }} || true;
       kubectl apply -f {{mindxdl_yaml_dir}}/{{ item }}
   delegate_to: "{{ groups['master'][0] }}"
   delegate_facts: true
@@ -117,3 +147,20 @@
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
+
+# 检查并更新npu-exporter应用
+- name: upgrade npu-exporter component
+  shell:
+    cmd:
+      exporter_info="$(kubectl get pods -n npu-exporter -o wide 2>/dev/null | grep 'npu-exporter-')";
+      npu_status=$(echo "$exporter_info" | grep "npu-exporter-.*Running" | wc -l);
+      if [ $npu_status = 0 ]; then exit 0; fi;
+      for((i=0;i<$npu_status;i++));do eval "$(echo "$exporter_info" | grep "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n npu-exporter "$1}')" || true; done
+  delegate_to: "{{ groups['master'][0] }}"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when:
+    - do_upgrade is defined
