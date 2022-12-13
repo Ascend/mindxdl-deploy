@@ -45,7 +45,7 @@
     cmd:
       npu_info="$(kubectl get ds -n npu-exporter 2>/dev/null | grep 'npu-exporter')";
       if [ "$npu_info" = "" ]; then exit 0;fi;
-      for((i=1;i<=$(echo "$npu_info" | wc -l);i++)); do echo "$(echo -e "$(eval "$(echo "$npu_info" | sed -n "${i}p" | awk '{print "kubectl describe ds -n npu-exporter "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+      for i in $(seq $(echo "$npu_info" | wc -l)); do echo "$(echo -e "$(eval "$(echo "$npu_info" | sed -n "${i}p" | awk '{print "kubectl describe ds -n npu-exporter "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
   register: image_name
   when:
     - do_upgrade is defined
@@ -155,7 +155,7 @@
       exporter_info="$(kubectl get pods -n npu-exporter -o wide 2>/dev/null | grep 'npu-exporter-')";
       npu_status=$(echo "$exporter_info" | grep "npu-exporter-.*Running" | wc -l);
       if [ $npu_status = 0 ]; then exit 0; fi;
-      for((i=0;i<$npu_status;i++));do eval "$(echo "$exporter_info" | grep "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n npu-exporter "$1}')" || true; done
+      for i in $(seq $npu_status);do eval "$(echo "$exporter_info" | grep "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n npu-exporter "$1}')" || true; done
   delegate_to: "{{ groups['master'][0] }}"
   environment:
     http_proxy: ""

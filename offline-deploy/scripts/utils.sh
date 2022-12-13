@@ -44,12 +44,16 @@ function harbor_server_check() {
 
 harbor_server_http="true"
 harbor_server="$(echo "$inventory_content" | grep -E "^HARBOR_SERVER" | awk -F'=' '{print $2}' | sed "s/\"//g")"
-result="$(harbor_server_check)"
-if [[ $find_result == false ]]
+if [[ $harbor_server != "" ]]
 then
-    unset http_proxy https_proxy
-    harbor_server_check
+    result="$(harbor_server_check)"
+    if [[ $find_result == false ]]
+    then
+        unset http_proxy https_proxy
+        harbor_server_check
+    fi
 fi
+
 
 # 检查项2
 scene_num="$(echo "$inventory_content" | grep -E '^SCENE_NUM' | awk -F'=' '{print $2}')"
