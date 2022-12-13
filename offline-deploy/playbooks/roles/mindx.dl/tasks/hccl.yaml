@@ -45,7 +45,7 @@
     cmd:
       hccl_info="$(kubectl get deploy -n {{ MINDXDL_NAMESPACE }} 2>/dev/null | grep 'hccl-controller')";
       if [ "$hccl_info" = "" ]; then exit 0;fi;
-      for((i=1;i<=$(echo "$hccl_info" | wc -l);i++)); do echo "$(echo -e "$(eval "$(echo "$hccl_info" | sed -n "${i}p" | awk '{print "kubectl describe deploy -n {{ MINDXDL_NAMESPACE }} "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+      for i in $(seq $(echo "$hccl_info" | wc -l)); do echo "$(echo -e "$(eval "$(echo "$hccl_info" | sed -n "${i}p" | awk '{print "kubectl describe deploy -n {{ MINDXDL_NAMESPACE }} "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
   register: image_name
   when:
     - do_upgrade is defined
@@ -148,7 +148,7 @@
       hccl_info="$(kubectl get pods -n {{ MINDXDL_NAMESPACE }} -o wide 2>/dev/null | grep 'hccl-controller-' )";
       hccl_status=$(echo "$hccl_info" | grep "hccl-controller-.*Running" | wc -l);
       if [ $hccl_status = 0 ]; then exit 0; fi;
-      for((i=0;i<$hccl_status;i++));do eval "$(echo "$hccl_info" | grep "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n {{ MINDXDL_NAMESPACE }} "$1}')" || true; done
+      for i in $(seq $hccl_status);do eval "$(echo "$hccl_info" | grep "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n {{ MINDXDL_NAMESPACE }} "$1}')" || true; done
   environment:
     http_proxy: ""
     https_proxy: ""

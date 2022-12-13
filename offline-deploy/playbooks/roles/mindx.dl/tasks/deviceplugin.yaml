@@ -72,7 +72,7 @@
     cmd:
       deviceplugin_info="$(kubectl get ds -n kube-system 2>/dev/null | grep 'ascend-device-plugin')";
       if [ "$deviceplugin_info" = "" ]; then exit 0;fi;
-      for((i=1;i<=$(echo "$deviceplugin_info" | wc -l);i++)); do echo "$(echo -e "$(eval "$(echo "$deviceplugin_info" | sed -n "${i}p" | awk '{print "kubectl describe ds -n kube-system "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+      for i in $(seq $(echo "$deviceplugin_info" | wc -l)); do echo "$(echo -e "$(eval "$(echo "$deviceplugin_info" | sed -n "${i}p" | awk '{print "kubectl describe ds -n kube-system "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
   register: image_name
   when:
     - do_upgrade is defined
@@ -274,7 +274,7 @@
       deviceplugin_info="$(kubectl get pods -n kube-system -o wide 2>/dev/null | grep 'ascend-device-plugin-')";
       deviceplugin_status=$(echo "$deviceplugin_info" | grep "ascend-device-plugin-.*Running" | wc -l);
       if [ $deviceplugin_status = 0 ]; then exit 0; fi;
-      for((i=0;i<$deviceplugin_status;i++));do eval "$(echo "$deviceplugin_info" | grep "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n kube-system "$1}')" || true; done
+      for i in $(seq $deviceplugin_status);do eval "$(echo "$deviceplugin_info" | grep "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n kube-system "$1}')" || true; done
   environment:
     http_proxy: ""
     https_proxy: ""

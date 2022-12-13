@@ -211,6 +211,7 @@ tar -xf resources.tar.gz
 ```
 
 ## 步骤3：安装Ansible
+如果已经安装过Ansible，也需要执行下面的命令，不会覆盖已有的Ansible，仅修改Ansible部分配置。
 ```bash
 cd /root/offline-deploy
 bash scripts/install_ansible.sh

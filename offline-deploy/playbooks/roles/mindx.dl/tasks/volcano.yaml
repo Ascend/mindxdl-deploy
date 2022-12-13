@@ -51,7 +51,7 @@
     cmd:
       volcano_info="$(kubectl get deploy -n volcano-system 2>/dev/null | grep "volcano")";
       if [ "$volcano_info" = "" ]; then exit 0;fi;
-      for((i=1;i<=$(echo "$volcano_info" | wc -l);i++)); do echo "$(echo -e "$(eval "$(echo "$volcano_info" | sed -n "${i}p" | awk '{print "kubectl describe deploy -n volcano-system "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+      for i in $(seq $(echo "$volcano_info" | wc -l)); do echo "$(echo -e "$(eval "$(echo "$volcano_info" | sed -n "${i}p" | awk '{print "kubectl describe deploy -n volcano-system "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
   register: image_name
   when:
     - do_upgrade is defined
