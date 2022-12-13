@@ -11,7 +11,7 @@ MINDX_GROUP_ID: 9000
 HIAI_GROUP: HwHiAiUser
 
 # 离线资源包路径
-resource_dir: "~/resources"
+resource_dir: "/root/resources"
 host_count: "{{ ansible_play_hosts_all | length }}"
 first_host: "{{ ansible_play_hosts_all[0] }}"
 no_copy_flag: "{{ NO_COPY | default('false') }}"

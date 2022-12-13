@@ -58,8 +58,8 @@
     cacheable: yes
   when:
     - do_upgrade is defined
-    - image_name is defined and image_name['stdout_lines'] | length > 0
     - use_harbor
+    - image_name is defined and STDOUT_LINES_KEY in image_name and image_name[STDOUT_LINES_KEY] | length > 0
     - inventory_hostname == groups['worker'][0]
 
 - name: pull npu-exporter image
@@ -68,8 +68,10 @@
       docker pull "{{ item }}"
   loop: "{{ hostvars[groups['worker'][0]].npu_image_name }}"
   when:
-    - do_upgrade is defined and npu_image_name is defined
+    - do_upgrade is defined
     - use_harbor
+    - "'npu_image_name' in hostvars[groups['worker'][0]]"
+    - HARBOR_SERVER in item
 
 - name: label worker
   shell: |
