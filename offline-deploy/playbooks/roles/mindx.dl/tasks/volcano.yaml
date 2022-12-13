@@ -64,8 +64,8 @@
     cacheable: yes
   when:
     - do_upgrade is defined
-    - image_name is defined and image_name['stdout_lines'] | length > 0
     - use_harbor
+    - image_name is defined and STDOUT_LINES_KEY in image_name and image_name[STDOUT_LINES_KEY] | length > 0
     - inventory_hostname == groups['master'][0]
 
 - name: pull volcano image
@@ -74,9 +74,11 @@
       docker pull "{{ item }}"
   loop: "{{ hostvars[groups['master'][0]].volcano_image_name }}"
   when:
-    - do_upgrade is defined and volcano_image_name is defined
+    - do_upgrade is defined
     - use_harbor
+    - "'volcano_image_name' in hostvars[groups['master'][0]]"
     - inventory_hostname in groups['master']
+    - HARBOR_SERVER in item
 
 # 给集群增加volcano标签
 - name: label dl master

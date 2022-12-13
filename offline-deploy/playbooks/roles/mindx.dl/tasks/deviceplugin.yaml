@@ -85,8 +85,8 @@
     cacheable: yes
   when:
     - do_upgrade is defined
-    - image_name is defined and image_name['stdout_lines'] | length > 0
     - use_harbor
+    - image_name is defined and STDOUT_LINES_KEY in image_name and image_name[STDOUT_LINES_KEY] | length > 0
     - inventory_hostname == groups['worker'][0]
 
 - name: pull deviceplugin image
@@ -95,9 +95,11 @@
       docker pull "{{ item }}"
   loop: "{{ hostvars[groups['worker'][0]].deviceplugin_image_name }}"
   when:
-    - do_upgrade is defined and deviceplugin_image_name is defined
+    - do_upgrade is defined
     - use_harbor
+    - "'deviceplugin_image_name' in hostvars[groups['worker'][0]]"
     - inventory_hostname in groups['worker']
+    - HARBOR_SERVER in item
 
 - name: label ascend310
   shell: kubectl label --overwrite node {{ NODE_NAME }} accelerator=huawei-Ascend310
@@ -271,8 +273,8 @@
 - name: upgrade deviceplugin component
   shell:
     cmd:
-      deviceplugin_info="$(kubectl get pods -n kube-system -o wide 2>/dev/null | grep 'ascend-device-plugin-')";
-      deviceplugin_status=$(echo "$deviceplugin_info" | grep "ascend-device-plugin-.*Running" | wc -l);
+      deviceplugin_info="$(kubectl get pods -n kube-system -o wide 2>/dev/null | grep 'ascend-device-plugin')";
+      deviceplugin_status=$(echo "$deviceplugin_info" | grep "ascend-device-plugin.*Running" | wc -l);
       if [ $deviceplugin_status = 0 ]; then exit 0; fi;
       for i in $(seq $deviceplugin_status);do eval "$(echo "$deviceplugin_info" | grep "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n kube-system "$1}')" || true; done
   environment:

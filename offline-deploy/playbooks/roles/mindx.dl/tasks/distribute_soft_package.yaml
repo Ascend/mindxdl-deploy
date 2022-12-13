@@ -10,6 +10,7 @@
     - "{{mindxdl_deploy_package_dir}}"
     - "{{mindxdl_images_dir}}"
     - "{{mindxdl_yaml_dir}}"
+  changed_when: false
   ignore_errors: true
 
 - name: create directory in local

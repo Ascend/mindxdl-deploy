@@ -33,3 +33,5 @@ HARBOR_MINDX_PROJECT: "mindx"
 HARBOR_MINDX_PREFIX: "{{ HARBOR_SERVER }}/{{ HARBOR_MINDX_PROJECT }}"
 
 docker_20_bin_dir: "{{ resource_dir }}/do-not-change"
+
+STDOUT_LINES_KEY: "stdout_lines"

@@ -2,7 +2,7 @@
 # 配置信息示例:10.10.10.10 set_hostname=master-1 k8s_api_server_ip=10.10.10.10 kube_interface=enp125s0f0
 # 示例说明:
 # 10.10.10.10:服务器的ip地址。
-# set_hostname:设置节点在K8s集群中的节点名字,建议用“[a-z]-[0-9]”的格式。
+# set_hostname:设置节点在K8s集群中的节点名字,建议用“[a-z]-[0-9]”的格式；如果已有K8s集群，则该名字需要为节点在K8s中的名字，不可随意填写。
 # k8s_api_server_ip:k8s对外提供服务的入口，配置为master节点的IP地址。
 # kube_interface:对应服务器ip地址网卡名字，单master场景下可以不设置
 
@@ -28,8 +28,8 @@
 # 场景2安装组件: Ascend Docker Runtime, Ascend Device Plugin, Volcano，HCCL-Controller(可选), NodeD(可选), NPU-Exporter(可选)
 # 场景3安装组件: Ascend Docker Runtime, Ascend Device Plugin, NPU-Exporter(可选)
 # SCENE_NUM:安装场景选择，可选1，2，3场景,默认场景1
-
 SCENE_NUM=1
+
 # EXTRA_COMPONENT: 为可选组件，组件间逗号隔开，可选值如下；
 # 	npu-exporter     表示安装NPU-Exporter组件
 # 	noded            表示安装NodeD组件
