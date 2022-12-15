@@ -28,10 +28,10 @@ function install_ansible()
 
         case ${os_name} in
         ubuntu)
-            dpkg -i --force-all ~/resources/ansible/Ubuntu_18.04/${arch}/*.deb 1>/dev/null
+            dpkg -i --force-all /root/resources/ansible/Ubuntu_18.04/${arch}/*.deb 1>/dev/null
             ;;
         openEuler)
-            rpm -i --nodeps --force ~/resources/ansible/OpenEuler_${os_version}_LTS/${arch}/*.rpm 1>/dev/null
+            rpm -i --nodeps --force /root/resources/ansible/OpenEuler_${os_version}_LTS/${arch}/*.rpm 1>/dev/null
             ;;
         esac
         echo -e "\n[INFO]\t$(date +"%Y-%m-%d %H:%M:%S")\t successfully installed ansible\n"

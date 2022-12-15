@@ -99,7 +99,7 @@
 
 - name: set k8s master[0] vip
   set_fact:
-    multi_k8s_cluster: "{{ false if master_user_vip is not defined or master_user_vip.stdout == '0' else true }}"
+    multi_k8s_cluster: "{{ false if master_use_vip is not defined or STDOUT_KEY not in master_use_vip or master_use_vip.stdout == '0' else true }}"
     cacheable: yes
   changed_when: false
 
@@ -113,7 +113,7 @@
     - inventory_hostname != groups['master'][0]
     - not k8s_initialized
     - hostvars[groups['master'][0]].k8s_initialized
-    - not hostvars[groups['master'][0]].multi_k8s_cluster
+    - "'multi_k8s_cluster' in hostvars[groups['master'][0]] and not hostvars[groups['master'][0]].multi_k8s_cluster"
 
 - name: reset node
   shell:

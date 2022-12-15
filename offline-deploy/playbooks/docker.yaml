@@ -5,6 +5,7 @@
     - master
     - worker
   gather_facts: false
+  become: yes
   vars_files:
     - roles/mindx.docker/vars/main.yml
   tasks:
@@ -14,6 +15,7 @@
     - master
     - worker
   gather_facts: false
+  become: yes
   vars_files:
     - roles/mindx.docker/vars/main.yml
   tasks:
@@ -25,6 +27,7 @@
     - master
     - worker
   gather_facts: false
+  become: yes
   vars_files:
     - roles/mindx.docker/vars/main.yml
   tasks:

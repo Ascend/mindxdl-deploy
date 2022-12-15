@@ -57,6 +57,7 @@ fi
 
 # 检查项2
 scene_num="$(echo "$inventory_content" | grep -E '^SCENE_NUM' | awk -F'=' '{print $2}')"
+kube_vip="$(echo "$inventory_content" | grep -E '^KUBE_VIP' | grep -Po "[0-9.]*")"
 extra_cpt="$(echo "$inventory_content" | grep -E '^EXTRA_COMPONENT' | awk -F'=' '{print $2}' | sed 's/"//g')"
 extra_array=(`echo $extra_cpt | tr ',' ' ' | tr '\"' ' '` )
 forbidden_cpt_2=("docker" "k8s")
@@ -67,6 +68,12 @@ master_num=$(grep -A 100 '\[master\]' inventory_file  | grep -B 200 '\[worker\]'
 if [[ $scene_num == "1" ]] && [[ $(($master_num % 2)) == 0 ]]
 then
     echo -e "[ERROR]\t$(date +"%Y-%m-%d %H:%M:%S")\t in inventory_file, the number of nodes configured under [master] must be odd, such as 1,3,5,7"
+    exit 1
+fi
+# 安装K8s时，为多master需要配置KUBE_VIP
+if [[ $scene_num == "1" ]] && [[ $master_num > 1 ]] && [[ $kube_vip == "" ]]
+then
+    echo -e "[ERROR]\t$(date +"%Y-%m-%d %H:%M:%S")\t in inventory_file, KUBE_VIP must be configured in the multi master scenario"
     exit 1
 fi
 # 检查inventory_file中场景（SCENE_NUM）和额外组件（EXTRA_COMPONENT）的配套关系
