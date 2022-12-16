@@ -32,7 +32,7 @@
  3. 执行安装脚本前，保证安装Kubernetes的服务器的时间一致，可参考[常用操作1](#常用操作)快速设置各节点时间。
  4. 所有节点需要**已安装Python2.7以上**
  5. 安装部署脚本会在节点创建一个uid和gid为9000的用户hwMindX，请保证各节点上该uid和gid未被占用。
- 6. 如果用户需要使用Harbor，请保证各节点能够登录Harbor。
+ 6. 如果用户需要使用Harbor，请保证各节点（包括执行机）能够登录Harbor。
  7. 如果用户已有K8s集群，则需要在master节点的/root/.kube/config文件中放置能够操作K8s资源的授权内容。
  8. 不支持多操作系统混合部署。
  5. 安装脚本支持在下表的操作系统运行，脚本支持在如下操作系统上安装MindX DL的集群调度组件、Docker、Kubernetes软件。
@@ -364,7 +364,7 @@ bash scripts/renew_certs.sh
     将下面命令中的***2022-06-01 08:00:00***替换成用户需要的时间后，再执行
     ```
     cd /root/offline-deploy
-    ansible -i inventory_file all -m shell w jiu -a "date -s '2022-06-01 08:00:00'; hwclock -w"
+    ansible -i inventory_file all -m shell -a "date -s '2022-06-01 08:00:00'; hwclock -w"
     ```
 
  2. 查看安装脚本执行节点能否访问inventory_file中的其他节点，即检查连通性。

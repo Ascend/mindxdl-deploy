@@ -106,7 +106,7 @@
       heterogeneous_image="{{ HARBOR_MINDX_PREFIX }}/{{ item.stdout.replace('_'+master_arch+':', '_'+heterogeneous_arch+':') }}";
       docker push "${heterogeneous_image}";
       docker manifest create --insecure "${manifest_name}"  --amend "${heterogeneous_image}";
-      docker manifest annotate --arch "{{ 'arm64' if master_arch == 'aarch64' else 'amd64' }}" "${manifest_name}" "${heterogeneous_image}";
+      docker manifest annotate --arch "{{ 'amd64' if master_arch == 'aarch64' else 'arm64' }}" "${manifest_name}" "${heterogeneous_image}";
   loop: "{{ master_dl_images['results'] }}"
   environment:
     DOCKER_CLI_EXPERIMENTAL: enabled
