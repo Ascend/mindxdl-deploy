@@ -18,6 +18,7 @@
  - [常见问题](#常见问题)
     - [常见安装问题](#常见安装问题)
     - [其他问题](#其他问题)
+ - [免责声明](#免责声明)
  - [历史版本](#历史版本)
  - [CHANGELOG](#changelog)
 
@@ -122,7 +123,7 @@
 | 服务器类型 |
 |:---------------|
 | Atlas 800 训练服务器（型号：9000/9010） |
-| Atlas 800 训练服务器（型号：3000/3010） |
+| Atlas 800 推理服务器（型号：3000/3010） |
 | 服务器（插Atlas 300T 训练卡） |
 | 服务器（插Atlas 300I 推理卡） |
 | 服务器（插Atlas 300I Pro 推理卡） |
@@ -144,9 +145,9 @@
 </thead>
 <tbody>
   <tr>
-    <td rowspan="8">场景一</td>
+    <td rowspan="8">集群调度场景（全栈）</td>
     <td rowspan="8"><li>Docker</li><br /><li>Kubernetes</li><br /><li>Ascend Docker Runtime</li><br /><li>Ascend Device Plugin</li><br /><li>Volcano</li><br /><li>NodeD</li><br /><li>HCCL-Controller</li><br /><li>NPU-Exporter</li></td>
-    <td rowspan="8">常用安装场景，包含大多数MindX DL集群调度组件的功能</td>
+    <td rowspan="8">该场景适用于你有一台或者多台NPU服务器，需要使用Kubernetes管理。使用该场景会完成NPU服务器的Docker、Kubernetes和NPU集群调度组件的安装。在inventory_file中对应场景一</td>
   </tr>
   <tr>
   </tr>
@@ -163,9 +164,9 @@
   <tr>
   </tr>
   <tr>
-    <td rowspan="6">场景二</td>
+    <td rowspan="6">集群调度场景</td>
     <td rowspan="6"><li>Ascend Docker Runtime</li><br /><li>Ascend Device Plugin</li><br /><li>Volcano</li><br /><li>NodeD(可选)</li><br /><li>HCCL-Controller(可选)</li><br /><li>NPU-Exporter(可选)</li></td>
-    <td rowspan="6">Volcano基础调度场景</td>
+    <td rowspan="6">该场景适用于你已经有一个部署好的Kubernetes集群，需要纳管新的NPU服务器。使用该场景时，需要在已有的Kubernetes集群的master节点部署NPU管理组件，新接入的NPU机器上部署worker节点的NPU管理组件。在inventory_file中对应场景二</td>
   </tr>
   <tr>
   </tr>
@@ -178,9 +179,9 @@
   <tr>
   </tr>
   <tr>
-    <td rowspan="3">场景三</td>
+    <td rowspan="3">设备纳管场景</td>
     <td rowspan="3"><li>Ascend Docker Runtime</li><br /><li>Ascend Device Plugin</li><br /><li>NPU-Exporter(可选)</li></td>
-    <td rowspan="3">其他调度器场景</td>
+    <td rowspan="3">该场景适用于你已经有一个部署好的Kubernetes集群，希望使用自己的调度器部署NPU任务。使用该场景时，需要在新接入的NPU服务器上部署worker节点的NPU管理组件。在inventory_file中对应场景三</td>
   </tr>
   <tr>
   </tr>
@@ -193,7 +194,7 @@
 
 ## 步骤1：准备登录各台服务器的账号
 
-安装部署脚本需要登录各台服务器执行命令，支持使用ssh免密的方式登录，也支持ssh使用账号密码登录的方式。支持账号类型仅为**root账号**和配置了**sudo权限**的**普通账号**。如需使用免密登录的方式，可参考[常用操作5](#常用操作)。
+安装部署脚本需要登录各台服务器执行命令，支持使用ssh免密的方式登录，也支持ssh使用账号密码登录的方式。支持账号类型仅为**root账号**和配置了**sudo权限**的**普通账号**。如需使用ssh免密登录的方式，可参考[常用操作5](#常用操作)。
 
 
 ## 步骤2：下载离线软件包
@@ -230,7 +231,7 @@ ansible 2.9.27
 
 ## 步骤4：配置安装信息
 
-修改配置文件参数，用户可根据配置文件注释自行设置
+修改配置文件参数，用户可根据配置文件注释自行设置，**请勿修改配置文件中的结构**。
 
 ```bash
 cd /root/offline-deploy
@@ -364,7 +365,7 @@ bash scripts/renew_certs.sh
     将下面命令中的***2022-06-01 08:00:00***替换成用户需要的时间后，再执行
     ```
     cd /root/offline-deploy
-    ansible -i inventory_file all -m shell -a "date -s '2022-06-01 08:00:00'; hwclock -w"
+    ansible -i inventory_file all -m shell -b -a "date -s '2022-06-01 08:00:00'; hwclock -w"
     ```
 
  2. 查看安装脚本执行节点能否访问inventory_file中的其他节点，即检查连通性。
@@ -419,15 +420,15 @@ bash scripts/renew_certs.sh
  		- 场景包含的安装组件中有Docker或Kubernetes时
  			- 如果用户已在部分节点安装过Docker或Kubernetes，则脚本会打印这些节点上软件的版本信息，并且跳过软件的安装；剩余未安装的节点，则会根据[软件支持列表](#软件支持列表)中的软件版本安装软件;此时用户需要保证自行安装的Docker或Kubernetes版本与软件支持列表中的软件版本一致，避免出现不可预测的问题。
  			- 如果master节点已经加入过Kubernetes集群，则该master节点会跳过初始化，不做任何操作；否则会初始化集群或者多master场景下会加入已有master集群；用户需要自行保证各master节点Kubernetes版本一致，避免不可预测的问题。
- 			- 如果worker节点已经加入过集群，则该worker节点会不会再加入master的集群，不做任何操作；未加入过集群的worker节点会加入到master集群中；用户需要自行保证各worker节点，以及worker节点与master节点Kubernetes版本一致，避免不可预测的问题。
- 	- 安装脚本安装的组件由两部分组成，场景1,2,3默认安装的组件加上EXTRA_COMPONENT中配置的组件
+ 			- 如果worker节点已经加入过集群，则该worker节点不会再加入master的集群，不做任何操作；未加入过集群的worker节点会加入到master集群中；用户需要自行保证各worker节点，以及worker节点与master节点Kubernetes版本一致，避免不可预测的问题。
+ 	- 安装脚本安装的组件由两部分组成，每个场景默认安装的组件加上EXTRA_COMPONENT中配置的组件
  	- 如果用户已经安装了Kubernetes，其版本不能高于1.21
  	- 多Master场景下每个Master的kube_interface参数的值必须为本机上已存在的网卡名
  	- 无论是单Master、还是多Master场景，k8s_api_server_ip参数必须配置为本机上已经存在的IP
  	- 节点的存放Docker镜像的磁盘分区需要保留至少30%的空间
  	- 如果节点的IP网段与默认的K8s集群网段冲突，请用户修改inventory_file中的`POD_NETWORK_CIRD`参数为其他私有网段，如：10.0.0.0/16
  	- 训练节点需要配置device IP，可参考[配置训练服务器NPU的device IP](https://www.hiascend.com/document/detail/zh/canncommercial/60RC1/envdeployment/instg/instg_000039.html)
- 	- 场景1中，inventory_file配置文件`[master]`下配置的节点个数必须为奇数，如1,3,5...
+ 	- 使用集群调度场景(全栈)部署时，inventory_file配置文件`[master]`下配置的节点个数必须为奇数，如1,3,5...
 
  3. 使用Harbor时，docker login失败了，运行日志出现如下内容
  	```
@@ -469,10 +470,11 @@ bash scripts/renew_certs.sh
     fatal: [172.0.0.100]: FAILED! => {"msg": "Missing sudo password"}
     ```
 	**原因**：<br />
-    inventory_file中配置的非root账号登录，且未配置在/etc/sudoers中未配置NOPASSWD，
+    inventory_file中配置的非root账号登录，且未在对应节点/etc/sudoers中为账号配置NOPASSWD，
 
     **解决方法**：<br />
-    通过命令`docker info`依次查看登录失败的服务器是否配置了代理，回显如下表示本节点配置了代理
+    - 参考inventory_file中的注释，配置`ansible_become_password`参数
+    - 在/etc/sudoers文件中为账号配置NOPASSWD
  5. 如果安装时选择了安装K8s，脚本运行过程中，出现K8s相关错误，建议执行reset命令后再重新安装，reset命令会重置master和worker节点的K8s集群，请谨慎操作，命令执行参考[常用操作4](#常用操作)。
 
 
@@ -523,6 +525,8 @@ bash scripts/renew_certs.sh
     ```
     ip addr delete <ip地址> dev <网卡名>
     ```
+# 免责声明
+如需在生产环境中安装并使用Docker和Kubernetes，请参考对应的官方文档进行安装、配置和安全加固。
 # 历史版本
 <table>
 <thead>

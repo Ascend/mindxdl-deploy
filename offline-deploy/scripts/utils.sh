@@ -121,15 +121,19 @@ done
 
 sethostname="set_hostname"
 # 检查inventory_file中，同一个节点既在[master]也在[worker]中时，只能在[master]处配置set_hostname
-master_node="$(echo "$inventory_content"  | grep -A 100 -E '\[master\]' | grep -B 1000 -E '\[worker\]' | grep -v "^#" | grep -v "^\[")"
+master_node="$(echo "$inventory_content" | grep -A 100 -E '^\[master\]' | grep -B 1000 -E '^\[worker\]' | grep -v "^#" | grep -v "^\[")"
 master_count=$(echo "$master_node" | wc -l)
-worker_node="$(echo "$inventory_content"  | grep -A 100 -E '\[worker\]' | grep -B 1000 -E '\[other_build_image\]' | grep -v "^#" | grep -v "^\[")"
+worker_node="$(echo "$inventory_content" | grep -A 100 -E '^\[worker\]' | grep -B 1000 -E '^\[other_build_image\]' | grep -v "^#" | grep -v "^\[")"
 node_error=false
 for((i=1;i<=$master_count;i++))
 do
-    master_ip="$(echo "$master_node" | sed -n "${i}p" | awk '{print $1}')"
+    master_ip="$(echo "$master_node" | sed -n "${i}p" | awk '{print $1}' | sed "s/^[ \t]*//g")"
     in_worker=$(echo "$worker_node" | grep "$master_ip" | wc -l)
     worker_hostname=$(echo "$worker_node" | grep "$master_ip" | grep "$sethostname" | wc -l)
+    if [[ "$master_ip" == "" ]]
+    then
+        continue
+    fi
     # 同一个节点worker也配置了set_hostname参数
     if [[ $in_worker != 0 ]] && [[ $worker_hostname != 0 ]]
     then
