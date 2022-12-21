@@ -12,7 +12,6 @@
     - [步骤5：执行安装](#步骤5执行安装)
  - [安装后状态查看](#安装后状态查看)
  - [组件升级](#组件升级)
- - [Kubernetes证书更新](#kubernetes证书更新)
  - [安装脚本对系统的修改](#安装脚本对系统的修改)
  - [常用操作](#常用操作)
  - [常见问题](#常见问题)
@@ -240,7 +239,7 @@ vi inventory_file
 
 ## 步骤5：执行安装
 
-在[步骤4](#步骤4配置安装信息)同级目录中执行下面的安装命令。如果安装过程出现错误，请根据回显中的信息进行排查处理，也可查看[常见安装问题](#常见安装问题)进行处理，处理完毕后再执行如下命令进行安装。
+在[步骤4](#步骤4配置安装信息)同级目录中执行下面的安装命令。如果安装过程出现错误，请根据回显中的信息进行排查处理，也可查看[常见问题](#常见问题)进行处理，手动处理完毕后再执行如下命令进行安装。
 ```
 bash scripts/install.sh
 ```
@@ -301,42 +300,6 @@ cd /root/offline-deploy
 bash scripts/upgrade.sh
 ```
 
-# Kubernetes证书更新
-K8s默认的证书有效期为1年，可通过如下命令查看证书有效期。
-```
-kubeadm alpha certs check-expiration
-```
-回显示例如下
-```
-[check-expiration] Reading configuration from the cluster...
-[check-expiration] FYI: You can look at this config file with 'kubectl -n kube-system get cm kubeadm-config -oyaml'
-
-CERTIFICATE                EXPIRES                  RESIDUAL TIME   CERTIFICATE AUTHORITY   EXTERNALLY MANAGED
-admin.conf                 Dec 05, 2023 14:56 UTC   364d                                    no      
-apiserver                  Dec 05, 2023 14:56 UTC   364d            ca                      no      
-apiserver-etcd-client      Dec 05, 2023 14:56 UTC   364d            etcd-ca                 no      
-apiserver-kubelet-client   Dec 05, 2023 14:56 UTC   364d            ca                      no      
-controller-manager.conf    Dec 05, 2023 14:56 UTC   364d                                    no      
-etcd-healthcheck-client    Dec 05, 2023 14:56 UTC   364d            etcd-ca                 no      
-etcd-peer                  Dec 05, 2023 14:56 UTC   364d            etcd-ca                 no      
-etcd-server                Dec 05, 2023 14:56 UTC   364d            etcd-ca                 no      
-front-proxy-client         Dec 05, 2023 14:56 UTC   364d            front-proxy-ca          no      
-scheduler.conf             Dec 05, 2023 14:56 UTC   364d                                    no      
-
-CERTIFICATE AUTHORITY   EXPIRES                  RESIDUAL TIME   EXTERNALLY MANAGED
-ca                      Dec 02, 2032 14:01 UTC   9y              no      
-etcd-ca                 Dec 02, 2032 14:01 UTC   9y              no      
-front-proxy-ca          Dec 02, 2032 14:01 UTC   9y              no
-```
-基于K8s的<a href="https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#manual-certificate-renewal">官方更新机制</a>，提供了一键更新节点K8s证书的功能，**仅支持K8s默认的证书签发机制生成的证书**。**升级时可能会有短时间的服务中断，请合理规划更新证书的时间**。执行更新命令需要满足如下的前提条件
-1. [完成Ansible安装](#步骤3安装ansible)
-2. [配置了inventory_file](#步骤4配置安装信息)
-
-执行如下命令，完成K8s证书更新，只更新inventory_file中配置节点的证书
-```
-cd /root/offline-deploy
-bash scripts/renew_certs.sh
-```
 
 # 安装脚本对系统的修改
 
@@ -475,7 +438,28 @@ bash scripts/renew_certs.sh
     **解决方法**：<br />
     - 参考inventory_file中的注释，配置`ansible_become_password`参数
     - 在/etc/sudoers文件中为账号配置NOPASSWD
- 5. 如果安装时选择了安装K8s，脚本运行过程中，出现K8s相关错误，建议执行reset命令后再重新安装，reset命令会重置master和worker节点的K8s集群，请谨慎操作，命令执行参考[常用操作4](#常用操作)。
+ 5. 如果安装时选择了安装K8s，脚本运行过程中，出现K8s加入集群失败相关错误，建议执行reset命令后再重新安装，reset命令会重置inventory_file中配置的master和worker节点的K8s集群，请确认后再操作。命令执行参考[常用操作4](#常用操作)。
+ 6. 如果安装部署过程出现K8s的master与worker通信异常，如打标签失败，通信超时等问题导致脚本执行失败，可以按照如下思路手动进行排查处理。
+    1. 先排查K8s节点之间网络是否连通，是否因为网络代理原因的影响。
+    2. 根据安装部署脚本回显的日志信息，在对应节点手动执行日志中出现的命令，看是否成功；如果执行失败，可先在[常见问题](#常见问题)中寻找错误处理方案。
+    3. 解决错误之后，可再次执行安装部署命令。
+ 7. 安装部署脚本执行时，master或者worker节点加入K8s集群，或者执行kubectl命令时出现类似如下错误信息
+    ```
+    read: connection reset by peer\nerror: unexpected error when reading response body. Please retry.
+    ```
+	**原因**：<br />
+   可能由于节点之间网络通信不稳定，server端关闭了连接，导致申请加入集群的节点，或者发送kubectl命令的节点无法收到响应。
+
+   **解决方法**：<br />
+   1. 如果是加入集群时出现该错误，请在成功的master节点使用命令`kubectl get node`确认失败的节点是否加入成功
+        - 如果是worker加入成功了，则重新执行安装命令即可
+        - 如果是master加入成功了，则需要执行下面命令后，解除master隔离后，再重新执行安装命令
+        ```
+        # {nodename}为节点在K8s中的名字
+        kubectl taint nodes {nodename} node-role.kubernetes.io/master-
+        ```
+        - 如果失败了，建议在对应节点上将K8s重置之后再执行安装命令，命令为`kubeadm reset -f && rm -rf $HOME/.kube /etc/cni/net.d`
+   2. 如果是执行`kubectl`命令时失败了，根据回显的信息处理完错误后再执行安装命令。
 
 
 ## 其他问题

@@ -39,7 +39,7 @@
 - name: check k8s_api_server_ip must exists
   shell:
     cmd:
-      is_exist=$(ifconfig | grep {{ k8s_api_server_ip }} | wc -l);
+      is_exist=$(ifconfig | grep -w {{ k8s_api_server_ip }} | wc -l);
       if [ $is_exist -eq 0 ]; then echo "{{ not_match }}"; else echo "match"; fi
   register: api_ip_correct
   when:
@@ -58,7 +58,7 @@
 - name: check kube_interface must exists
   shell:
     cmd:
-      is_exist=$(ifconfig | grep {{ kube_interface }} | wc -l);
+      is_exist=$(ifconfig | grep -w {{ kube_interface }} | wc -l);
       if [ $is_exist -eq 0 ]; then echo "{{ not_match }}"; else echo "match"; fi
   register: interface_correct
   when:

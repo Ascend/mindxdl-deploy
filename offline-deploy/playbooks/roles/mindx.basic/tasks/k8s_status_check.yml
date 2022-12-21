@@ -55,7 +55,7 @@
 - name: get k8s cluster info
   delegate_to: "{{ groups['master'][0] }}"
   delegate_facts: False
-  shell: "kubectl get node -o wide 2>/dev/null | grep {{ k8s_api_server_ip if k8s_api_server_ip is defined else inventory_hostname }} | wc -l"
+  shell: "kubectl get node -o wide 2>/dev/null | grep -w {{ k8s_api_server_ip if k8s_api_server_ip is defined else inventory_hostname }} | wc -l"
   register: k8s_cluster_info
   environment:
     http_proxy: ""
@@ -71,7 +71,7 @@
   changed_when: false
 
 - name: get other k8s cluster info
-  shell: "kubectl get node -o wide 2>/dev/null | grep {{ k8s_api_server_ip if k8s_api_server_ip is defined else inventory_hostname }} | wc -l"
+  shell: "kubectl get node -o wide 2>/dev/null | grep -w {{ k8s_api_server_ip if k8s_api_server_ip is defined else inventory_hostname }} | wc -l"
   register: other_cluster_info
   environment:
     http_proxy: ""
@@ -91,7 +91,7 @@
 - name: master[0] cluster info
   shell:
     cmd:
-      kubectl cluster-info 2>/dev/null | grep "{{ KUBE_VIP }}" | wc -l
+      kubectl cluster-info 2>/dev/null | grep -w "{{ KUBE_VIP }}" | wc -l
   register: master_use_vip
   when:
     - inventory_hostname == groups['master'][0]
