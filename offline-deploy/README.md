@@ -444,23 +444,22 @@ bash scripts/upgrade.sh
     2. 根据安装部署脚本回显的日志信息，在对应节点手动执行日志中出现的命令，看是否成功；如果执行失败，可先在[常见问题](#常见问题)中寻找错误处理方案。
     3. 解决错误之后，可再次执行安装部署命令。
  7. 安装部署脚本执行时，master或者worker节点加入K8s集群，或者执行kubectl命令时出现类似如下错误信息
-    ```
+ 	```
     read: connection reset by peer\nerror: unexpected error when reading response body. Please retry.
     ```
 	**原因**：<br />
-   可能由于节点之间网络通信不稳定，server端关闭了连接，导致申请加入集群的节点，或者发送kubectl命令的节点无法收到响应。
+    可能由于节点之间网络通信不稳定，server端关闭了连接，导致申请加入集群的节点，或者发送kubectl命令的节点无法收到响应。
 
-   **解决方法**：<br />
-   1. 如果是加入集群时出现该错误，请在成功的master节点使用命令`kubectl get node`确认失败的节点是否加入成功
-        - 如果是worker加入成功了，则重新执行安装命令即可
-        - 如果是master加入成功了，则需要执行下面命令后，解除master隔离后，再重新执行安装命令
-        ```
+    **解决方法**：<br />
+    1. 如果是加入集群时出现该错误，请在成功的master节点使用命令`kubectl get node`确认失败的节点是否加入成功
+    	- 如果节点加入失败了，建议在对应节点上将K8s重置之后再执行安装命令，命令为`kubeadm reset -f && rm -rf $HOME/.kube /etc/cni/net.d`
+    	- 如果worker节点加入成功了，则重新执行安装命令即可
+    	- 如果master节点加入成功了，则需要执行下面命令后，解除master隔离后，再重新执行安装命令
+    	```
         # {nodename}为节点在K8s中的名字
         kubectl taint nodes {nodename} node-role.kubernetes.io/master-
         ```
-        - 如果失败了，建议在对应节点上将K8s重置之后再执行安装命令，命令为`kubeadm reset -f && rm -rf $HOME/.kube /etc/cni/net.d`
-   2. 如果是执行`kubectl`命令时失败了，根据回显的信息处理完错误后再执行安装命令。
-
+    2. 如果是执行`kubectl`命令时失败了，根据回显的信息处理完错误后再执行安装命令。
 
 ## 其他问题
 
