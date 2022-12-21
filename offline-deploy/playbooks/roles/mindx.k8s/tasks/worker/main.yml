@@ -23,13 +23,17 @@
 
 - name: create kube directory
   file:
-    path: "{{ ansible_env.HOME }}/.kube"
+    path: "/root/.kube"
     state: directory
+    owner: "root"
+    group: "root"
     mode: 0750
 
 - name: set cluster config
   copy:
     src: /etc/kubernetes/kubelet.conf
-    dest: "{{ ansible_env.HOME }}/.kube/config"
+    dest: "/root/.kube/config"
     mode: "0640"
+    owner: "root"
+    group: "root"
     remote_src: yes

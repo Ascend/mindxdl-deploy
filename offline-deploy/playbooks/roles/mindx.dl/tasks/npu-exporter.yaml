@@ -157,7 +157,7 @@
       exporter_info="$(kubectl get pods -n npu-exporter -o wide 2>/dev/null | grep 'npu-exporter-')";
       npu_status=$(echo "$exporter_info" | grep "npu-exporter-.*Running" | wc -l);
       if [ $npu_status = 0 ]; then exit 0; fi;
-      for i in $(seq $npu_status);do eval "$(echo "$exporter_info" | grep "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n npu-exporter "$1}')" || true; done
+      for i in $(seq $npu_status);do eval "$(echo "$exporter_info" | grep -w "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n npu-exporter "$1}')" || true; done
   delegate_to: "{{ groups['master'][0] }}"
   environment:
     http_proxy: ""
