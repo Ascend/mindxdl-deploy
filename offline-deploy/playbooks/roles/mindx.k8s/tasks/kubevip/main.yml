@@ -22,9 +22,14 @@
   when:
     - not use_harbor
 
+- name: pull kube-vip images on master
+  shell: "docker pull {{ HARBOR_SERVER }}/{{ KUBE_VIP_IMAGE }}:{{ KVVERSION }}"
+  when:
+    - use_harbor
+
 - name: generate kube-vip.yaml
   shell: |
-    docker run --network host --rm {{ KUBE_VIP_IMAGE }}:{{ KVVERSION }} manifest pod \
+    docker run --network host --rm {{ HARBOR_SERVER+'/' if use_harbor else '' }}{{ KUBE_VIP_IMAGE }}:{{ KVVERSION }} manifest pod \
     --interface {{ kube_interface }} \
     --address {{ KUBE_VIP }} \
     --controlplane \

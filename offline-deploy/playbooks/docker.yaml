@@ -24,6 +24,7 @@
         - not docker_installed
 
 - hosts:
+    - localhost
     - master
     - worker
   gather_facts: false
