@@ -271,6 +271,8 @@
 
 # 检查并更新deviceplugin应用
 - name: upgrade deviceplugin component
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
   shell:
     cmd:
       deviceplugin_info="$(kubectl get pods -n kube-system -o wide 2>/dev/null | grep 'ascend-device-plugin')";
