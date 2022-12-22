@@ -454,11 +454,11 @@ bash scripts/upgrade.sh
     1. 如果是加入集群时出现该错误，请在成功的master节点使用命令`kubectl get node`确认失败的节点是否加入成功
     	- 如果节点加入失败了，建议在对应节点上将K8s重置之后再执行安装命令，命令为`kubeadm reset -f && rm -rf $HOME/.kube /etc/cni/net.d`
     	- 如果worker节点加入成功了，则重新执行安装命令即可
-    	- 如果master节点加入成功了，则需要执行下面命令后，解除master隔离后，再重新执行安装命令
-    	```
-        # {nodename}为节点在K8s中的名字
-        kubectl taint nodes {nodename} node-role.kubernetes.io/master-
-        ```
+    	- 如果master节点加入成功了，则需要执行下面命令，解除master隔离后，再重新执行安装命令
+          ```
+          # {nodename}为节点在K8s中的名字
+          kubectl taint nodes {nodename} node-role.kubernetes.io/master-
+          ```
     2. 如果是执行`kubectl`命令时失败了，根据回显的信息处理完错误后再执行安装命令。
 
 ## 其他问题
