@@ -20,7 +20,7 @@ spec:
       - image: ascend-k8sdeviceplugin:v3.0.0                  # Inference image name
         imagePullPolicy: IfNotPresent
         name: infer-env-quick-validation
-        command: [ "/bin/bash", "-c", "npu-smi info" ]
+        command: [ "/bin/bash", "-c", "npu-smi info;sleep 100000;" ]
         resources:
           requests:
             huawei.com/Ascend310P: 1             # Number of the Ascend 310 Processors. If the Ascend 310P Processor is used, change it to huawei.com/Ascend310P.
