@@ -1,32 +1,3 @@
-# 如果需要安装K8s，检查集群网络配置
-- name: register value k8s pod network cird
-  shell:
-    cmd:
-      /bin/bash -c "if [[ {{ item }} =~ 192.168.*.* ]] && [[ {{ POD_NETWORK_CIDR }} =~ 192.168.*.* ]]; then echo "{{ not_match }}"; else echo "{{ match }}"; fi"
-  register: cird_status
-  loop: "{{ groups['master'] + groups['worker'] }}"
-  changed_when: false
-  when:
-    - inventory_hostname == "localhost"
-
-- name: check k8s pod network cird
-  shell:
-    cmd:
-      echo "please modify POD_NETWORK_CIDR param in {{ hostvars['localhost'].ansible_inventory_sources[0] }} on install command execution node, change it to other private network, for example 10.0.0.0/16"
-  loop: "{{ cird_status['results'] }}"
-  when:
-    - inventory_hostname == "localhost"
-    - cird_status is defined and item.stdout == not_match
-
-- name: POD_NETWORK_CIDR and KUBE_VIP
-  fail:
-    msg: "please modify POD_NETWORK_CIDR param in {{ hostvars['localhost'].ansible_inventory_sources[0] }} on install command execution node, change it to other private network, for example 10.0.0.0/16"
-  when:
-    - inventory_hostname != "localhost"
-    - "groups['master'] | length > 1"
-    - KUBE_VIP != "" and KUBE_VIP.startswith("192.168")
-    - POD_NETWORK_CIDR != "" and POD_NETWORK_CIDR.startswith("192.168")
-
 # 检查master节点必须存在k8s_api_server_ip的ip
 - name: check k8s_api_server_ip must configured
   fail:
@@ -74,6 +45,52 @@
     - "groups['master'] | length > 1"
     - "interface_correct is defined and STDOUT_KEY in interface_correct"
     - "interface_correct.stdout == not_match"
+
+# 如果需要安装K8s，检查集群网络配置是否冲突
+- name: register value k8s pod network cird - master k8s_api_server_ip
+  shell:
+    cmd:
+      /bin/bash -c "if [[ {{ hostvars[item].k8s_api_server_ip }} =~ 192.168.*.* ]] && [[ {{ POD_NETWORK_CIDR }} =~ 192.168.*.* ]]; then echo "{{ not_match }}"; else echo "{{ match }}"; fi"
+  register: master_cird_status
+  loop: "{{ groups['master'] }}"
+  changed_when: false
+  when:
+    - inventory_hostname == "localhost"
+
+- name: check k8s pod network cird - master k8s_api_server_ip
+  fail:
+    msg: "please modify POD_NETWORK_CIDR param in {{ hostvars['localhost'].ansible_inventory_sources[0] }} on install command execution node, change it to other private network, for example 10.0.0.0/16"
+  loop: "{{ master_cird_status['results'] }}"
+  when:
+    - inventory_hostname == "localhost"
+    - master_cird_status is defined and STDOUT_KEY in item and item.stdout == not_match
+
+- name: register value k8s pod network cird - worker
+  shell:
+    cmd:
+      /bin/bash -c "if [[ {{ item }} =~ 192.168.*.* ]] && [[ {{ POD_NETWORK_CIDR }} =~ 192.168.*.* ]]; then echo "{{ not_match }}"; else echo "{{ match }}"; fi"
+  register: worker_cird_status
+  loop: "{{ groups['worker'] }}"
+  changed_when: false
+  when:
+    - inventory_hostname == "localhost"
+
+- name: check k8s pod network cird - worker
+  fail:
+    msg: "please modify POD_NETWORK_CIDR param in {{ hostvars['localhost'].ansible_inventory_sources[0] }} on install command execution node, change it to other private network, for example 10.0.0.0/16"
+  loop: "{{ worker_cird_status['results'] }}"
+  when:
+    - inventory_hostname == "localhost"
+    - worker_cird_status is defined and STDOUT_KEY in item and item.stdout == not_match
+
+- name: POD_NETWORK_CIDR and KUBE_VIP
+  fail:
+    msg: "please modify POD_NETWORK_CIDR param in {{ hostvars['localhost'].ansible_inventory_sources[0] }} on install command execution node, change it to other private network, for example 10.0.0.0/16"
+  when:
+    - inventory_hostname == "localhost"
+    - "groups['master'] | length > 1"
+    - KUBE_VIP != "" and KUBE_VIP.startswith("192.168")
+    - POD_NETWORK_CIDR != "" and POD_NETWORK_CIDR.startswith("192.168")
 
 - name: include k8s_status_check
   include_tasks: ./k8s_status_check.yml
