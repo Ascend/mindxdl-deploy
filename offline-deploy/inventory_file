@@ -22,7 +22,7 @@
 #10.10.10.13 ansible_ssh_user="test" ansible_ssh_pass="test1234" ansible_become_password="test1234" set_hostname=master-4 k8s_api_server_ip=10.10.10.13 kube_interface=enp125s0f0
 
 # worker,工作节点信息，可以配置多个工作节点，每个节点信息占据一行，配置参考注释
-# 已在[master]中的节点并且设置了set_hostname，则[worker]中不需要再配置set_hostname，如下面[worker]配置的第二行
+# 已在[master]中的节点并且设置了set_hostname，则[worker]中不需要再配置set_hostname，如下面[worker]配置的第一行
 [worker]
 #10.10.10.13 ansible_ssh_user="test" ansible_ssh_pass="test1234" ansible_become_password="test1234" ansible_ssh_port=9090
 #10.10.10.14 ansible_ssh_user="test" ansible_ssh_pass="test1234" ansible_become_password="test1234" ansible_ssh_port=9090 set_hostname=worker-1
