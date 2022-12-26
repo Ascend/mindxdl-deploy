@@ -129,6 +129,22 @@
     - use_harbor
     - inventory_hostname in groups['master'][0]
 
+# 清理default空间下的hccl信息
+- name: clear default namespace hccl component
+  shell:
+    cmd:
+      kubectl delete clusterrolebinding hccl-controller-rolebinding || true;
+      kubectl delete sa hccl-controller || true;
+      kubectl delete clusterrole pods-hccl-controller-role || true;
+      kubectl delete deploy hccl-controller || true;
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when:
+    - inventory_hostname in groups['master'][0]
+
 # 部署hccl应用
 - name: apply hccl component
   shell:

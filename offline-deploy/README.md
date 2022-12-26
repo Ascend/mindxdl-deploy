@@ -35,6 +35,8 @@
  6. 如果用户需要使用Harbor，请保证各节点（包括执行机）能够登录Harbor。
  7. 如果用户已有K8s集群，则需要在master节点的/root/.kube/config文件中放置能够操作K8s资源的授权内容。
  8. 不支持多操作系统混合部署。
+ 9. 请保证节点的IP与K8s默认集群网段（192.168.0.0/16）没有冲突，如果冲突，请用户修改inventory_file中的`POD_NETWORK_CIRD`参数为其他私有网段，如：10.0.0.0/16。
+ 10. 如果用户已经安装了Kubernetes，其版本不能高于1.21
  5. 安装脚本支持在下表的操作系统运行，脚本支持在如下操作系统上安装MindX DL的集群调度组件、Docker、Kubernetes软件。
 	<table>
     <thead>
@@ -193,7 +195,13 @@
 
 ## 步骤1：准备登录各台服务器的账号
 
-安装部署脚本需要登录各台服务器执行命令，支持使用ssh免密的方式登录，也支持ssh使用账号密码登录的方式。支持账号类型仅为**root账号**和配置了**sudo权限**的**普通账号**。如需使用ssh免密登录的方式，可参考[常用操作5](#常用操作)。
+安装部署脚本需要通过ssh登录各台服务器执行命令，支持的ssh登录方式有如下两种：
+- 使用ssh免密的方式登录，配置方式可参考[常用操作5](#常用操作)。
+- 使用ssh账号、密码登录的方式
+
+支持ssh登录的账号有如下两种：
+- root账号
+- 配置了sudo权限的普通账号
 
 
 ## 步骤2：下载离线软件包
@@ -243,7 +251,9 @@ vi inventory_file
 ```
 bash scripts/install.sh
 ```
-说明：NPU-Exporter可提供HTTPS或HTTP服务，使用安装脚本仅支持HTTP服务，如对安全性需求较高可参考《MindX DL用户指南》中安装NPU-Exporter的章节，手动部署提供HTTPS服务的NPU-Exporter。
+说明：
+- NPU-Exporter可提供HTTPS或HTTP服务，使用安装脚本仅支持HTTP服务，如对安全性需求较高可参考《MindX DL用户指南》中安装NPU-Exporter的章节，手动部署提供HTTPS服务的NPU-Exporter，升级时仅支持使用HTTP部署的方式。
+- 使用安装脚本部署的HCCL-Controller、NodeD、Ascend Device Plugin均使用ServiceAccount授权方式与K8s进行通信，如需使用更加安全的方式与K8s进行通信如通过证书导入工具导入KubeConfig文件，则请参考《MindX DL用户指南》中的“导入证书和KubeConfig”章节，升级时仅支持使用ServiceAccount授权的方式。
 
 # 安装后状态查看
 
@@ -281,7 +291,7 @@ volcano-system   volcano-scheduler-66f75bf89f-94jkx        1/1     Running      
 # 组件升级
 目前**仅支持MindX DL集群调度组件升级**，**不支持**Docker和Kubernetes的升级，并且升级时会按照之前`/root/offline-deploy/inventory_file`中配置的**节点**、**节点类型**、**场景包含的组件**进行升级。
 
-升级会先卸载旧的MindX DL集群调度组件再重新安装，请选择空闲时间进行，避免影响训练或者推理任务。
+升级会先卸载旧的MindX DL集群调度组件再重新安装，请选择空闲时间进行，避免影响训练或者推理任务。同时，升级时请一次性升级安装了MindX DL集群调度组件中的某个组件的所有节点，避免部分组件未升级影响正常功能。
 
 升级MindX DL集群调度组件时需要获取[历史版本](#历史版本)中的resources.tar.gz包，上传到脚本执行节点**非/root目录**(如/root/upgrade)下，执行如下命令先备份旧的resources.tar.gz中的内容。
 ```
@@ -389,7 +399,7 @@ bash scripts/upgrade.sh
  	- 多Master场景下每个Master的kube_interface参数的值必须为本机上已存在的网卡名
  	- 无论是单Master、还是多Master场景，k8s_api_server_ip参数必须配置为本机上已经存在的IP
  	- 节点的存放Docker镜像的磁盘分区需要保留至少30%的空间
- 	- 如果节点的IP网段与默认的K8s集群网段冲突，请用户修改inventory_file中的`POD_NETWORK_CIRD`参数为其他私有网段，如：10.0.0.0/16
+ 	- 如果节点的IP网段与默认的K8s默认集群网段（192.168.0.0/16）冲突，请用户修改inventory_file中的`POD_NETWORK_CIRD`参数为其他私有网段，如：10.0.0.0/16
  	- 训练节点需要配置device IP，可参考[配置训练服务器NPU的device IP](https://www.hiascend.com/document/detail/zh/canncommercial/60RC1/envdeployment/instg/instg_000039.html)
  	- 使用集群调度场景(全栈)部署时，inventory_file配置文件`[master]`下配置的节点个数必须为奇数，如1,3,5...
 
