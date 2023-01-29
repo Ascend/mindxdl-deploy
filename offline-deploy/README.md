@@ -532,7 +532,7 @@ bash scripts/upgrade.sh
 <tbody>
   <tr>
     <td>3.0.0</td>
-    <td><a href=""></a></td>
+    <td><a href="https://ascend-repo-modelzoo.obs.cn-east-2.myhuaweicloud.com/MindXDL/3.0.0/resources.tar.gz">https://ascend-repo-modelzoo.obs.cn-east-2.myhuaweicloud.com/MindXDL/3.0.0/resources.tar.gz</a></td>
     <td>2022.12.30</td>
   </tr>
   <tr>
