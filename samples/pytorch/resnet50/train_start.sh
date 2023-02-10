@@ -1,170 +1,263 @@
 #!/bin/bash
-
-umask 007
-currentDir=$(dirname "$0")
-cd "${currentDir}" || exit
-
-# Set environment variable
-export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
-
-# Set global variables
-device_count=0
-server_count=""
-master_ip=""
-device_list=''
-train_start_time=$(date +%Y_%m%d_%H%M)
-
-# Create log directory
-logDir="/job/output/pytorch/logs"
-mkdir -p ${logDir}
-chmod 750 -R ${logDir}
-
-
-function get_json_value()
-{
-    local json=$1
-    local key=$2
-
-    if [[ -z "$3" ]]; then
-        local num=1
-    else
-        local num=$3
-    fi
-
-    local value
-    value=$(cat "${json}" | awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'"${key}"'\042/){print $(i+1)}}}' |
-                  tr -d '"' | sed -n "${num}"p)
-    echo "${value}"
-}
-
-function check_hccl_status()
-{
-    local retry_times=60
-    local retry_interval=5
-    for (( n=1;n<="$retry_times";n++ ));
-    do
-        local status
-        status=$(get_json_value ${RANK_TABLE_FILE} status)
-        if [[ "$status" != "completed" ]]; then
-            echo "hccl status is not completed, wait 5s and retry." | tee -a ${logDir}/hccl.log
-            sleep $retry_interval
-            continue
-        else
-            echo 0
-            return
-        fi
-    done
-    echo 1
-}
-
-function gen_device_list()
-{
-    local device_per_server=$1
-    # Generate device list for training job
-    for (( i=0;i<"${device_per_server}";i++ ));
-    do
-        device_list="${device_list}${i},"
-    done
-    device_list="${device_list%?}"
-}
-
-function get_server_id()
-{
-    local key="server_id"
-    local srv_id
-    srv_id=$(cat "${RANK_TABLE_FILE}" | awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'${key}'\042/){print $(i+1)}}}' |
-             awk '{print FNR ":" $1}' | grep "${XDL_IP}" | awk -F ":" '{print $1}')
-    if [[ -z "${srv_id}" ]];then
-        echo "Fail to get server id, current job will be stopped." |
-         tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
-        exit 1
-    fi
-    srv_id=$((srv_id-1))
-    echo ${srv_id}
-}
-
-function parse_parameters()
-{
-    device_count=$(cat "${RANK_TABLE_FILE}" | grep -o device_id | wc -l)
-    if [[ "$device_count" -eq 0 ]]; then
-        echo "device count is 0, train job failed." | tee -a ${logDir}/hccl.log
-        exit 1
-    fi
-
-    server_count=$(get_json_value ${RANK_TABLE_FILE} server_count)
-    if [[ "$server_count" == "" ]]; then
-        echo "server count is 0, train job failed." | tee -a ${logDir}/hccl.log
-        exit 1
-    fi
-    export WORLD_SIZE=${server_count}
-
-    master_ip=$(get_json_value ${RANK_TABLE_FILE} server_id)
-    if [[ "$master_ip" == "" ]]; then
-        echo "fail to get ip, train job failed." | tee -a ${logDir}/hccl.log
-        exit 1
-    fi
-    echo "master ip:${master_ip} as master"
-    export MASTER_ADDR=${master_ip}
-}
-
-function train_start()
-{
-    device_count_per_server=$((device_count / server_count))
-    rank_size=${device_count}
-    # single node training job
-    if [[ "$server_count" == "1" ]]; then
-        cluster=False
-        device_id=0
-        rank_index=0
-        log_id=${train_start_time}
-        mkdir -p ${logDir}/"${log_id}"
-        chmod 750 -R ${logDir}
-        gen_device_list "${device_count_per_server}"
-        bash main.sh ${device_id} "${device_list}" "${rank_size}" "${rank_index}" "${log_id}" ${cluster} &
-    # multiple node training job
-    else
-        cluster=True
-        # Generate hccl bridge device file
-        config_path=/usr/serverid/devindex/config
-        if [ ! -d ${config_path} ]; then
-            mkdir -p ${config_path}
-        fi
-        hccl_bridge_device_path=${config_path}/hccl_bridge_device_file
-        if [[ -f ${hccl_bridge_device_path} ]];then
-            rm -f ${hccl_bridge_device_path}
-        fi
-        touch ${hccl_bridge_device_path}
-        chmod 755 ${hccl_bridge_device_path}
-        # Getting cluster node devices' ips for each first device.
-        for (( i=1;i<="${device_count}";i+="${device_count_per_server}" ));
-        do
-            dev_ip=$(get_json_value ${RANK_TABLE_FILE} device_ip ${i})
-            echo "${dev_ip}:0" >> ${hccl_bridge_device_path}
-        done
-        export HCCL_BRIDGE_DEVICE_FILE=${hccl_bridge_device_path}
-
-        device_id=0
-        gen_device_list "${device_count_per_server}"
-        rank_index=$(get_server_id)
-        log_id=${train_start_time}${rank_index}
-        mkdir -p ${logDir}/"${log_id}"
-        chmod 750 -R ${logDir}
-        echo "hccl bridge device file: ${HCCL_BRIDGE_DEVICE_FILE}" |
-         tee -a ${logDir}/"${train_start_time}"/training_"${device_count}".log 2>&1
-        bash main.sh ${device_id} "${device_list}" "${rank_size}" "${rank_index}" "${log_id}" ${cluster} &
-    fi
-
-    wait
-}
-
-function main() {
-  ret=$(check_hccl_status)
-  if [[ "${ret}" == "1" ]]; then
-      echo "wait hccl status timeout, train job failed." | tee -a ${logDir}/hccl.log
-      exit 1
+# default start shell path
+DLS_USER_HOME_DIR="$(
+  cd "$(dirname "$0")" || exit 1
+  if [[ $? -eq 1 ]]; then
+    exit 1
   fi
-  parse_parameters
-  train_start
+  pwd -P
+)"
+cd "$DLS_USER_HOME_DIR" || exit 1
+
+# set pythonpath(especially for tensorflow)
+export PYTHONPATH="$DLS_USER_JOB_DIR:$PYTHONPATH"
+export PYTHONUNBUFFERED=1
+
+# use utils.sh env and functions
+source utils.sh
+echo $@ |grep -q -E '^[ 0-9a-zA-Z,./:_=-]*$'
+ret=$?
+if [ "${ret}" -ne 0 ]; then
+  echo "params error!"
+  exit 1
+fi
+
+# training job input parameters
+code_real_dir=`readlink -f $1`
+if [ -d "${code_real_dir}" ]; then
+    app_url="${code_real_dir}/"
+fi
+log_real_path=`readlink -f $2`
+if [ -f "${log_real_path}" ]; then
+    log_url="${log_real_path}"
+else
+    touch ${log_real_path}
+    log_url="${log_real_path}"
+fi
+shift 2
+
+function show_help() {
+  echo "Usage train_start.sh /job/code/resnet50 /tmp/log/training.log train.py"
 }
 
-main
+function param_check() {
+  if [ -z "${app_url}" ]; then
+    echo "please input code dir"
+    show_help
+    exit 1
+  fi
+
+  if [ -L ${app_url} ]; then
+    echo "code dir is a link!"
+    exit 1
+  fi
+
+  if [ -z "${log_url}" ]; then
+    echo "please input log url"
+    show_help
+    exit 1
+  fi
+
+  if [ -L ${log_url} ]; then
+    echo "log url is a link!"
+    exit 1
+  fi
+
+}
+
+boot_file_path=${app_url}
+params="$@"
+train_param=${params%%need_freeze*}
+if [[ $@ =~ need_freeze ]]; then
+    freeze_cmd=${params##*need_freeze }
+fi
+
+param_check
+chmod 640 ${log_url}
+
+start_time=$(date +%Y-%m-%d-%H:%M:%S)
+logger "Training start at ${start_time}"
+
+# hccl json process
+source rank_table.sh
+
+check_hccl_status
+if [ $? -eq 1 ]; then
+  echo "wait hccl status timeout, train job failed." | tee -a hccl.log
+  chmod 440 ${log_url}
+  exit 1
+fi
+
+sleep 1
+
+# 获取hccl.json文件中的device_count字段
+device_count=$(cat "${RANK_TABLE_FILE}" | grep -o device_id | wc -l)
+if [[ "${device_count}" -eq 0 ]]; then
+  echo "device count is 0, train job failed." | tee -a hccl.log
+  chmod 440 ${log_url}
+  exit 1
+fi
+
+# 获取hccl.json文件中的server_count字段
+server_count=$(get_json_value ${RANK_TABLE_FILE} server_count)
+if [[ "${server_count}" == "" ]]; then
+  echo "server count is 0, train job failed." | tee -a hccl.log
+  chmod 440 ${log_url}
+  exit 1
+fi
+
+# 获取device_list
+device_list=""
+device_list_len=${device_count}
+
+if [[ "${server_count}" -gt 1 ]]; then
+  device_list_len=$((device_count / server_count))
+fi
+for ((i = 1; i <= ${device_list_len}; i++)); do
+  dev_id=$(get_json_value ${RANK_TABLE_FILE} rank_id ${i})
+  if [[ "${i}" -eq 1 ]]; then
+    device_list="${dev_id}"
+  else
+    device_list="${device_list},${dev_id}"
+  fi
+done
+
+echo "device_list: ${device_list}"
+
+boot_file=""
+if [[ "${device_list_len}" == "1" ]]; then
+   boot_file="pytorch_resnet50_apex.py"
+else 
+   boot_file-"DistributedResnet50/main_apex_d76_npu.py"
+fi
+
+function get_env_for_1p_job() {
+  export DEVICE_NUM=1
+  export DEVICE_ID=0
+  export ASCEND_DEVICE_ID=${DEVICE_ID}
+  export RANK_ID=0
+  export RANK_SIZE=1
+  export DEVICE_INDEX=${RANK_ID}
+  export JOB_ID=123456789
+}
+
+function get_env_for_multi_card_job() {
+  export JOB_ID=123456789
+  rankid=$((rank_start + i))
+  export DEVICE_ID=${i}
+  export ASCEND_DEVICE_ID=${DEVICE_ID}
+  export RANK_ID=${rankid}
+  export RANK_SIZE=${device_count}
+  export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
+}
+
+function get_env_for_pytorch_multi_node_job() {
+  export JOB_ID=123456789
+  export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
+  #将Host日志输出到串口,0-关闭/1-开启
+  export ASCEND_SLOG_PRINT_TO_STDOUT=0
+  #设置默认日志级别,0-debug/1-info/2-warning/3-error
+  export ASCEND_GLOBAL_LOG_LEVEL=3
+  #设置Event日志开启标志,0-关闭/1-开启
+  export ASCEND_GLOBAL_EVENT_ENABLE=0
+  #设置是否开启taskque,0-关闭/1-开启
+  export TASK_QUEUE_ENABLE=1
+  export HCCL_WHITELIST_DISABLE=1
+  export HCCL_IF_IP=${XDL_IP}
+  first_server_ip=$(get_server_id_0_ip)
+  export MASTER_ADDR=${first_server_ip}
+  export WORLD_SIZE=${server_count}
+  export RANK=${server_id}
+}
+
+function check_return_code() {
+    if [[ $? -ne 0 ]]; then
+      logger "running job failed." | tee ${log_url}
+      exit 1
+    fi
+}
+
+DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
+# set training env
+set_env
+
+# 单节点训练场景
+if [[ "${server_count}" -eq 1 ]]; then
+  server_id=0
+  if [ "${device_count}" -eq 1 ]; then
+    get_env_for_1p_job
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --rank=${RANK} 2>&1 && tee ${log_url}
+    check_return_code
+    if [[ $@ =~ need_freeze ]]; then
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${log_url}
+      check_return_code
+    fi
+    chmod 440 ${log_url}
+    exit 0
+  fi
+fi
+
+# 多节点场景
+if [[ "${server_count}" -ge 1 ]]; then
+  server_id=$(get_server_id)
+  if [ -z "${framework}" ]; then
+    echo "framework is null."
+    chmod 440 ${log_url}
+    exit 1
+  fi
+
+  logger "server id is: ""${server_id}"
+  if [ "${framework}" == "PyTorch" ]; then
+    get_env_for_pytorch_multi_node_job
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --device-list=${device_list} --multiprocessing-distributed --benchmark=0 --device='npu'  --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
+
+    check_return_code
+    if [[ $@ =~ need_freeze ]]; then
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
+      check_return_code
+    fi
+  elif [ "${framework}" == "Tensorflow" ]; then
+    # CPU核心数
+    core_num=`cat /proc/cpuinfo | grep "processor" | wc -l`
+    device_each_server=$((device_count / server_count))
+    rank_start=$((device_each_server * server_id))
+    for ((i = $((device_each_server - 1)); i >= 0; i--)); do
+      get_env_for_multi_card_job
+      export DEVICE_INDEX=${RANK_ID}
+      logger "start training for rank ${RANK_ID}, device ${DEVICE_ID}"
+      # 设置绑定范围，如:0-11
+      core_range="$((i*${core_num}/8))-$(((i+1)*${core_num}/8-1))"
+      if [ "${i}" -eq 0 ]; then
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} && tee ${log_url}
+          check_return_code
+          if [[ $@ =~ need_freeze ]]; then
+            taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} && tee ${log_url}
+            check_return_code
+          fi
+      else
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> ${log_url} &
+      fi
+    done
+  elif [ "${framework}" == "MindSpore" ]; then
+    device_each_server=$((device_count / server_count))
+    rank_start=$((device_each_server * server_id))
+    for ((i = $((device_each_server - 1)); i >= 0; i--)); do
+      get_env_for_multi_card_job
+      echo "start training for rank ${RANK_ID}, device ${DEVICE_ID}"
+      if [ "${i}" -eq 0 ]; then
+          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} && tee ${log_url}
+          check_return_code
+          if [[ $@ =~ need_freeze ]]; then
+            ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} && tee ${log_url}
+            check_return_code
+          fi
+      else
+          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> ${log_url} &
+      fi
+    done
+  else
+    logger "framework error"
+  fi
+fi
+
+chmod 440 ${log_url}
