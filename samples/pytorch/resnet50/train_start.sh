@@ -111,7 +111,7 @@ device_list=""
 device_list_len=${device_count}
 
 if [[ "${server_count}" -gt 1 ]]; then
-  device_list_len=$((device_count / server_count))
+  device_list_len=8
 fi
 for ((i = 1; i <= ${device_list_len}; i++)); do
   dev_id=$(get_json_value ${RANK_TABLE_FILE} rank_id ${i})
@@ -139,6 +139,8 @@ function get_env_for_1p_job() {
   export RANK_SIZE=1
   export DEVICE_INDEX=${RANK_ID}
   export JOB_ID=123456789
+  export RANK=${server_id}
+  export WORLD_SIZE=${server_count}
 }
 
 function get_env_for_multi_card_job() {
