@@ -4,7 +4,9 @@ time="$(date +"%Y-%m-%d-%HH")"
 
 # 备份旧的resources.tar.gz解压出的内容
 cd /root
+rm -rf offline-deploy.$time 2>/dev/null || true
 mv offline-deploy offline-deploy.$time 2>/dev/null || true
+rm -rf resources.$time 2>/dev/null || true
 mv resources resources.$time 2>/dev/null || true
 
 # 使用新的resources.tar.gz

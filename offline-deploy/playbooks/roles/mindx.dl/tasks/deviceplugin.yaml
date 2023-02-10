@@ -67,40 +67,6 @@
     msg: "can not find npu card, please check"
   when: processing_accelerator.rc != 0
 
-- name: get deviceplugin image name when use harbor
-  shell:
-    cmd:
-      deviceplugin_info="$(kubectl get ds -n kube-system 2>/dev/null | grep 'ascend-device-plugin')";
-      if [ "$deviceplugin_info" = "" ]; then exit 0;fi;
-      for i in $(seq $(echo "$deviceplugin_info" | wc -l)); do echo "$(echo -e "$(eval "$(echo "$deviceplugin_info" | sed -n "${i}p" | awk '{print "kubectl describe ds -n kube-system "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
-  register: image_name
-  when:
-    - do_upgrade is defined
-    - use_harbor
-    - inventory_hostname == groups['worker'][0]
-
-- name: set fact deviceplugin image name
-  set_fact:
-    deviceplugin_image_name: "{{ image_name['stdout_lines'] | unique }}"
-    cacheable: yes
-  when:
-    - do_upgrade is defined
-    - use_harbor
-    - image_name is defined and STDOUT_LINES_KEY in image_name and image_name[STDOUT_LINES_KEY] | length > 0
-    - inventory_hostname == groups['worker'][0]
-
-- name: pull deviceplugin image
-  shell:
-    cmd:
-      docker pull "{{ item }}"
-  loop: "{{ hostvars[groups['worker'][0]].deviceplugin_image_name }}"
-  when:
-    - do_upgrade is defined
-    - use_harbor
-    - "'deviceplugin_image_name' in hostvars[groups['worker'][0]]"
-    - inventory_hostname in groups['worker']
-    - HARBOR_SERVER in item
-
 - name: label ascend310
   shell: kubectl label --overwrite node {{ NODE_NAME }} accelerator=huawei-Ascend310
   delegate_to: "{{ groups['master'][0] }}"
@@ -147,6 +113,123 @@
     - "'Device d801' in processing_accelerator.stdout"
     - "'Atlas' not in product_name.stdout"
 
+- name: register label info
+  shell:
+    cmd:
+      kubectl get nodes --show-labels 2>/dev/null || true
+  register: node_labels
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+
+- name: check label info
+  fail:
+    msg: "cannot get node label info"
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  when:
+    - node_labels is not defined or node_labels.stdout == ""
+
+- name: 310 card delete pod when the volcano scene is different
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
+  shell:
+    cmd:
+      deviceplugin_volcano_num="$(kubectl get pods -n kube-system -o wide 2>/dev/null | grep 'ascend-device-plugin' | awk '{print $1}' | grep "\-310\-" | wc -l)";
+      deviceplugin_no_volcano_num="$(kubectl get pods -n kube-system -o wide 2>/dev/null | grep 'ascend-device-plugin' | awk '{print $1}' | grep -v "\-310\-" | wc -l)";
+      use_volcano_flag={{ "true" if VOLCANO_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(',')) else "false" }};
+      if [ $deviceplugin_no_volcano_num != "0" ]; then if [ $use_volcano_flag = "true" ];
+      then ls {{mindxdl_yaml_dir}}/*310-*yaml | grep -v volcano | head -n 1 | xargs -n 1 kubectl delete -f || true; fi;
+      elif [ $deviceplugin_volcano_num != "0" -a $use_volcano_flag = "false" ];
+      then ls {{mindxdl_yaml_dir}}/*310-*yaml | grep volcano | head -n 1 | xargs -n 1 kubectl delete -f || true;
+      fi;
+  when:
+    - do_upgrade is defined
+    - "'Device d100' in processing_accelerator.stdout"
+
+- name: 310P card delete pod when the volcano scene is different
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
+  shell:
+    cmd:
+      deviceplugin_volcano_num="$(kubectl get pods -n kube-system -o wide 2>/dev/null | grep 'ascend-device-plugin' | awk '{print $1}' | grep "\-310p\-" | wc -l)";
+      deviceplugin_no_volcano_num="$(kubectl get pods -n kube-system -o wide 2>/dev/null | grep 'ascend-device-plugin' | awk '{print $1}' | grep -v "\-310p\-" | wc -l)";
+      use_volcano_flag={{ "true" if VOLCANO_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(',')) else "false" }};
+      if [ $deviceplugin_no_volcano_num != "0" ]; then if [ $use_volcano_flag = "true" ];
+      then ls {{mindxdl_yaml_dir}}/*310P-*yaml | grep -v volcano | | grep -v '1usoc' | head -n 1 | xargs -n 1 kubectl delete -f || true; fi;
+      elif [ $deviceplugin_volcano_num != "0" -a $use_volcano_flag = "false" ];
+      then ls {{mindxdl_yaml_dir}}/*310P-*yaml | grep volcano | grep -v '1usoc' | head -n 1 | xargs -n 1 kubectl delete -f || true;
+      fi;
+  when:
+    - do_upgrade is defined
+    - "'Device d500' in processing_accelerator.stdout"
+
+- name: 910 card delete pod when the volcano scene is different
+  delegate_to: "{{ groups['master'][0] }}"
+  delegate_facts: true
+  shell:
+    cmd:
+      deviceplugin_volcano_num="$(kubectl get pods -n kube-system -o wide 2>/dev/null | grep 'ascend-device-plugin' | awk '{print $1}' | grep "\-910\-" | wc -l)";
+      deviceplugin_no_volcano_num="$(kubectl get pods -n kube-system -o wide 2>/dev/null | grep 'ascend-device-plugin' | awk '{print $1}' | grep -v "\-910\-" | wc -l)";
+      use_volcano_flag={{ "true" if VOLCANO_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(',')) else "false" }};
+      if [ $deviceplugin_no_volcano_num != "0" ]; then if [ $use_volcano_flag = "true" ];
+      then ls {{mindxdl_yaml_dir}}/device-plugin-910*yaml | head -n 1 | xargs -n 1 kubectl delete -f || true; fi;
+      elif [ $deviceplugin_volcano_num != "0" -a $use_volcano_flag = "false" ];
+      then ls {{mindxdl_yaml_dir}}/device-plugin-volcano*yaml | head -n 1 | xargs -n 1 kubectl delete -f || true;
+      fi;
+  when:
+    - do_upgrade is defined
+    - "'Device d801' in processing_accelerator.stdout"
+
+- name: list device-plugin yaml
+  delegate_to: "{{ groups['master'][0] }}"
+  shell: "ls {{mindxdl_yaml_dir}} | grep {{DEVICE_PLUGIN_COMPONENT}} | grep -v 'without'"
+  register: yaml_file
+
+- name: modify device-plugin yaml
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  shell: |
+    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\        - name: {{KUBE_SYSTEM_SECRET_NAME}}' {{ mindxdl_yaml_dir }}/{{ item }};
+  loop: "{{ yaml_file.stdout_lines }}"
+  when:
+    - use_harbor
+
+- name: get deviceplugin image name when use harbor
+  shell:
+    cmd:
+      cd {{mindxdl_yaml_dir}};
+      cat $(find . -name "{{ DEVICE_PLUGIN_COMPONENT }}*.yaml" -type f  | grep -v "1usoc" | head -n 1) | grep 'image:' | awk '{print $3}'
+  register: image_name
+  when:
+    - do_upgrade is defined
+    - use_harbor
+    - inventory_hostname == groups['worker'][0]
+
+- name: set fact deviceplugin image name
+  set_fact:
+    deviceplugin_image_name: "{{ image_name['stdout_lines'] | unique }}"
+    cacheable: yes
+  when:
+    - do_upgrade is defined
+    - use_harbor
+    - image_name is defined and STDOUT_LINES_KEY in image_name and image_name[STDOUT_LINES_KEY] | length > 0
+    - inventory_hostname == groups['worker'][0]
+
+- name: pull deviceplugin image
+  shell:
+    cmd:
+      docker pull "{{ item }}"
+  loop: "{{ hostvars[groups['worker'][0]].deviceplugin_image_name }}"
+  when:
+    - do_upgrade is defined
+    - use_harbor
+    - "'deviceplugin_image_name' in hostvars[groups['worker'][0]]"
+    - inventory_hostname in groups['worker']
+    - HARBOR_SERVER in item
+
 - name: create log directories
   file:
     path: /var/log/mindx-dl
@@ -176,39 +259,6 @@
   ignore_errors: true
   when:
     - use_harbor
-
-- name: list device-plugin yaml
-  delegate_to: "{{ groups['master'][0] }}"
-  shell: "ls {{mindxdl_yaml_dir}} | grep {{DEVICE_PLUGIN_COMPONENT}} | grep -v 'without'"
-  register: yaml_file
-
-- name: modify device-plugin yaml
-  delegate_to: "{{ groups['master'][0] }}"
-  run_once: true
-  shell: |
-    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\        - name: {{KUBE_SYSTEM_SECRET_NAME}}' {{ mindxdl_yaml_dir }}/{{ item }};
-  loop: "{{ yaml_file.stdout_lines }}"
-  when:
-    - use_harbor
-
-- name: register label info
-  shell:
-    cmd:
-      kubectl get nodes --show-labels 2>/dev/null || true
-  register: node_labels
-  delegate_to: "{{ groups['master'][0] }}"
-  run_once: true
-
-- name: check label info
-  fail:
-    msg: "cannot get node label info"
-  delegate_to: "{{ groups['master'][0] }}"
-  run_once: true
-  when:
-    - node_labels is not defined or node_labels.stdout == ""
 
 # 执行device plugin的yaml
 - name: apply device plugin 310P yaml

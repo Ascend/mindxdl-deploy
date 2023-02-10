@@ -60,7 +60,6 @@
     status_code: [200, 201, 409]
     body: '{"project_name": "{{ HARBOR_MINDX_PROJECT }}", "metadata": {"public": "{{ HARBOR_PUBLIC_PROJECT }}"}, "storage_limit": -1}'
     body_format: json
-  loop: "{{ master_dl_images['results'] }}"
   environment:
     http_proxy: ""
     https_proxy: ""
@@ -69,7 +68,7 @@
   no_log: true
   ignore_errors: true
   when:
-    - "'/' in item.stdout "
+    - master_dl_images is defined and 'results' in master_dl_images and master_dl_images['results'] | length > 0
 
 - name: clean mindxdl old manifest
   shell:

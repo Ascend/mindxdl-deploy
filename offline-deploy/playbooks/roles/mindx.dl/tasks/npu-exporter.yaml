@@ -40,12 +40,30 @@
   when:
     - not use_harbor
 
+- name: list npu-exporter yaml
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  shell: "ls {{mindxdl_yaml_dir}} | grep {{NPU_EXPORTER_COMPONENT}} | grep -v '1usoc'"
+  register: yaml_file
+
+- name: modify npu-exporter yaml
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  delegate_facts: true
+  shell: |
+    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\        - name: {{NPU_EXPORTER_SECRET_FOR_HARBOR}}' {{ mindxdl_yaml_dir }}/{{ item }};
+  loop: "{{ yaml_file.stdout_lines }}"
+  when:
+    - use_harbor
+
 - name: get npu-exporter image name when use harbor
   shell:
     cmd:
-      npu_info="$(kubectl get ds -n npu-exporter 2>/dev/null | grep 'npu-exporter')";
-      if [ "$npu_info" = "" ]; then exit 0;fi;
-      for i in $(seq $(echo "$npu_info" | wc -l)); do echo "$(echo -e "$(eval "$(echo "$npu_info" | sed -n "${i}p" | awk '{print "kubectl describe ds -n npu-exporter "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+      cd {{mindxdl_yaml_dir}};
+      cat $(find . -name "{{ NPU_EXPORTER_COMPONENT }}*.yaml" -type f  | grep -v "1usoc" | head -n 1) | grep 'image:' | awk '{print $2}'
   register: image_name
   when:
     - do_upgrade is defined
@@ -113,25 +131,6 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
   ignore_errors: true
-  when:
-    - use_harbor
-
-- name: list npu-exporter yaml
-  delegate_to: "{{ groups['master'][0] }}"
-  run_once: true
-  shell: "ls {{mindxdl_yaml_dir}} | grep {{NPU_EXPORTER_COMPONENT}} | grep -v '1usoc'"
-  register: yaml_file
-
-- name: modify npu-exporter yaml
-  delegate_to: "{{ groups['master'][0] }}"
-  run_once: true
-  delegate_facts: true
-  shell: |
-    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\        - name: {{NPU_EXPORTER_SECRET_FOR_HARBOR}}' {{ mindxdl_yaml_dir }}/{{ item }};
-  loop: "{{ yaml_file.stdout_lines }}"
   when:
     - use_harbor
 

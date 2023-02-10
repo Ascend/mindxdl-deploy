@@ -40,12 +40,29 @@
   when:
     - not use_harbor
 
+- name: list noded yaml
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  shell: "ls {{mindxdl_yaml_dir}} | grep {{NODED_COMPONENT}} | grep -v 'without'"
+  register: yaml_file
+
+- name: modify noded yaml
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  shell: |
+    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\        - name: {{MINDX_DL_SECRET_FOR_HARBOR}}' {{ mindxdl_yaml_dir }}/{{ item }};
+  loop: "{{ yaml_file.stdout_lines }}"
+  when:
+    - use_harbor
+
 - name: get noded image name when use harbor
   shell:
     cmd:
-      noded_info="$(kubectl get ds -n {{ MINDXDL_NAMESPACE }} 2>/dev/null | grep 'noded')";
-      if [ "$noded_info" = "" ]; then exit 0;fi;
-      for i in $(seq $(echo "$noded_info" | wc -l)); do echo "$(echo -e "$(eval "$(echo "$noded_info" | sed -n "${i}p" | awk '{print "kubectl describe ds -n {{ MINDXDL_NAMESPACE }} "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+      cd {{mindxdl_yaml_dir}};
+      cat $(find . -name "{{ NODED_COMPONENT }}*.yaml" -type f  | grep -v "without" | head -n 1) | grep 'image:' | awk '{print $2}'
   register: image_name
   when:
     - do_upgrade is defined
@@ -114,24 +131,6 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
   ignore_errors: true
-  when:
-    - use_harbor
-
-- name: list noded yaml
-  delegate_to: "{{ groups['master'][0] }}"
-  run_once: true
-  shell: "ls {{mindxdl_yaml_dir}} | grep {{NODED_COMPONENT}} | grep -v 'without'"
-  register: yaml_file
-
-- name: modify noded yaml
-  delegate_to: "{{ groups['master'][0] }}"
-  run_once: true
-  shell: |
-    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\        - name: {{MINDX_DL_SECRET_FOR_HARBOR}}' {{ mindxdl_yaml_dir }}/{{ item }};
-  loop: "{{ yaml_file.stdout_lines }}"
   when:
     - use_harbor
 
