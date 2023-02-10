@@ -128,7 +128,7 @@ boot_file=""
 if [[ "${device_list_len}" == "1" ]]; then
    boot_file="pytorch_resnet50_apex.py"
 else 
-   boot_file-"DistributedResnet50/main_apex_d76_npu.py"
+   boot_file="DistributedResnet50/main_apex_d76_npu.py"
 fi
 
 function get_env_for_1p_job() {
