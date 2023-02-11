@@ -34,18 +34,34 @@
     - not use_harbor
 
 # 在控制节点加载hccl镜像
-- name: load volcano images
+- name: load hccl images
   shell: "docker load -i {{mindxdl_images_dir}}/{{ansible_architecture}}/{{item}}"
   loop: "{{hccl_images.stdout_lines}}"
   when:
     - not use_harbor
 
+- name: modify hccl yaml
+  shell: "ls {{mindxdl_yaml_dir}} | grep {{HCCL_COMPONENT}} | grep -v 'without'"
+  register: yaml_file
+  when:
+    - inventory_hostname in groups['master'][0]
+
+- name: modify hccl yaml
+  shell: |
+    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\        - name: {{MINDX_DL_SECRET_FOR_HARBOR}}' {{ mindxdl_yaml_dir }}/{{ item }};
+  loop: "{{ yaml_file.stdout_lines }}"
+  when:
+    - use_harbor
+    - inventory_hostname in groups['master'][0]
+
 - name: get hccl image name when use harbor
   shell:
     cmd:
-      hccl_info="$(kubectl get deploy -n {{ MINDXDL_NAMESPACE }} 2>/dev/null | grep 'hccl-controller')";
-      if [ "$hccl_info" = "" ]; then exit 0;fi;
-      for i in $(seq $(echo "$hccl_info" | wc -l)); do echo "$(echo -e "$(eval "$(echo "$hccl_info" | sed -n "${i}p" | awk '{print "kubectl describe deploy -n {{ MINDXDL_NAMESPACE }} "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+      cd {{mindxdl_yaml_dir}};
+      cat $(find . -name "{{ HCCL_COMPONENT }}*.yaml" -type f  | grep -v "without" | head -n 1) | grep 'image:' | awk '{print $2}'
   register: image_name
   when:
     - do_upgrade is defined
@@ -108,23 +124,6 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
   ignore_errors: true
-  when:
-    - use_harbor
-    - inventory_hostname in groups['master'][0]
-
-- name: modify hccl yaml
-  shell: "ls {{mindxdl_yaml_dir}} | grep {{HCCL_COMPONENT}} | grep -v 'without'"
-  register: yaml_file
-  when:
-    - inventory_hostname in groups['master'][0]
-
-- name: modify hccl yaml
-  shell: |
-    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\        - name: {{MINDX_DL_SECRET_FOR_HARBOR}}' {{ mindxdl_yaml_dir }}/{{ item }};
-  loop: "{{ yaml_file.stdout_lines }}"
   when:
     - use_harbor
     - inventory_hostname in groups['master'][0]

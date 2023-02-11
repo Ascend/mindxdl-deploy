@@ -46,12 +46,28 @@
     - not use_harbor
     - inventory_hostname in groups['master']
 
+- name: list volcano yaml
+  shell: "ls {{mindxdl_yaml_dir}} | grep {{VOLCANO_COMPONENT}} | grep -v 'device-plugin'"
+  register: yaml_file
+  when:
+    - inventory_hostname == groups['master'][0]
+
+- name: modify volcano yaml
+  shell: |
+    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i 's/imagePullPolicy: Never]]/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\        - name: {{ VOLCANO_SECRET_FOR_HARBOR }}' {{ mindxdl_yaml_dir }}/{{ item }}
+  loop: "{{ yaml_file.stdout_lines }}"
+  when:
+    - use_harbor
+    - inventory_hostname == groups['master'][0]
+
 - name: get volcano image name when use harbor
   shell:
     cmd:
-      volcano_info="$(kubectl get deploy -n volcano-system 2>/dev/null | grep "volcano")";
-      if [ "$volcano_info" = "" ]; then exit 0;fi;
-      for i in $(seq $(echo "$volcano_info" | wc -l)); do echo "$(echo -e "$(eval "$(echo "$volcano_info" | sed -n "${i}p" | awk '{print "kubectl describe deploy -n volcano-system "$1}')" 2>/dev/null || true)" | grep 'Image:' | awk '{print $2}')"; done
+      cd {{mindxdl_yaml_dir}};
+      cat $(find . -name "{{ VOLCANO_COMPONENT }}*.yaml" -type f  | grep -v 'device-plugin' | head -n 1) | grep 'image:' | awk '{print $2}'
   register: image_name
   when:
     - do_upgrade is defined
@@ -178,23 +194,6 @@
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
-  when:
-    - use_harbor
-    - inventory_hostname == groups['master'][0]
-
-- name: list volcano yaml
-  shell: "ls {{mindxdl_yaml_dir}} | grep {{VOLCANO_COMPONENT}} | grep -v 'device-plugin'"
-  register: yaml_file
-  when:
-    - inventory_hostname == groups['master'][0]
-
-- name: modify volcano yaml
-  shell: |
-    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i 's/imagePullPolicy: Never]]/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\        - name: {{ VOLCANO_SECRET_FOR_HARBOR }}' {{ mindxdl_yaml_dir }}/{{ item }}
-  loop: "{{ yaml_file.stdout_lines }}"
   when:
     - use_harbor
     - inventory_hostname == groups['master'][0]
