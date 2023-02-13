@@ -58,6 +58,8 @@
     - inventory_hostname in groups['master'][0]
 
 - name: get hccl image name when use harbor
+  delegate_to: localhost
+  run_once: true
   shell:
     cmd:
       cd {{mindxdl_yaml_dir}};
@@ -66,9 +68,10 @@
   when:
     - do_upgrade is defined
     - use_harbor
-    - inventory_hostname == groups['master'][0]
 
 - name: set fact hccl image name
+  delegate_to: localhost
+  run_once: true
   set_fact:
     hccl_image_name: "{{ image_name['stdout_lines'] | unique  }}"
     cacheable: yes
@@ -76,17 +79,16 @@
     - do_upgrade is defined
     - use_harbor
     - image_name is defined and STDOUT_LINES_KEY in image_name and image_name[STDOUT_LINES_KEY] | length > 0
-    - inventory_hostname == groups['master'][0]
 
 - name: pull hccl image
   shell:
     cmd:
       docker pull "{{ item }}"
-  loop: "{{ hostvars[groups['master'][0]].hccl_image_name }}"
+  loop: "{{ hostvars['localhost'].hccl_image_name }}"
   when:
     - do_upgrade is defined
     - use_harbor
-    - "'hccl_image_name' in hostvars[groups['master'][0]]"
+    - "'hccl_image_name' in hostvars['localhost']"
     - HARBOR_SERVER in item
 
 - name: label dl master
