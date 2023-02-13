@@ -60,6 +60,8 @@
     - use_harbor
 
 - name: get npu-exporter image name when use harbor
+  delegate_to: localhost
+  run_once: true
   shell:
     cmd:
       cd {{mindxdl_yaml_dir}};
@@ -68,9 +70,10 @@
   when:
     - do_upgrade is defined
     - use_harbor
-    - inventory_hostname == groups['worker'][0]
 
 - name: set fact npu-exporter image name
+  delegate_to: localhost
+  run_once: true
   set_fact:
     npu_image_name: "{{ image_name['stdout_lines'] | unique  }}"
     cacheable: yes
@@ -78,17 +81,16 @@
     - do_upgrade is defined
     - use_harbor
     - image_name is defined and STDOUT_LINES_KEY in image_name and image_name[STDOUT_LINES_KEY] | length > 0
-    - inventory_hostname == groups['worker'][0]
 
 - name: pull npu-exporter image
   shell:
     cmd:
       docker pull "{{ item }}"
-  loop: "{{ hostvars[groups['worker'][0]].npu_image_name }}"
+  loop: "{{ hostvars['localhost'].npu_image_name }}"
   when:
     - do_upgrade is defined
     - use_harbor
-    - "'npu_image_name' in hostvars[groups['worker'][0]]"
+    - "'npu_image_name' in hostvars['localhost']"
     - HARBOR_SERVER in item
 
 - name: label worker

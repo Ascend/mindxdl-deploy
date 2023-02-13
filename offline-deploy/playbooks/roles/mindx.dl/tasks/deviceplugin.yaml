@@ -155,7 +155,7 @@
       deviceplugin_no_volcano_num="$(kubectl get pods -n kube-system -o wide 2>/dev/null | grep 'ascend-device-plugin' | awk '{print $1}' | grep -v "\-310p\-" | wc -l)";
       use_volcano_flag={{ "true" if VOLCANO_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(',')) else "false" }};
       if [ $deviceplugin_no_volcano_num != "0" ]; then if [ $use_volcano_flag = "true" ];
-      then ls {{mindxdl_yaml_dir}}/*310P-*yaml | grep -v volcano | | grep -v '1usoc' | head -n 1 | xargs -n 1 kubectl delete -f || true; fi;
+      then ls {{mindxdl_yaml_dir}}/*310P-*yaml | grep -v volcano | grep -v '1usoc' | head -n 1 | xargs -n 1 kubectl delete -f || true; fi;
       elif [ $deviceplugin_volcano_num != "0" -a $use_volcano_flag = "false" ];
       then ls {{mindxdl_yaml_dir}}/*310P-*yaml | grep volcano | grep -v '1usoc' | head -n 1 | xargs -n 1 kubectl delete -f || true;
       fi;
@@ -198,6 +198,8 @@
     - use_harbor
 
 - name: get deviceplugin image name when use harbor
+  delegate_to: localhost
+  run_once: true
   shell:
     cmd:
       cd {{mindxdl_yaml_dir}};
@@ -206,9 +208,10 @@
   when:
     - do_upgrade is defined
     - use_harbor
-    - inventory_hostname == groups['worker'][0]
 
 - name: set fact deviceplugin image name
+  delegate_to: localhost
+  run_once: true
   set_fact:
     deviceplugin_image_name: "{{ image_name['stdout_lines'] | unique }}"
     cacheable: yes
@@ -216,18 +219,16 @@
     - do_upgrade is defined
     - use_harbor
     - image_name is defined and STDOUT_LINES_KEY in image_name and image_name[STDOUT_LINES_KEY] | length > 0
-    - inventory_hostname == groups['worker'][0]
 
 - name: pull deviceplugin image
   shell:
     cmd:
       docker pull "{{ item }}"
-  loop: "{{ hostvars[groups['worker'][0]].deviceplugin_image_name }}"
+  loop: "{{ hostvars['localhost'].deviceplugin_image_name }}"
   when:
     - do_upgrade is defined
     - use_harbor
-    - "'deviceplugin_image_name' in hostvars[groups['worker'][0]]"
-    - inventory_hostname in groups['worker']
+    - "'deviceplugin_image_name' in hostvars['localhost']"
     - HARBOR_SERVER in item
 
 - name: create log directories

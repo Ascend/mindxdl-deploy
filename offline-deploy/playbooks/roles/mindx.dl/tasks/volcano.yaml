@@ -64,6 +64,8 @@
     - inventory_hostname == groups['master'][0]
 
 - name: get volcano image name when use harbor
+  delegate_to: localhost
+  run_once: true
   shell:
     cmd:
       cd {{mindxdl_yaml_dir}};
@@ -75,6 +77,8 @@
     - inventory_hostname == groups['master'][0]
 
 - name: set fact volcano image name
+  delegate_to: localhost
+  run_once: true
   set_fact:
     volcano_image_name: "{{ image_name['stdout_lines'] | unique  }}"
     cacheable: yes
@@ -82,17 +86,16 @@
     - do_upgrade is defined
     - use_harbor
     - image_name is defined and STDOUT_LINES_KEY in image_name and image_name[STDOUT_LINES_KEY] | length > 0
-    - inventory_hostname == groups['master'][0]
 
 - name: pull volcano image
   shell:
     cmd:
       docker pull "{{ item }}"
-  loop: "{{ hostvars[groups['master'][0]].volcano_image_name }}"
+  loop: "{{ hostvars['localhost'].volcano_image_name }}"
   when:
     - do_upgrade is defined
     - use_harbor
-    - "'volcano_image_name' in hostvars[groups['master'][0]]"
+    - "'volcano_image_name' in hostvars['localhost']"
     - inventory_hostname in groups['master']
     - HARBOR_SERVER in item
 
