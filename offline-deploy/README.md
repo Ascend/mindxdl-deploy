@@ -49,7 +49,7 @@
     <tbody>
       <tr>
         <td rowspan="2">Ubuntu </td>
-        <td rowspan="2">18.04 20.04</td>
+        <td rowspan="2">18.04、20.04</td>
         <td>aarch64</td>
       </tr>
       <tr>
@@ -57,7 +57,7 @@
       </tr>
       <tr>
         <td rowspan="2">OpenEuler</td>
-        <td rowspan="2">20.03 LTS 22.03 LTS</td>
+        <td rowspan="2">20.03LTS、22.03LTS</td>
         <td>aarch64</td>
       </tr>
       <tr>
