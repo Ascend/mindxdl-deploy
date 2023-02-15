@@ -540,7 +540,7 @@ bash scripts/upgrade.sh
 <tbody>
   <tr>
     <td>5.0.0RC1</td>
-    <td><a href="https://ascend-repo-modelzoo.obs.cn-east-2.myhuaweicloud.com/MindXDL/5.0.0RC1/resources.tar.gz">https://ascend-repo-modelzoo.obs.cn-east-2.myhuaweicloud.com/MindXDL/3.0.0/resources.tar.gz</a></td>
+    <td><a href="https://ascend-repo-modelzoo.obs.cn-east-2.myhuaweicloud.com/MindXDL/5.0.0RC1/resources.tar.gz">https://ascend-repo-modelzoo.obs.cn-east-2.myhuaweicloud.com/MindXDL/5.0.0RC1/resources.tar.gz</a></td>
     <td>2022.12.30</td>
   </tr>
   <tr>
@@ -565,6 +565,10 @@ bash scripts/upgrade.sh
   </tr>
 </thead>
 <tbody>
+  <tr>
+    <td>5.0.0</td>
+    <td><li>支持按场景进行安装部署</li><br /><li>部署脚本支持运行环境为：Ubuntu 18.04、20.04和CentOS 7.6和OpenEuler 20.03 LTS、22.03 LTS</li><br /><li>支持使用Harbor仓</li><br /><li>支持K8s多master部署</li></td>
+  </tr>
   <tr>
     <td>3.0.0</td>
     <td><li>支持按场景进行安装部署</li><br /><li>部署脚本支持运行环境为：Ubuntu 18.04和OpenEuler 20.03 LTS</li><br /><li>支持使用Harbor仓</li><br /><li>支持K8s多master部署</li></td>
