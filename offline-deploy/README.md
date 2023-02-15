@@ -65,7 +65,7 @@
       </tr>
       <tr>
         <td rowspan="2">CentOS</td>
-        <td rowspan="2">7</td>
+        <td rowspan="2">7.6</td>
         <td>aarch64</td>
       </tr>
       <tr>
