@@ -1,0 +1,23 @@
+- name: find npu-smi command
+  shell: command -v npu-smi | wc -l
+  register: npu_smi_exists
+  failed_when: false
+
+- name: find hccn_tool command
+  shell: command -v hccn_tool | wc -l
+  register: hccn_tool_exists
+  failed_when: false
+
+- name: copy hccn to remote hosts
+  copy:
+    src: /root/hccn
+    dest: /root/hccn
+    mode: 0750
+    owner: root
+    group: root
+    force: yes
+  when: ansible_connection != "local"
+
+- name: hccn_tool configures IP address
+  shell: /root/hccn '{{ action }}' -mode '{{ mode }}' -ip '{{ ip }}' -detectip '{{ detectip }}' -netmask '{{ netmask }}'
+  register: hccn_result
