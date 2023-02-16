@@ -567,7 +567,7 @@ bash scripts/upgrade.sh
 <tbody>
   <tr>
     <td>5.0.RC1</td>
-    <td><a href="https://ascend-repo-modelzoo.obs.cn-east-2.myhuaweicloud.com/MindXDL/5.0.RC1/resources.tar.gz">https://ascend-repo-modelzoo.obs.cn-east-2.myhuaweicloud.com/MindXDL/5.0.RC1/resources.tar.gz</a></td>
+    <td><a href="https://ascend-repo-modelzoo.obs.myhuaweicloud.com/MindXDL/5.0.RC1/resources.tar.gz">https://ascend-repo-modelzoo.obs.myhuaweicloud.com/MindXDL/5.0.RC1/resources.tar.gz</a></td>
     <td>2022.12.30</td>
   </tr>
   <tr>

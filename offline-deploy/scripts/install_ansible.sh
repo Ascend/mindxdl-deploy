@@ -28,7 +28,7 @@ function install_ansible()
 
         case ${os_name} in
         ubuntu)
-            dpkg -i --force-all /root/resources/ansible/Ubuntu_18.04/${arch}/*.deb 1>/dev/null
+            dpkg -i --force-all /root/resources/ansible/Ubuntu_${os_version}/${arch}/*.deb 1>/dev/null
             ;;
         openEuler)
             rpm -i --nodeps --force /root/resources/ansible/OpenEuler_${os_version}_LTS/${arch}/*.rpm 1>/dev/null
