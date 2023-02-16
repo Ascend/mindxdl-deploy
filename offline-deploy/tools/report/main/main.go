@@ -15,22 +15,24 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"syscall"
 )
 
 const (
-	masterNode        = "MASTER"
-	inventoryFilePath = "/root/mindxdl-deploy-master/offline-deploy/inventory_file"
-	csvFileName       = "nodesData.csv"
-	csvFileMode       = 0600
-	maxStringLength   = 999
+	masterNode      = "MASTER"
+	workerNode      = "WORKER"
+	csvFileName     = "nodesData.csv"
+	csvFileMode     = 0600
+	maxStringLength = 999
 )
 
 var (
-	matchAllFlag     = "MATCHALL"
-	multiMasterExtra = "kube-vip"
-	sceneOneMustHave = []string{
+	inventoryFilePath string
+	matchAllFlag      = "MATCHALL"
+	multiMasterExtra  = "kube-vip"
+	sceneOneMustHave  = []string{
 		"calico-node",
 		"etcd",
 		"kube-apiserver",
@@ -86,10 +88,10 @@ type nodeSummary struct {
 	Name        string
 	Status      string
 	RunningPods []string
-	FailingPods string
+	FailingPods []string
 	MissingPods []string
 	Npu         string
-	Components  string
+	Components  []string
 	NodeType    string
 }
 
@@ -187,7 +189,8 @@ func addInfo2Node(nodes *v1.NodeList) {
 			}
 			target := totalMasterNodesSummary[ip]
 			tmpComponents := strings.Split(imageNames, " ")
-			target.Components = strings.Join(tmpComponents, "\n")
+			sort.Sort(sort.StringSlice(tmpComponents))
+			target.Components = tmpComponents
 			target.Npu = npus
 		}
 		for ip, summary := range totalWorkerNodesSummary {
@@ -196,7 +199,8 @@ func addInfo2Node(nodes *v1.NodeList) {
 			}
 			target := totalWorkerNodesSummary[ip]
 			tmpComponents := strings.Split(imageNames, " ")
-			target.Components = strings.Join(tmpComponents, "\n")
+			sort.Sort(sort.StringSlice(tmpComponents))
+			target.Components = tmpComponents
 			target.Npu = npus
 		}
 	}
@@ -330,7 +334,7 @@ func updatePodsSummary(pods *v1.PodList, summary map[string]*nodeSummary) {
 				continue
 			}
 			failingPods := summary[key]
-			failingPods.FailingPods += fmt.Sprintf("%v ", podName)
+			failingPods.FailingPods = append(failingPods.FailingPods, podName)
 		}
 	}
 
@@ -404,6 +408,9 @@ func checkMasterNode(inventoryInfo map[string][]string, client kubernetes.Client
 		return false
 	}
 	updatePodsSummary(pods, totalMasterNodesSummary)
+	if len(inventoryInfo["SCENE_NUM"]) < 1 {
+		return false
+	}
 	if inventoryInfo["SCENE_NUM"][0] == "1" {
 		shouldHaveOne := sceneOneMasterShouldHaveAtLeastOne
 		mustHave := sceneOneMustHave
@@ -433,7 +440,7 @@ func checkWorkerNode(inventoryInfo map[string][]string, client kubernetes.Client
 	if inventoryInfo["SCENE_NUM"][0] == "1" {
 		for _, worker := range inventoryInfo["WORKER_NODES_NAME"] {
 			tmpPods := getPodStatus(sceneOneWorker, pods, worker)
-			updateRequiredPodStatus(tmpPods, worker, masterNode)
+			updateRequiredPodStatus(tmpPods, worker, workerNode)
 		}
 	}
 	var tmpSceneWorker []string
@@ -447,7 +454,7 @@ func checkWorkerNode(inventoryInfo map[string][]string, client kubernetes.Client
 	}
 	for _, worker := range inventoryInfo["WORKER_NODES_NAME"] {
 		tmpPods := getPodStatus(tmpSceneWorker, pods, worker)
-		updateRequiredPodStatus(tmpPods, worker, masterNode)
+		updateRequiredPodStatus(tmpPods, worker, workerNode)
 	}
 	return true
 }
@@ -481,7 +488,9 @@ func saveRes2CSV() bool {
 	for key, value := range totalMasterNodesSummary {
 		runningPods := strings.Join(value.RunningPods, "\n")
 		missingPods := strings.Join(value.MissingPods, "\n")
-		row := []string{key, value.Name, value.Status, runningPods, missingPods, value.FailingPods, value.Npu, value.Components, value.NodeType}
+		failingPods := strings.Join(value.FailingPods, "\n")
+		components := strings.Join(value.Components, "\n")
+		row := []string{key, value.Name, value.Status, runningPods, missingPods, failingPods, value.Npu, components, value.NodeType}
 		if err = w.Write(row); err != nil {
 			return false
 		}
@@ -490,7 +499,9 @@ func saveRes2CSV() bool {
 	for key, value := range totalWorkerNodesSummary {
 		runningPods := strings.Join(value.RunningPods, "\n")
 		missingPods := strings.Join(value.MissingPods, "\n")
-		row := []string{key, value.Name, value.Status, runningPods, missingPods, value.FailingPods, value.Npu, value.Components, value.NodeType}
+		failingPods := strings.Join(value.FailingPods, "\n")
+		components := strings.Join(value.Components, "\n")
+		row := []string{key, value.Name, value.Status, runningPods, missingPods, failingPods, value.Npu, components, value.NodeType}
 		if err = w.Write(row); err != nil {
 			return false
 		}
@@ -500,6 +511,8 @@ func saveRes2CSV() bool {
 }
 
 func main() {
+	flag.StringVar(&inventoryFilePath, "inventoryFilePath", "", "inventory file path")
+	flag.Parse()
 	client := initkubeConfig()
 	if client == nil {
 		fmt.Println("init kube config failed.")
@@ -513,5 +526,4 @@ func main() {
 		fmt.Println("save nodes data to csv failed")
 		return
 	}
-	fmt.Printf("check offline-deploy successfully\n")
 }
