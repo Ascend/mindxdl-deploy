@@ -33,6 +33,9 @@ function install_ansible()
         openEuler)
             rpm -i --nodeps --force /root/resources/ansible/OpenEuler_${os_version}_LTS/${arch}/*.rpm 1>/dev/null
             ;;
+        centos)
+            rpm -i --nodeps --force /root/resources/ansible/CentOS_7.6/${arch}/*.rpm 1>/dev/null
+            ;;    
         esac
         echo -e "\n[INFO]\t$(date +"%Y-%m-%d %H:%M:%S")\t successfully installed ansible\n"
     else
