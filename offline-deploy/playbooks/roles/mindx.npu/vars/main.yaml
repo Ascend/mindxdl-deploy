@@ -1,4 +1,5 @@
 resource_dir: "/root/resources"
+npu_basic_pkg_dir: "{{ resource_dir }}/npu/basic"
 npu_zip_pkg_dir: "{{ resource_dir }}/npu/zip"
 npu_run_pkg_dir: "{{ resource_dir }}/npu/run"
 os_dict:
@@ -40,6 +41,7 @@ code_name_dict:
     "LTS-SP1": "LTS"
     "LTS-SP3": "LTS"
     "LTS": "LTS"
+    "": "LTS"
 code_name: ""
 zip_dict:
   infer:

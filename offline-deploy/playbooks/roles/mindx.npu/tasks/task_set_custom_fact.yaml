@@ -103,11 +103,11 @@
   when: install_path is not defined
 
 - name: check if need prepare
-  local_action: stat path=prepare_{{os_and_arch}}.yml
+  local_action: stat path=roles/mindx.npu/tasks/prepare_{{os_and_arch}}.yaml
   register: optional_file
 
 - name: process prepare
-  include_tasks: "prepare_{{os_and_arch}}.yml"
+  include_tasks: "roles/mindx.npu/tasks/prepare_{{os_and_arch}}.yaml"
   when: optional_file.stat.exists
 
 - name: set pip install option
