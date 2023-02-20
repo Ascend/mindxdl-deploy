@@ -379,16 +379,28 @@ bash scripts/upgrade.sh
 	注意事项: 请用户注意ssh密钥和密钥密码在使用和保管过程中的风险,安装完成后请删除控制节点~/.ssh/目录下的id_rsa和id_rsa_pub文件，和其他节点~/.ssh目录下的authorized_keys文件。
  6. hccn_tool网络配置（仅支持训练环境使用，详情可参考[配置device的网卡IP](https://www.hiascend.com/document/detail/zh/canncommercial/60RC1/envdeployment/instg/instg_000039.html)）
  	```
-    cd /root/offline-deploy/tools/main
+    cd ${HOME}/offline-deploy/tools/main
     go build hccn.go
-    # 进入/root/offline-deploy/tools/main，执行go build编译生成二进制文件hccn，将该二进制文件放到/root目录下
+    # 进入${HOME}/offline-deploy/tools/main，执行go build编译生成二进制文件hccn，将该二进制文件放到/root目录下
 
-    cd /root/offline-deploy/scripts
+    cd ${HOME}/offline-deploy/scripts
     vi inventory_file
     # 进入offline-deploy/scripts目录，编辑inventory_file文件（该文件为offline-deploy/scripts下的，与offline-deploy目录下的inventory_file不同），新增待配置设备的ip地址、用户名、action（执行配置<config>或者查看当前设备配置信息<view>）、mode（工作模式<SMP>、<AMP>）、ip（npu卡所配ip）、detectip（对端检测ip）、netmask（子网掩码）。格式参考inventory_file。
 
     bash tools.sh
     # 在offline-deploy/scripts目录下执行bash tools.sh，完成指定设备的npu卡的ip网络配置。
+    ```
+ 7. DL离线安装组件报告查看工具
+    ```
+    cd ${HOME}/offline-deploy/tools/report
+    go build main.go
+    # 进入${HOME}/offline-deploy/tools/main/report，执行go build编译生成二进制文件main
+    
+    ./main -h 
+    # 运行以上命令查看帮助命令
+    ./main -inventoryFilePath ${INVENTORY_FILE_PATH}
+    # 其中INVENTORY_FILE_PATH代表离线安装inventory_file文件路径，默认路径为${HOME}/offline-deploy/inventory_file
+    运行以上命令后，即可在本目录下生成nodeData.csv文件，可以查看相关节点和pod，容器等信息
     ```
 
     注意事项: 
