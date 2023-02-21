@@ -416,13 +416,34 @@ bash scripts/upgrade.sh
     
     4、inventory_file其他配置可直接参考inventory_file中的样例;
 
-7. kubeedge安装说明
+8. kubeedge安装说明
    ```
    cd /root/offline-deploy/scripts
    bash install_kubeedge.sh              # 安装kubeedge
    bash install_kubeedge.sh --uninstall  # 卸载kubeedge
    ```
    注意事项：安装kubeedge须在执行完`bash scripts/install.sh`操作后。
+
+9. 驱动、固件安装说明
+   ```
+   cd /root/offline-deploy/scripts
+   批量安装驱动、固件需编辑当前目录的inventory_file文件，格式如下：
+   [tools]
+   localhost ansible_connection='local'
+   ip_address_1
+   ip_address_2
+
+   [tools:vars]
+   user=HwHiAiUser
+   group=HwHiAiUser
+   ansible_ssh_user='root'
+   
+   bash install_npu.sh                   # 安装驱动、固件
+   bash install_npu.sh --type=run        # 默认使用zip包安装，可指定为用run包安装
+   ``` 
+   注意事项：
+   1. 环境已安装驱动、固件安装时所需依赖。
+   2. 若执行批量配置，需提前配置免密登录。
   
 
 # 常见问题
