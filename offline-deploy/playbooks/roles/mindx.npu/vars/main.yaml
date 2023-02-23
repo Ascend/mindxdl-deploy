@@ -50,7 +50,9 @@ zip_dict:
   a300iduo:
     - "{{ npu_pkg_dir }}/zip/run_from_310p_zip"
   train:
-    "{{ npu_pkg_dir }}/zip/run_from_910_zip"
+    - "{{ npu_pkg_dir }}/zip/run_from_910_zip"
+  a910b:
+    - "{{ npu_pkg_dir }}/zip/run_from_910b_zip"
 run_dict:
   infer:
     - "{{ npu_pkg_dir }}/run/run_from_310"
@@ -60,5 +62,7 @@ run_dict:
     - "{{ npu_pkg_dir }}/run/run_from_310p"
   train:
     - "{{ npu_pkg_dir}}/run/run_from_910"
+  a910b:
+    - "{{ npu_pkg_dir}}/run/run_from_910b_zip"
   
   

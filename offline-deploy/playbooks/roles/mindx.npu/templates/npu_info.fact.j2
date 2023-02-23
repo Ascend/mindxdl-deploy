@@ -35,6 +35,8 @@ CHIPS_DICT = {
                  'aarch64'): 'A300T-9000',
     ChipMetaData('0x19e5', '0xd801', '0x0200', '0x0100',
                  'x86_64'): 'A300T-9000',
+    ChipMetaData('0x19e5', '0xd802', '0x0200', '0x0100',
+                 'aarch64'): 'A900T',
     ChipMetaData('0x19e5', '0xd500', '0x0200', '0x0100',
                  'aarch64'): 'A300i-pro',
     ChipMetaData('0x19e5', '0xd500', '0x0200', '0x0100',
@@ -68,6 +70,8 @@ def get_profile_model(arch, model):
         model = 'A300-3000'
     if model == 'A800-3010':
         model = 'A300-3010'
+    if model in ['A900T']:
+        scene = 'a910b'
 
     return model
 
