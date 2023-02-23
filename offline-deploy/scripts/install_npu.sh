@@ -3,6 +3,7 @@ set -e
 readonly INFER_PRODUCT_LIST="Ascend-hdk-310,Ascend310-hdk"
 readonly A310P_PRODUCT_LIST="Ascend-hdk-310p"
 readonly TRAIN_PRODUCT_LIST="Ascend-hdk-910"
+readonly TRAIN_910B_PRODUCT_LIST="Ascend-hdk-910B,Ascend910B-hdk"
 readonly NPU_ZIP_DIR="/root/resources/npu/zip"
 readonly NPU_RUN_DIR="/root/resources/npu/run"
 CUR_DIR=$(dirname "$(readlink -f $0)")
@@ -38,6 +39,8 @@ function zip_extract() {
             local run_from_zip=${NPU_ZIP_DIR}/run_from_310p_zip
         elif [[ $(check_npu_scene ${INFER_PRODUCT_LIST} $(basename ${zip_file})) == 1 ]]; then
             local run_from_zip=${NPU_ZIP_DIR}/run_from_310_zip
+        elif [[ $(check_npu_scene ${TRAIN_910B_PRODUCT_LIST} $(basename ${zip_file}))  == 1 ]];then
+            local run_from_zip=${NPU_ZIP_DIR}/run_from_910b_zip
         elif [[ $(check_npu_scene ${TRAIN_PRODUCT_LIST} $(basename ${zip_file})) == 1 ]]; then
             local run_from_zip=${NPU_ZIP_DIR}/run_from_910_zip
         else
@@ -57,6 +60,8 @@ function run_extract() {
             local run_pkg_dir=${NPU_RUN_DIR}/run_from_310p
         elif [[ $(check_npu_scene ${INFER_PRODUCT_LIST} $(basename ${run_file})) == 1 ]]; then
             local run_pkg_dir=${NPU_RUN_DIR}/run_from_310
+        elif [[ $(check_npu_scene ${TRAIN_910B_PRODUCT_LIST} $(basename ${run_file}))  == 1 ]];then
+            local run_pkg_dir=${NPU_RUN_DIR}/run_from_910b_zip
         elif [[ $(check_npu_scene ${TRAIN_PRODUCT_LIST} $(basename ${run_file})) == 1 ]]; then
             local run_pkg_dir=${NPU_RUN_DIR}/run_from_910
         else

@@ -28,6 +28,10 @@
     - NPUIssue is defined
     - force_upgrade_npu == 'false'
 
+- name: install deps
+  import_tasks: task_sys_pkg.yaml
+  when: ansible_user_uid == 0
+
 - name: import firmware task
   import_tasks: task_firmware.yaml
   when: ansible_user_uid == 0 and isInstalledTool.stdout != "0"
