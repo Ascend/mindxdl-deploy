@@ -20,6 +20,7 @@ const (
 	startPoint = 2
 	argsMin    = 2
 	cmdIndex   = 1
+	firstNum   = 0
 )
 
 var (
@@ -77,8 +78,9 @@ func confIP(ipStr string, mode string, count int) ([]string, error) {
 	}
 	if mode == "AMP" {
 		if count == fullNum {
+			b31 := b3
 			for i := 0; i < count; i++ {
-				b3 = b3 + 1
+				b3 = b31 + i
 				ipArray[i] = strconv.Itoa(b0) + "." + strconv.Itoa(b1) + "." + strconv.Itoa(b2) + "." + strconv.Itoa(b3)
 			}
 		}
@@ -204,8 +206,15 @@ func config(npuIDArray []string, count int) (err error) {
 			return err
 		}
 		// 配置npu卡对端ip
-		if err := detectIPConf(npuIDArray[i], detectIPArray[i%halfNum]); err != nil {
-			return err
+		if mode == "AMP" {
+			if err := detectIPConf(npuIDArray[i], detectIPArray[firstNum]); err != nil {
+				return err
+			}
+		}
+		if mode == "SMP" {
+			if err := detectIPConf(npuIDArray[i], detectIPArray[i%halfNum]); err != nil {
+				return err
+			}
 		}
 	}
 
