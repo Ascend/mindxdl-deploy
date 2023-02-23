@@ -1,7 +1,6 @@
 resource_dir: "/root/resources"
 npu_basic_pkg_dir: "{{ resource_dir }}/npu/basic"
-npu_zip_pkg_dir: "{{ resource_dir }}/npu/zip"
-npu_run_pkg_dir: "{{ resource_dir }}/npu/run"
+npu_pkg_dir: "{{ resource_dir }}/npu/"
 os_dict:
   centos: "CentOS"
   ubuntu: "Ubuntu"
@@ -45,21 +44,21 @@ code_name_dict:
 code_name: ""
 zip_dict:
   infer:
-    - "{{ npu_zip_pkg_dir }}/run_from_310_zip"
+    - "{{ npu_pkg_dir }}/zip/run_from_310_zip"
   a300i:
-    - "{{ npu_zip_pkg_dir }}/run_from_310p_zip"
+    - "{{ npu_pkg_dir }}/zip/run_from_310p_zip"
   a300iduo:
-    - "{{ npu_zip_pkg_dir }}/run_from_310p_zip"
+    - "{{ npu_pkg_dir }}/zip/run_from_310p_zip"
   train:
-    "{{ npu_zip_pkg_dir}}/run_from_910_zip"
+    "{{ npu_pkg_dir }}/zip/run_from_910_zip"
 run_dict:
   infer:
-    - "{{ npu_run_pkg_dir }}/run_from_310"
+    - "{{ npu_pkg_dir }}/run/run_from_310"
   a300i:
-    - "{{ npu_run_pkg_dir }}/run_from_310p"
+    - "{{ npu_pkg_dir }}/run/run_from_310p"
   a300iduo:
-    - "{{ npu_run_pkg_dir }}/run_from_310p"
+    - "{{ npu_pkg_dir }}/run/run_from_310p"
   train:
-    - "{{ npu_run_pkg_dir}}/run_from_910"
+    - "{{ npu_pkg_dir}}/run/run_from_910"
   
   
