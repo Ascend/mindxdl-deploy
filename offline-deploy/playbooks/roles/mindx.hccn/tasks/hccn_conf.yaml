@@ -10,8 +10,8 @@
 
 - name: copy hccn to remote hosts
   copy:
-    src: "/root/resources/tool/hccn-{{ ansible_architecture }}"
-    dest: "{{ ansible_env.HOME}}/hccn"
+    src: "{{ hccnname }}"
+    dest: "{{ ansible_env.HOME }}/"
     mode: 0700
     force: yes
 

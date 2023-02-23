@@ -1,5 +1,7 @@
 - hosts:
     - worker
+  vars:
+    hccnname: /root/resources/tool/hccn*
   gather_facts: true
   become: yes
   tasks:
