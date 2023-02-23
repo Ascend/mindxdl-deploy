@@ -17,7 +17,7 @@ func main() {
 		}
 		defer zipFile.Close()
 
-		targetDir := "./"
+		targetDir := os.Args[2]
 		extractedFilePath := filepath.Join(
 			targetDir,
 			file.Name,
