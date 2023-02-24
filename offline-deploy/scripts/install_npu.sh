@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-readonly INFER_PRODUCT_LIST="Ascend-hdk-310,Ascend310-hdk"
+readonly INFER_PRODUCT_LIST="A300-3000,A300-3010"
 readonly A310P_PRODUCT_LIST="Ascend-hdk-310p"
 readonly TRAIN_PRODUCT_LIST="Ascend-hdk-910"
 readonly TRAIN_910B_PRODUCT_LIST="Ascend-hdk-910B,Ascend910B-hdk"
