@@ -1,8 +1,8 @@
 #!/bin/bash
 # default start shell path
 
-CURPATH="(dirname "$0")"
-. ${CONFIG_PATH}/cache_util.sh
+CURPATH="$(dirname "$0")"
+. ${CURPATH}/cache_util.sh
 if [ $# != 3 ] && [ $# != 4] && [ $# != 5 ]
 then
     echo "Usage: bash train_start.sh [DATASET_PATH] [CONFIG_PATH] [DEVICE_TARGET] [PRETRAINED_CKPT_PATH](optional)"
@@ -51,13 +51,13 @@ then
 	exit 1
 fi
 
-if [ "x{RUN_EVAL}" == "xTrue" ]
+if [ "x${RUN_EVAL}" == "xTrue" ]
 then
   bootup_cache_server
   CACHE_SESSION_ID=$(generate_cache_session)
 fi
 
-if [ ${MS_ROLE} == "MS_SCHED"]
+if [ ${MS_ROLE} == "MS_SCHED" ]
 then
     rm -rf ./sched
     mkdir ./sched
@@ -78,11 +78,12 @@ then
     fi
 fi
 
-if [ ${MS_ROLE} == "MS_WORKER"]
+if [ ${MS_ROLE} == "MS_WORKER" ]
 then
-    echo "start scheduler"
+    echo "start worker_$i"
     for((i=0;i<${MS_LOCAL_WORKER};i++));
     do
+	   export MS_NODE_ID=${i}
 	   export DEVICE_ID=${i}
        rm -rf ./worker_$i
        mkdir ./worker_$i
@@ -92,12 +93,12 @@ then
        cd ./worker_$i || exit
        if [ $# == 3 ]
        then 
-           python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output'	&> sched.log &
+           python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output'	&> worker_$i.log &
        fi
 	
        if [ $# == 4 ]
        then
-           python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'	&> sched.log &
+           python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'	&> worker_$i.log &
        fi
        cd ..
     done

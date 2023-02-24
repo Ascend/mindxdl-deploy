@@ -133,7 +133,7 @@ if [[ "${device_count}" -eq 0 ]]; then
 fi
 
 # 获取环境变量中的server_count字段
-server_count=·expr ${CM_WORLD_SIZE} / ${CM_LOCAL_WORKER}·
+server_count=·expr ${CM_WORKER_SIZE} / ${CM_LOCAL_WORKER}·
 if [[ "${server_count}" == "" ]]; then
   echo "server count is 0, train job failed." | tee -a hccl.log
   chmod 440 ${log_url}
@@ -170,6 +170,12 @@ fi
 # 多节点场景
 if [[ "${server_count}" -ge 1 ]]; then
   server_id=$(CM_RANK)
+  if [ -z "${framework}" ]; then
+    echo "framework is null."
+    chmod 440 ${log_url}
+    exit 1
+  fi
+
   logger "server id is: ""${server_id}"
   rank_start=`expr ${CM_RANK} \* ${CM_LOCAL_WORKER}`
   for ((i = 0; i < ${CM_LOCAL_WORKER}; i++)); do
