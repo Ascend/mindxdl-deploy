@@ -36,19 +36,19 @@ fi
 if [ ! -d $PATH1 ]
 then
     echo "error: DATASET_PATH=$PATH1 is not a directory"
-	exit 1
+    exit 1
 fi
 
 if [ $# == 4 ] && [ ! -f $PATH2 ]
 then
     echo "error: PRETRAINED_CKPT_PATH=$PATH2 is not a file"
-	exit 1
+    exit 1
 fi
 
 if [ "x${RUN_EVAL}" == "xTrue" ] && [ ! -d $EVAL_DATASET_PATH ]
 then
     echo "error: EVAL_DATASET_PATH=$EVAL_DATASET_PATH is not a directory"
-	exit 1
+    exit 1
 fi
 
 if [ "x${RUN_EVAL}" == "xTrue" ]
