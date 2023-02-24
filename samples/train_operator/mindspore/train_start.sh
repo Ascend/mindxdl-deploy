@@ -71,10 +71,9 @@ then
     then 
         python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output'	&> sched.log &
     fi
-	
     if [ $# == 4 ]
     then
-	    python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'	&> sched.log &
+        python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'	&> sched.log &
     fi
 fi
 
@@ -95,7 +94,6 @@ then
        then 
            python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output'	&> worker_$i.log &
        fi
-	
        if [ $# == 4 ]
        then
            python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'	&> worker_$i.log &
