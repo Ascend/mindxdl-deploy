@@ -151,11 +151,10 @@ DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
 # set training env
 set_env
 
-# 单节点训练场景
-if [[ "${server_count}" -eq 1 ]]; then
+# 单卡训练场景
+if [[ "${device_count}" -eq 1 ]]; then
   server_id=0
   if [ "${device_count}" -eq 1 ]; then
-  
     ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${log_url}
     check_return_code
     if [[ $@ =~ need_freeze ]]; then
@@ -167,8 +166,8 @@ if [[ "${server_count}" -eq 1 ]]; then
   fi
 fi
 
-# 多节点场景
-if [[ "${server_count}" -ge 1 ]]; then
+# 分布式场景
+if [[ "${device_count}" -ge 1 ]]; then
   server_id=$(CM_RANK)
   if [ -z "${framework}" ]; then
     echo "framework is null."
