@@ -184,6 +184,21 @@ func config(npuIDArray []string, count int) (err error) {
 	if strings.Contains(ip, ",") {
 		ipArray = strings.Split(ip, ",")
 		detectIPArray = strings.Split(detectIP, ",")
+		for i := 0; i < count; i++ {
+			// 配置之前查看npu卡之前是否配置ip
+			err := checkNpuIP(npuIDArray[i])
+			if err != nil {
+				return err
+			}
+			// 配置npu卡ip
+			if err := npuIPConf(npuIDArray[i], ipArray[i], netMask); err != nil {
+				return err
+			}
+			// 配置npu卡对端ip
+			if err := detectIPConf(npuIDArray[i], detectIPArray[i]); err != nil {
+				return err
+			}
+		}
 	} else {
 		ipArray, err = confIP(ip, mode, count)
 		if err != nil {
@@ -193,27 +208,26 @@ func config(npuIDArray []string, count int) (err error) {
 		if err != nil {
 			return err
 		}
-	}
-
-	for i := 0; i < count; i++ {
-		// 配置之前查看npu卡之前是否配置ip
-		err := checkNpuIP(npuIDArray[i])
-		if err != nil {
-			return err
-		}
-		// 配置npu卡ip
-		if err := npuIPConf(npuIDArray[i], ipArray[i], netMask); err != nil {
-			return err
-		}
-		// 配置npu卡对端ip
-		if mode == "AMP" {
-			if err := detectIPConf(npuIDArray[i], detectIPArray[firstNum]); err != nil {
+		for i := 0; i < count; i++ {
+			// 配置之前查看npu卡之前是否配置ip
+			err := checkNpuIP(npuIDArray[i])
+			if err != nil {
 				return err
 			}
-		}
-		if mode == "SMP" {
-			if err := detectIPConf(npuIDArray[i], detectIPArray[i%halfNum]); err != nil {
+			// 配置npu卡ip
+			if err := npuIPConf(npuIDArray[i], ipArray[i], netMask); err != nil {
 				return err
+			}
+			// 配置npu卡对端ip
+			if mode == "AMP" {
+				if err := detectIPConf(npuIDArray[i], detectIPArray[firstNum]); err != nil {
+					return err
+				}
+			}
+			if mode == "SMP" {
+				if err := detectIPConf(npuIDArray[i], detectIPArray[i%halfNum]); err != nil {
+					return err
+				}
 			}
 		}
 	}
