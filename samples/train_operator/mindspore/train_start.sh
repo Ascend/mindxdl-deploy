@@ -60,47 +60,47 @@ fi
 if [ ${MS_ROLE} == "MS_SCHED"]
 then
     rm -rf ./sched
-	mkdir ./sched
-	cp ../config/*.yaml ./sched
-	cp ../*.py ./sched
-	cp -r ../src ./sched
-	cd ./sched || exit
+    mkdir ./sched
+    cp ../config/*.yaml ./sched
+    cp ../*.py ./sched
+    cp -r ../src ./sched
+    cd ./sched || exit
     echo "start scheduler"
     export DEVICE_ID=0
-	if [ $# == 3 ]
+    if [ $# == 3 ]
     then 
-         python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output'	&> sched.log &
+        python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output'	&> sched.log &
     fi
 	
-	if [ $# == 4 ]
-	then
-	     python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'	&> sched.log &
+    if [ $# == 4 ]
+    then
+	    python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'	&> sched.log &
     fi
 fi
 
 if [ ${MS_ROLE} == "MS_WORKER"]
 then
     echo "start scheduler"
-    for((i=0;i<${MS_LOCAL_WORKER});i++);
-	do
+    for((i=0;i<${MS_LOCAL_WORKER};i++));
+    do
 	   export DEVICE_ID=${i}
-	   rm -rf ./worker_$i
-	   mkdir ./worker_$i
-	   cp ../config/*.yaml ./worker_$i
-	   cp ../*.py ./worker_$i
-	   cp -r ../src ./worker_$i
-	   cd ./worker_$i || exit
+       rm -rf ./worker_$i
+       mkdir ./worker_$i
+       cp ../config/*.yaml ./worker_$i
+       cp ../*.py ./worker_$i
+       cp -r ../src ./worker_$i
+       cd ./worker_$i || exit
        if [ $# == 3 ]
-	   then 
+       then 
            python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output'	&> sched.log &
        fi
 	
-	   if [ $# == 4 ]
-	   then
-	       python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'	&> sched.log &
+       if [ $# == 4 ]
+       then
+           python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'	&> sched.log &
        fi
        cd ..
-	done
+    done
 fi
 
 
