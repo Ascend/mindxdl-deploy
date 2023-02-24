@@ -125,7 +125,7 @@ start_time=$(date +%Y-%m-%d-%H:%M:%S)
 logger "Training start at ${start_time}"
 
 # 获取环境变量中的device_count字段
-device_count=${CM_WORLD_SIZE}
+device_count=${CM_WORKER_SIZE}
 if [[ "${device_count}" -eq 0 ]]; then
   echo "device count is 0, train job failed." | tee -a hccl.log
   chmod 440 ${log_url}
@@ -133,7 +133,7 @@ if [[ "${device_count}" -eq 0 ]]; then
 fi
 
 # 获取环境变量中的server_count字段
-server_count=·expr ${CM_WORLD_SIZE} / ${CM_LOCAL_WORKER}·
+server_count=`expr ${CM_WORKER_SIZE} / ${CM_LOCAL_WORKER}`
 if [[ "${server_count}" == "" ]]; then
   echo "server count is 0, train job failed." | tee -a hccl.log
   chmod 440 ${log_url}
@@ -150,6 +150,7 @@ function check_return_code() {
 DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
 # set training env
 set_env
+export PYTHONPATH=$PYTHONPATH:$boot_file_path
 
 # 单卡训练场景
 if [[ "${device_count}" -eq 1 ]]; then
@@ -169,12 +170,6 @@ fi
 # 分布式场景
 if [[ "${device_count}" -ge 1 ]]; then
   server_id=$(CM_RANK)
-  if [ -z "${framework}" ]; then
-    echo "framework is null."
-    chmod 440 ${log_url}
-    exit 1
-  fi
-
   logger "server id is: ""${server_id}"
   rank_start=`expr ${CM_RANK} \* ${CM_LOCAL_WORKER}`
   for ((i = 0; i < ${CM_LOCAL_WORKER}; i++)); do

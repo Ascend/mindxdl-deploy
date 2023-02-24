@@ -156,10 +156,6 @@ do
 done
 echo "device_list: ${device_list}"
 
-
-
-
-
 function check_return_code() {
     if [[ $? -ne 0 ]]; then
       logger "running job failed." | tee ${log_url}
