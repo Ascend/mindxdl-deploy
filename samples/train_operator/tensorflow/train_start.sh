@@ -133,7 +133,7 @@ if [[ "${device_count}" -eq 0 ]]; then
 fi
 
 # 获取环境变量中的server_count字段
-server_count=·expr ${CM_WORKER_SIZE} / ${CM_LOCAL_WORKER}·
+server_count=·expr ${CM_WORLD_SIZE} / ${CM_LOCAL_WORKER}·
 if [[ "${server_count}" == "" ]]; then
   echo "server count is 0, train job failed." | tee -a hccl.log
   chmod 440 ${log_url}
