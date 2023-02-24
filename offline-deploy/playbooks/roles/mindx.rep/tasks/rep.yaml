@@ -8,15 +8,22 @@
   register: hccn_tool_exists
   failed_when: false
 
-- name: copy hccn to remote hosts
+- name: copy hccn-aarch64 to remote hosts
   copy:
-    src: "/root/resources/tool/hccn-{{ ansible_architecture }}"
-    dest: "{{ ansible_env.HOME }}/hccn"
+    src: "/root/resources/tool/hccn-aarch64"
+    dest: "{{ ansible_env.HOME }}/"
+    mode: 0700
+    force: yes
+
+- name: copy hccn-x86_64 to remote hosts
+  copy:
+    src: "/root/resources/tool/hccn-x86_64"
+    dest: "{{ ansible_env.HOME }}/"
     mode: 0700
     force: yes
 
 - name: hccn_tool configures IP address
-  shell: "{{ ansible_env.HOME }}/hccn view"
+  shell: "{{ ansible_env.HOME }}/hccn-{{ ansible_architecture }} view"
   register: hccn_result
 
 - name: check driver status
