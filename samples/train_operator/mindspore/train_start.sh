@@ -79,11 +79,11 @@ fi
 
 if [ ${MS_ROLE} == "MS_WORKER" ]
 then
-    echo "start worker_$i"
+    echo "start worker"
     for((i=0;i<${MS_LOCAL_WORKER};i++));
     do
-	   export MS_NODE_ID=${i}
-	   export DEVICE_ID=${i}
+       export MS_NODE_ID=${i}
+       export DEVICE_ID=${i}
        rm -rf ./worker_$i
        mkdir ./worker_$i
        cp ../config/*.yaml ./worker_$i
