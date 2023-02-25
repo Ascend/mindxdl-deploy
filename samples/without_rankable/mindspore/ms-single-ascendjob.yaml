@@ -7,10 +7,8 @@ metadata:
 spec:
   schedulerName: volcano
   runPolicy:
-    cleanPodPolicy: None
-    backoffLimit: 30
     schedulingPolicy:
-      minAvailable: 3 #
+      minAvailable: 1 #
       queue: default
   successPolicy: AllWorkers
   replicaSpecs:
