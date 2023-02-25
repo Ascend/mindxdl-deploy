@@ -14,8 +14,8 @@ spec:
       labels:
          app: infers
          host-arch: huawei-arm
-         fault-scheduling: grace           # Add this Labels, will reschedule pods in the event of chip failures.
-         ring-controller.atlas: ascend-310 # Add this Label, used to check job kind.
+         fault-scheduling: grace            # Add this Labels, will reschedule pods in the event of chip failures.
+         ring-controller.atlas: ascend-310P # Add this Label, used to check job kind.
     spec:
       schedulerName: volcano 
       nodeSelector:
