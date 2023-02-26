@@ -4,16 +4,20 @@ import (
 	"bufio"
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/docker/docker/client"
 	"github.com/go-ini/ini"
 	"io"
+	"io/ioutil"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -82,6 +86,7 @@ var (
 		"kube-proxy",
 	}
 	workerExtraComponent = []string{"npu-exporter", "noded"}
+	path2saveJsonFile    string
 )
 
 type nodeSummary struct {
@@ -93,6 +98,15 @@ type nodeSummary struct {
 	Npu         string
 	Components  []string
 	NodeType    string
+}
+
+type dockerInfo struct {
+	Version       string
+	APIVersion    string
+	Os            string
+	Arch          string
+	KernelVersion string
+	BuildTime     string
 }
 
 var totalMasterNodesSummary = map[string]*nodeSummary{}
@@ -473,7 +487,7 @@ func nodeCheck(configs map[string][]string, client *kubernetes.Clientset) bool {
 	return true
 }
 
-func saveRes2CSV() bool {
+func saveRes2CSV(jsonPath string) bool {
 	file, err := os.OpenFile(csvFileName, syscall.O_RDWR|syscall.O_CREAT|syscall.O_TRUNC, csvFileMode)
 	defer file.Close()
 	if err != nil {
@@ -495,7 +509,11 @@ func saveRes2CSV() bool {
 			return false
 		}
 	}
-
+	data, _ := json.Marshal(totalMasterNodesSummary)
+	err = ioutil.WriteFile(path.Join(jsonPath, "masterNode.json"), data, 0644)
+	if err != nil {
+		return false
+	}
 	for key, value := range totalWorkerNodesSummary {
 		runningPods := strings.Join(value.RunningPods, "\n")
 		missingPods := strings.Join(value.MissingPods, "\n")
@@ -506,13 +524,59 @@ func saveRes2CSV() bool {
 			return false
 		}
 	}
+	data, _ = json.Marshal(totalWorkerNodesSummary)
+	err = ioutil.WriteFile(path.Join(jsonPath, "masterNode.json"), data, 0644)
+	if err != nil {
+		return false
+	}
 	return true
+}
 
+func getDockerInfo() (error, *dockerInfo) {
+	checkDockerInfo := dockerInfo{}
+	ctx := context.Background()
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		fmt.Println("init docker client failed")
+		return err, nil
+	}
+	dockerInfos, err := cli.ServerVersion(ctx)
+	if err != nil {
+		fmt.Println("get server version failed")
+		return err, nil
+	}
+	checkDockerInfo.Version = dockerInfos.Version
+	checkDockerInfo.APIVersion = dockerInfos.APIVersion
+	checkDockerInfo.Arch = dockerInfos.Arch
+	checkDockerInfo.Os = dockerInfos.Os
+	checkDockerInfo.KernelVersion = dockerInfos.KernelVersion
+	checkDockerInfo.BuildTime = dockerInfos.BuildTime
+	return nil, &checkDockerInfo
+}
+
+func writeDockerInfo(jsonPath string) bool {
+	err, dockerInfos := getDockerInfo()
+	if err != nil {
+		fmt.Println("get docker info failed")
+		return false
+	}
+	jsonByte, _ := json.Marshal(dockerInfos)
+	err = ioutil.WriteFile(path.Join(jsonPath, "docker.json"), jsonByte, 0644)
+	if err != nil {
+		fmt.Println("write docker info failed")
+		return false
+	}
+	return true
 }
 
 func main() {
 	flag.StringVar(&inventoryFilePath, "inventoryFilePath", "", "inventory file path")
+	flag.StringVar(&path2saveJsonFile, "path2saveJsonFile", "", "path to save json file")
 	flag.Parse()
+	if !writeDockerInfo(path2saveJsonFile) {
+		fmt.Println("write docker info to json file failed")
+		return
+	}
 	client := initkubeConfig()
 	if client == nil {
 		fmt.Println("init kube config failed.")
@@ -521,8 +585,9 @@ func main() {
 	configs := getSceneNum(inventoryFilePath, *client)
 	if nodeChecker := nodeCheck(configs, client); !nodeChecker {
 		fmt.Println("check node failed")
+		return
 	}
-	if saveChecker := saveRes2CSV(); !saveChecker {
+	if saveChecker := saveRes2CSV(path2saveJsonFile); !saveChecker {
 		fmt.Println("save nodes data to csv failed")
 		return
 	}
