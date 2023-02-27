@@ -422,7 +422,15 @@ bash scripts/upgrade.sh
    ```
    注意事项：安装kubeedge须在执行完`bash scripts/install.sh`操作后。
 
-9. 驱动、固件安装说明
+
+9. MEF安裝提示
+    ```
+    MEF会在第8步安装kubeedge是同时安装，安装前请同步导入resource.tar.gz下的
+    ubuntu_22.04_${arch}.tar和openresty_buster_${arch}.tar镜像，以确保
+    MEF可以成功安装
+    ```
+
+10. 驱动、固件安装说明
    ```
    cd /root/offline-deploy/scripts
    批量安装驱动、固件需编辑当前目录的inventory_file文件，格式如下：
