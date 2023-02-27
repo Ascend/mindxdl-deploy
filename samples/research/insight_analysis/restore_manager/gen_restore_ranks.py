@@ -15,14 +15,13 @@
 from restore_manager.restore_resilience_manager import RestoreManager
 from util.fault_ranks_manager import FaultRanksDLManager
 
-if __name__ == "__main__":
+
+def serialization_restore_ranks():
     res_manager = RestoreManager()
     fault_ranks = FaultRanksDLManager().get_fault_ranks()
-    restore_ranks_str, restore_ranks_json = res_manager.generate_restore_strategy(fault_ranks=fault_ranks)
+    normal_ranks_json, restore_ranks_json = res_manager.generate_restore_strategy(fault_ranks=fault_ranks)
 
-    restore_strategy_output_file_path = "/job/code/restore_ranks.sh"
+    restore_strategy_output_file_path = "/job/code/recovery_info.json"
 
     with open(restore_strategy_output_file_path, "w") as wfile:
-        restore_ranks_list = []
-        wfile.write(f"export RESTORE_RANKS={restore_ranks_str}\n")
-        wfile.write(f"export RESTORE_RANKS_MAP='{str(restore_ranks_json)}'\n")
+        wfile.write(f"normal_rank: {normal_ranks_json}, abnormal_rank: {restore_ranks_json}\n")

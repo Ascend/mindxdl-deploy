@@ -163,14 +163,16 @@ class RestoreManager:
         """
         restore_ranks = set()
         restore_rank_dict = dict()
+        normal_rank_dict = dict()
+        element_already_use = []
 
         for fault_rank in fault_ranks_list:
             elements = device_group_info_list[fault_rank]
             try:
                 if not fault_ranks_list:
-                    elements_for_use = set(elements)
+                    elements_for_use = set(elements) - set(element_already_use)
                 else:
-                    elements_for_use = set(elements) - set(fault_ranks_list)
+                    elements_for_use = set(elements) - set(fault_ranks_list) - set(element_already_use)
             except TypeError:
                 restore_ranks = '-1'
                 restore_rank_map_str = ""
@@ -185,7 +187,10 @@ class RestoreManager:
                              f"restore ranks map is {restore_rank_map_str}.")
                 return restore_ranks, restore_rank_map_str
 
-            restore_rank_dict[fault_rank] = sorted(list(elements_for_use))[0]
+            use_element = sorted(list(elements_for_use))[0]
+            element_already_use.append(use_element)
+            restore_rank_dict[str(fault_rank)] = use_element
+            normal_rank_dict[str(use_element)] = fault_rank
             restore_ranks.add(sorted(list(elements_for_use))[0])
 
         restore_ranks_list = []
@@ -193,12 +198,13 @@ class RestoreManager:
             restore_ranks_list.append(str(idx))
         restore_ranks_str = ",".join(restore_ranks_list)
         restore_ranks_json = str(json.dumps(restore_rank_dict))
+        normal_ranks_json = str(json.dumps(normal_rank_dict))
 
         if not restore_ranks_str or not restore_ranks_json:
             return "-1", ""
 
         srv_log.info(f"Restore ranks is {restore_ranks_str}, restore ranks map is {restore_ranks_json}")
-        return restore_ranks_str, restore_ranks_json
+        return normal_ranks_json, restore_ranks_json,
 
     @staticmethod
     def _get_restore_group_info_list(sub_strategy_input_file_name: str) -> List[int]:
@@ -245,6 +251,68 @@ class RestoreManager:
                 device_group_info_list.append(sorted(res))
         return device_group_info_list
 
+    def process_data_parallel_strategy(self, fault_ranks):
+        """
+        Process strategy for data parallel model
+        fault_ranks: abnormal device ids corresponding rank ids
+        """
+        self._init_communication_group()
+        device_num = self._get_communication_group_size()
+        fault_ranks_check_flag = self._check_input_parameter_fault_ranks(fault_ranks)
+        if not fault_ranks_check_flag:
+            return "-1", ""
+
+        fault_ranks_list = self._generate_fault_ranks_list(fault_ranks)
+        fault_ranks_list_sort = sorted(fault_ranks_list)
+
+        if device_num < len(fault_ranks_list_sort) * 2:
+            return "-1", ""
+
+        restore_ranks = set()
+        restore_rank_dict = dict()
+        normal_rank_dict = dict()
+        element_already_use = []
+
+        for fault_rank in fault_ranks_list_sort:
+            elements = [i for i in range(device_num)]
+            try:
+                if not fault_ranks_list_sort:
+                    elements_for_use = set(elements) - set(element_already_use)
+                else:
+                    elements_for_use = set(elements) - set(fault_ranks_list_sort) - set(element_already_use)
+            except TypeError:
+                restore_ranks = '-1'
+                restore_rank_map_str = ""
+                srv_log.error(f"Get fault ranks for use raise type error, restore ranks is {restore_ranks}, "
+                              f"restore ranks map is {restore_rank_map_str}.")
+                return restore_ranks, restore_rank_map_str
+
+            if not elements_for_use:
+                restore_ranks = '-1'
+                restore_rank_map_str = ""
+                srv_log.info(f"Fault ranks for use is empty, restore ranks is {restore_ranks}, "
+                             f"restore ranks map is {restore_rank_map_str}.")
+                return restore_ranks, restore_rank_map_str
+
+            use_element = sorted(list(elements_for_use))[0]
+            element_already_use.append(use_element)
+            restore_rank_dict[str(fault_rank)] = use_element
+            normal_rank_dict[str(use_element)] = fault_rank
+            restore_ranks.add(sorted(list(elements_for_use))[0])
+
+        restore_ranks_list = []
+        for idx in restore_ranks:
+            restore_ranks_list.append(str(idx))
+        restore_ranks_str = ",".join(restore_ranks_list)
+        restore_ranks_json = str(json.dumps(restore_rank_dict))
+        normal_ranks_json = str(json.dumps(normal_rank_dict))
+
+        if not restore_ranks_str or not restore_ranks_json:
+            return "-1", ""
+
+        srv_log.info(f"Restore ranks is {restore_ranks_str}, restore ranks map is {restore_ranks_json}")
+        return normal_ranks_json, restore_ranks_json
+
     def generate_restore_strategy(self, fault_ranks: Optional[str]) -> [str, str]:
         """
         Generate restore strategy given fault ranks
@@ -255,7 +323,7 @@ class RestoreManager:
 
         strategy_input_file_path = self._check_path(self.__strategy_input_file_path)
         if not strategy_input_file_path:
-            return "-1", ""
+            return self.process_data_parallel_strategy(fault_ranks)
 
         strategy_input_file_path, strategy_name = self._handle_input_strategy_file(strategy_input_file_path)
         if not strategy_input_file_path or not strategy_name:

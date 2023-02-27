@@ -14,9 +14,10 @@
 # ============================================================================
 from apscheduler.executors.pool import ProcessPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
-from pytz import utc
 
 from schedule.job import ProcessJob
+
+from pytz import utc
 
 
 class Scheduler(object):

@@ -18,9 +18,10 @@ import signal
 import subprocess
 from ctypes import *
 import psutil
-import time
 
+import time
 from constants import constants
+from constants.constants import RANK_TABLE_FILE
 from util.fault_ranks_manager import FaultRanksDLManager
 
 
@@ -61,8 +62,6 @@ class ScheduleJob(object):
                             p.info['name']]
 
             target_pid = []
-            # [{'name': 'python3', 'pid': 21947},
-            #  {'name': 'python', 'pid': 23835}]
             for process in process_info:
                 cmd_lines = process.get("cmdline")
                 for cmd_line in cmd_lines:
@@ -157,6 +156,19 @@ class ScheduleJob(object):
         result = p.communicate()[0]
         return result
 
+    def check_node_rank(self, fault_ranks):
+        with open(RANK_TABLE_FILE, "r", encoding='utf-8') as hccl_out:
+            rank_table_content = json.load(hccl_out)
+            server_list = rank_table_content.get("server_list")
+            for server in server_list:
+                if server.get("server_id") == os.getenv("XDL_IP"):
+                    device_list = server.get("device")
+                    for device in device_list:
+                        rank_id = device.get("rank_id")
+                        if rank_id in fault_ranks:
+                            return False
+        return True
+
     def _reset_npu(self):
         fault_ranks = FaultRanksDLManager().get_fault_ranks()
         clear_ecc_devices = self.get_extend_fault_ranks(fault_ranks)
@@ -168,69 +180,115 @@ class ScheduleJob(object):
             return
 
         reset_devices = list(set([int(device) // 4 for device in clear_ecc_devices]))
-        # reset_devices = [3]
-
+        print(f"reset devices {reset_devices}")
         for device_os_id in reset_devices:
             if device_os_id == 1:
                 device_id = 7
             else:
                 device_id = 3
-
+            print(f"device id for reset {device_id}")
             time.sleep(20)
             self.reset_status = "running"
-            self.dsmi_handle.dsmi_hot_reset_soc_v2(device_id, 0)
-
+            res_reset = self.dsmi_handle.dsmi_hot_reset_soc_v2(device_id, 0)
+            print(f"reset npu result {res_reset}, type is {type(res_reset)}", flush=True)
             self.dsmi_handle.dsmi_get_device_health(device_id, self.p_health)
+            print(f"health status of card {self.p_health.contents.value}", flush=True)
             if self.p_health.contents.value == 0:
                 self.reset_npu = True
                 self._add_success_flag_in_file(True)
                 self.reset_status = "completed"
+                print("it is time for stop process")
                 self._send_stop_process_signal()
                 self._send_start_process_job()
 
     def _fault_rank_hot_reset(self):
-        self._kill_fault_ranks_process()
-        self._reset_npu()
         fault_ranks = FaultRanksDLManager().get_fault_ranks()
-        if fault_ranks and len(fault_ranks) >= 1:
-            self.dsmi_handle.dsmi_get_device_health(7, self.p_health)
-            if self.p_health.contents.value == 0:
-                time.sleep(40)
-                self._send_stop_process_signal()
-                self._send_start_process_job()
+        fault_ranks_list = fault_ranks.split(",")
+        if len(fault_ranks_list) != 0 and len(fault_ranks_list) % 8 == 0:
+           self._node_fault_rank_process(fault_ranks)
+        else:
+            self._kill_fault_ranks_process()
+            print("look at the health of card", flush=True)
+            self._reset_npu()
+            fault_ranks = FaultRanksDLManager().get_fault_ranks()
+
+            # generate fault ranks strategy
+            print(f"fault ranks to check {fault_ranks}")
+            if fault_ranks and len(fault_ranks) >= 1:
+                if len(fault_ranks) % 8 != 0:
+                    self.dsmi_handle.dsmi_get_device_health(7, self.p_health)
+                    print(f"health status of card {self.p_health.contents.value}", flush=True)
+                    if self.p_health.contents.value == 0:
+                        print("it is time for stop process")
+                        time.sleep(40)
+                        self._send_stop_process_signal()
+                        self._send_start_process_job()
+
+                if len(fault_ranks) % 8 == 0:
+                    if self.check_node_rank(fault_ranks):
+                        time.sleep(40)
+                        self._send_stop_process_signal()
 
     def _send_stop_process_signal(self):
+        print("run into send stop signal")
         fault_ranks = FaultRanksDLManager().get_fault_ranks()
         if fault_ranks and len(fault_ranks) >= 1 and self.stop_process_flag == False:
+            print("run into stop process")
             # stop all process
             process_info = [p.info for p in psutil.process_iter(attrs=['pid', 'name', 'cmdline']) if 'python' in
                             p.info['name']]
 
             target_pid = []
-            # [{'name': 'python3', 'pid': 21947},
-            #  {'name': 'python', 'pid': 23835}]
             for process in process_info:
                 cmd_lines = process.get("cmdline")
                 for cmd_line in cmd_lines:
                     if "resnet" in cmd_line and process.get("pid") not in target_pid:
                         target_pid.append(process.get("pid"))
 
+            print(f"target pid {list(set(target_pid))}")
             for pid in list(set(target_pid)):
                 try:
                     os.kill(pid, signal.SIGUSR2)
                 except ProcessLookupError:
                     pass
+
             self.stop_process_flag = True
 
     def _send_start_process_job(self):
+        print("run into start process")
         restore_ranks = FaultRanksDLManager().get_restore_ranks()
+        print(f"restore ranks {restore_ranks}")
 
         if restore_ranks and len(restore_ranks) >= 1 and self.old_restore_ranks != restore_ranks and \
                 self.restart_process_flag == False:
             self.old_restore_ranks = restore_ranks
             command = "cd /job/code/scripts; bash train_start_hot.sh"
-            self.apl_tool_dos_get_result(command)
+            result = self.apl_tool_dos_get_result(command)
+
+            print(f"execute {command} result: {result}", flush=True)
             self.restart_process_flag = True
+
+    def _node_fault_rank_process(self, fault_ranks):
+        # get fault ranks correspoding server id
+        if self.check_node_rank(fault_ranks):
+            process_info = [p.info for p in psutil.process_iter(attrs=['pid', 'name', 'cmdline']) if 'python' in
+                            p.info['name']]
+
+            target_pid = []
+            for process in process_info:
+                cmd_lines = process.get("cmdline")
+                for cmd_line in cmd_lines:
+                    if "resnet" in cmd_line and process.get("pid") not in target_pid:
+                        target_pid.append(process.get("pid"))
+
+            print(f"target pid {list(set(target_pid))}")
+            for pid in list(set(target_pid)):
+                try:
+                    os.kill(pid, signal.SIGUSR2)
+                except ProcessLookupError:
+                    pass
+
+            self.stop_process_flag = True
 
     def create_process_job(self):
         self._sched.add_job(self._fault_rank_hot_reset, "interval",
