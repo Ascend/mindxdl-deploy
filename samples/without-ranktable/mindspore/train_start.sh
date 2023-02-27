@@ -70,11 +70,11 @@ then
     export DEVICE_ID=0
     if [ $# == 3 ]
     then 
-        python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output' 2>&1 && tee ./sched.log 
+        python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output' 2>&1 && tee ./sched.log &
     fi
     if [ $# == 4 ]
     then
-        python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output' 2>&1 && tee sched.log 
+        python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output' 2>&1 && tee sched.log 
     fi
 fi
 
@@ -83,7 +83,7 @@ then
     echo "start worker"
     start_index=`expr ${MS_NODE_RANK} \* ${MS_LOCAL_WORKER}`
     end_index=`expr ${start_index} + ${MS_LOCAL_WORKER}`
-    for((i=${start_index};i<${end_index};i++));
+    for((i=((${end_index}-1));i>=${start_index};i--));
     do
        rm -rf ./worker_$i
        mkdir ./worker_$i
@@ -95,17 +95,17 @@ then
        if [ $# == 3 ]
        then 
          if [[ "${i}" -eq "${start_index}" ]]; then
-           python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output' 2>&1 && tee worker_$i.log 
+           python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output' 2>&1 && tee worker_$i.log  
          else 
-           python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output' &> worker_$i.log &		  
+           python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output' &> worker_$i.log &		  
          fi
        fi
        if [ $# == 4 ]
        then
          if [[ "${i}" -eq "${start_index}" ]]; then
-           python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output' 2>&1 && tee worker_$i.log 
+           python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output' 2>&1 && tee worker_$i.log 
          else
-           python train.py --run_distribute=True --device_num=8 --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'  &> worker_$i.log & 
+           python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'  &> worker_$i.log & 
          fi
        fi
        cd ..
