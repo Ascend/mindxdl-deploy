@@ -142,20 +142,6 @@ if [[ "${server_count}" == "" ]]; then
   exit 1
 fi
 
-# 获取device_list
-device_list=""
-start_index=`expr ${RANK} \* 8`
-end_indexl=`expr ${start_index} + 8`
-for ((i = 0; i < ${LOCAL_WORLD_SIZE}; i++))
-do
-  if [[ "${i}" -eq 0 ]]; then
-    device_list="${i}"
-  else
-    device_list="${device_list},${i}"
-  fi
-done
-echo "device_list: ${device_list}"
-
 function check_return_code() {
     if [[ $? -ne 0 ]]; then
       logger "running job failed." | tee ${log_url}
@@ -187,7 +173,7 @@ fi
 if [[ "${device_count}" -ge 1 ]]; then
   server_id=${RANK}
   logger "server id is: ""${server_id}"
-  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --multiprocessing-distributed --device-list=${device_list} --benchmark=0 --device='npu' --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} && tee ${log_url}
+  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --multiprocessing-distributed --device-list=${LOCAL_RANK} --benchmark=0 --device='npu' --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} && tee ${log_url}
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
     ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
