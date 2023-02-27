@@ -180,7 +180,7 @@ if [[ "${device_count}" -ge 1 ]]; then
     else
       ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --model_dir=./models/device_${DEVICE_INDEX}/ --pretrained_model_checkpoint_path=./models/device${i}/  &> ${log_url}/device_${DEVICE_INDEX}/ &
     fi
-	check_return_code
+    check_return_code
     if [[ $@ =~ need_freeze ]]; then
       ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --model_dir=./models/device_${DEVICE_INDEX}/  --pretrained_model_checkpoint_path=./models/device${i}/ && tee ${log_url}/device_${DEVICE_INDEX}/
       check_return_code
