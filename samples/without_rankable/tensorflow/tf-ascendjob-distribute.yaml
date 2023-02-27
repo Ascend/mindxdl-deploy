@@ -1,18 +1,18 @@
 apiVersion: mindxdl.gitee.com/v1
 kind: AscendJob
 metadata:
-  name: default-test-mindspore
+  name: default-test-tensorflow
   labels:
-    framework: mindspore
+    framework: tensorflow
 spec:
-  schedulerName: volcano
+  schedulerName: volcano    # work when enableGangScheduling is true
   runPolicy:
-    schedulingPolicy:
-      minAvailable: 3 #
+    schedulingPolicy:       # work when enableGangScheduling is true
+      minAvailable: 3
       queue: default
   successPolicy: AllWorkers
   replicaSpecs:
-    Scheduler:
+    Chief:
       replicas: 1
       restartPolicy: Never
       template:
@@ -21,15 +21,20 @@ spec:
             host-arch: huawei-arm
           containers:
           - name: ascend # do not modify
-            image: ubuntu:18.04
+            image: tensorflow-test:latest
             imagePullPolicy: IfNotPresent
             command:
               - /bin/bash
               - -c
-              - while true; do sleep 30; done
+              - train_start.sh /job/code/ResNet50_for_Tensorflow_1.15_code/official/r1/resnet /job/code/ResNet50_for_Tensorflow_1.15_code/official/r1/resnet/output/logs
             env:
               - name: GLOG_V
                 value: "1"
+            resources:
+              limits:
+                huawei.com/Ascend910: 8
+              requests:
+                huawei.com/Ascend910: 8
             volumeMounts:
             - name: code
               mountPath: /job/code
@@ -41,8 +46,6 @@ spec:
               mountPath: /usr/local/Ascend/driver
             - name: ascend-add-ons
               mountPath: /usr/local/Ascend/add-ons
-            - name: dshm
-              mountPath: /dev/shm
             - name: localtime
               mountPath: /etc/localtime
           volumes:
@@ -64,9 +67,6 @@ spec:
           - name: ascend-add-ons
             hostPath:
               path: /usr/local/Ascend/add-ons
-          - name: dshm
-            emptyDir:
-              medium: Memory
           - name: localtime
             hostPath:
               path: /etc/localtime
@@ -79,12 +79,12 @@ spec:
             host-arch: huawei-arm
           containers:
           - name: ascend # do not modify
-            image: ubuntu:18.04
+            image: tensorflow-test:latest
             imagePullPolicy: IfNotPresent
             command:
               - /bin/bash
               - -c
-              - while true; do sleep 30; done
+              - train_start.sh /job/code/ResNet50_for_Tensorflow_1.15_code/official/r1/resnet /job/code/ResNet50_for_Tensorflow_1.15_code/official/r1/resnet/output/logs
             env:
               - name: GLOG_V
                 value: 1
@@ -104,8 +104,6 @@ spec:
               mountPath: /usr/local/Ascend/driver
             - name: ascend-add-ons
               mountPath: /usr/local/Ascend/add-ons
-            - name: dshm
-              mountPath: /dev/shm
             - name: localtime
               mountPath: /etc/localtime
           volumes:
@@ -127,9 +125,6 @@ spec:
           - name: ascend-add-ons
             hostPath:
               path: /usr/local/Ascend/add-ons
-          - name: dshm
-            emptyDir:
-              medium: Memory
           - name: localtime
             hostPath:
               path: /etc/localtime

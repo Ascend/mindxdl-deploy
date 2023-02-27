@@ -5,10 +5,10 @@ metadata:
   labels:
     framework: mindspore
 spec:
-  schedulerName: volcano
+  schedulerName: volcano    # work when enableGangScheduling is true
   runPolicy:
-    schedulingPolicy:
-      minAvailable: 1 #
+    schedulingPolicy:       # work when enableGangScheduling is true
+      minAvailable: 1
       queue: default
   successPolicy: AllWorkers
   replicaSpecs:
@@ -21,12 +21,12 @@ spec:
             host-arch: huawei-arm
           containers:
           - name: ascend # do not modify
-            image: ubuntu:18.04
+            image: mindspore-test:latest
             imagePullPolicy: IfNotPresent
             command:
               - /bin/bash
               - -c
-              - while true; do sleep 30; done
+              - train_start.sh /job/data/resnet50/imagenet/ /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
             env:
               - name: GLOG_V
                 value: 1

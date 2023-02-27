@@ -1,18 +1,18 @@
 apiVersion: mindxdl.gitee.com/v1
 kind: AscendJob
 metadata:
-  name: default-test-pytorch
+  name: default-test-mindspore
   labels:
-    framework: pytorch
+    framework: mindspore
 spec:
-  schedulerName: volcano
+  schedulerName: volcano    # work when enableGangScheduling is true
   runPolicy:
     schedulingPolicy:
-      minAvailable: 3
+      minAvailable: 3       # work when enableGangScheduling is true
       queue: default
   successPolicy: AllWorkers
   replicaSpecs:
-    Master:
+    Scheduler:
       replicas: 1
       restartPolicy: Never
       template:
@@ -21,20 +21,15 @@ spec:
             host-arch: huawei-arm
           containers:
           - name: ascend # do not modify
-            image: ubuntu:18.04
+            image: mindspore-test:latest
             imagePullPolicy: IfNotPresent
             command:
               - /bin/bash
               - -c
-              - while true; do sleep 30; done
+              - train_start.sh /job/data/resnet50/imagenet/ /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
             env:
               - name: GLOG_V
                 value: "1"
-            resources:
-              limits:
-                huawei.com/Ascend910: 8
-              requests:
-                huawei.com/Ascend910: 8
             volumeMounts:
             - name: code
               mountPath: /job/code
@@ -84,12 +79,12 @@ spec:
             host-arch: huawei-arm
           containers:
           - name: ascend # do not modify
-            image: ubuntu:18.04
+            image: mindspore-test:latest
             imagePullPolicy: IfNotPresent
             command:
               - /bin/bash
               - -c
-              - while true; do sleep 30; done
+              - train_start.sh /job/data/resnet50/imagenet/ /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
             env:
               - name: GLOG_V
                 value: 1
