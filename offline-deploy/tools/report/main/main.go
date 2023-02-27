@@ -587,7 +587,7 @@ func main() {
 		fmt.Println("check node failed")
 		return
 	}
-	if saveChecker := saveRes2CSV(); !saveChecker {
+	if saveChecker := saveRes2CSV(path2saveJsonFile); !saveChecker {
 		fmt.Println("save nodes data to csv failed")
 		return
 	}
