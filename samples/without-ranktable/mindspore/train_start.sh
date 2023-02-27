@@ -63,6 +63,7 @@ then
     mkdir ./sched
     cp ../config/*.yaml ./sched
     cp ../*.py ./sched
+	cp ./*.sh ./sched
     cp -r ../src ./sched
     cd ./sched || exit
     echo "start scheduler"
@@ -80,14 +81,15 @@ fi
 if [ ${MS_ROLE} == "MS_WORKER" ]
 then
     echo "start worker"
-	start_index=`expr ${MS_NODE_RANK} \* ${MS_LOCAL_WORKER}`
-	end_index=`expr ${start_index} + ${MS_LOCAL_WORKER}`
+    start_index=`expr ${MS_NODE_RANK} \* ${MS_LOCAL_WORKER}`
+    end_index=`expr ${start_index} + ${MS_LOCAL_WORKER}`
     for((i=${start_index};i<${end_index};i++));
     do
        rm -rf ./worker_$i
        mkdir ./worker_$i
        cp ../config/*.yaml ./worker_$i
        cp ../*.py ./worker_$i
+	   cp ./*.sh ./worker_$i
        cp -r ../src ./worker_$i
        cd ./worker_$i || exit
        if [ $# == 3 ]
