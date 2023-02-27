@@ -20,6 +20,7 @@ const (
 	startPoint = 2
 	argsMin    = 2
 	cmdIndex   = 1
+	firstNum   = 0
 )
 
 var (
@@ -77,8 +78,9 @@ func confIP(ipStr string, mode string, count int) ([]string, error) {
 	}
 	if mode == "AMP" {
 		if count == fullNum {
+			b31 := b3
 			for i := 0; i < count; i++ {
-				b3 = b3 + 1
+				b3 = b31 + i
 				ipArray[i] = strconv.Itoa(b0) + "." + strconv.Itoa(b1) + "." + strconv.Itoa(b2) + "." + strconv.Itoa(b3)
 			}
 		}
@@ -179,9 +181,24 @@ func config(npuIDArray []string, count int) (err error) {
 	}
 	var ipArray []string
 	var detectIPArray []string
-	if strings.Contains(ip, ",") {
+	if strings.Contains(ip, ",") || count == 1 {
 		ipArray = strings.Split(ip, ",")
 		detectIPArray = strings.Split(detectIP, ",")
+		for i := 0; i < count; i++ {
+			// 配置之前查看npu卡之前是否配置ip
+			err := checkNpuIP(npuIDArray[i])
+			if err != nil {
+				return err
+			}
+			// 配置npu卡ip
+			if err := npuIPConf(npuIDArray[i], ipArray[i], netMask); err != nil {
+				return err
+			}
+			// 配置npu卡对端ip
+			if err := detectIPConf(npuIDArray[i], detectIPArray[i]); err != nil {
+				return err
+			}
+		}
 	} else {
 		ipArray, err = confIP(ip, mode, count)
 		if err != nil {
@@ -191,21 +208,27 @@ func config(npuIDArray []string, count int) (err error) {
 		if err != nil {
 			return err
 		}
-	}
-
-	for i := 0; i < count; i++ {
-		// 配置之前查看npu卡之前是否配置ip
-		err := checkNpuIP(npuIDArray[i])
-		if err != nil {
-			return err
-		}
-		// 配置npu卡ip
-		if err := npuIPConf(npuIDArray[i], ipArray[i], netMask); err != nil {
-			return err
-		}
-		// 配置npu卡对端ip
-		if err := detectIPConf(npuIDArray[i], detectIPArray[i%halfNum]); err != nil {
-			return err
+		for i := 0; i < count; i++ {
+			// 配置之前查看npu卡之前是否配置ip
+			err := checkNpuIP(npuIDArray[i])
+			if err != nil {
+				return err
+			}
+			// 配置npu卡ip
+			if err := npuIPConf(npuIDArray[i], ipArray[i], netMask); err != nil {
+				return err
+			}
+			// 配置npu卡对端ip
+			if mode == "AMP" {
+				if err := detectIPConf(npuIDArray[i], detectIPArray[firstNum]); err != nil {
+					return err
+				}
+			}
+			if mode == "SMP" {
+				if err := detectIPConf(npuIDArray[i], detectIPArray[i%halfNum]); err != nil {
+					return err
+				}
+			}
 		}
 	}
 

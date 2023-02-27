@@ -379,17 +379,27 @@ bash scripts/upgrade.sh
 	注意事项: 请用户注意ssh密钥和密钥密码在使用和保管过程中的风险,安装完成后请删除控制节点~/.ssh/目录下的id_rsa和id_rsa_pub文件，和其他节点~/.ssh目录下的authorized_keys文件。
  6. hccn_tool网络配置（仅支持训练环境使用，详情可参考[配置device的网卡IP](https://www.hiascend.com/document/detail/zh/canncommercial/60RC1/envdeployment/instg/instg_000039.html)）
  	```
-    cd ${HOME}/offline-deploy/tools/main
-    go build hccn.go
-    # 进入${HOME}/offline-deploy/tools/main，执行go build编译生成二进制文件hccn，将该二进制文件放到/root目录下
+    下载文档中历史版本中最新的resources包，解压后将resources目录放置于root下
 
     cd ${HOME}/offline-deploy/scripts
     vi inventory_file
     # 进入offline-deploy/scripts目录，编辑inventory_file文件（该文件为offline-deploy/scripts下的，与offline-deploy目录下的inventory_file不同），新增待配置设备的ip地址、用户名、action（执行配置<config>或者查看当前设备配置信息<view>）、mode（工作模式<SMP>、<AMP>）、ip（npu卡所配ip）、detectip（对端检测ip）、netmask（子网掩码）。格式参考inventory_file。
 
-    bash tools.sh
-    # 在offline-deploy/scripts目录下执行bash tools.sh，完成指定设备的npu卡的ip网络配置。
+    bash hccn_set.sh
+    # 在offline-deploy/scripts目录下执行bash hccn_set.sh，完成指定设备的npu卡的ip网络配置。
     ```
+
+    注意事项: 
+
+    1、若未配置相关参数，无法完成ip配置；
+
+    2、若执行批量配置时，需提前配置免密登录；
+
+    3、inventory_file中ip、detectip配置格式有两种：
+
+        <1>输入一个ip，工具自行生成后续ip，例如ip=10.0.0.1，工具会内部自行生成八个ip，10.0.0.1、10.0.1.1、10.0.2.1、10.0.3.1、10.0.0.2、10.0.1.2、10.0.2.2、10.0.3.2（该方法仅限于八卡环境）；
+        <2>按照hccn配置官方文档要求，例如八卡环境上，ip=10.0.0.1,10.0.1.1,10.0.2.1,10.0.3.1,10.0.0.2,10.0.1.2,10.0.2.2,10.0.3.2（逗号必须为英文）。detectip类似输入。
+    4、inventory_file其他配置可直接参考inventory_file中的样例;
  7. DL离线安装组件报告查看工具
     ```
     cd ${HOME}/offline-deploy/tools/report
@@ -403,26 +413,35 @@ bash scripts/upgrade.sh
     运行以上命令后，即可在本目录下生成nodeData.csv文件，可以查看相关节点和pod，容器等信息
     ```
 
-    注意事项: 
 
-    1、若未配置相关参数，无法完成ip配置；
-
-    2、若执行批量配置时，需提前配置免密登录；
-
-    3、inventory_file中ip、detectip配置格式有两种：
-
-        <1>输入一个ip，工具自行生成后续ip，例如ip=10.0.0.1，工具会内部自行生成八个ip，10.0.0.1、10.0.1.1、10.0.2.1、10.0.3.1、10.0.0.2、10.0.1.2、10.0.2.2、10.0.3.2（该方法仅限于八卡环境）；
-        <2>按照hccn配置官方文档要求，例如八卡环境上，ip=10.0.0.1,10.0.1.1,10.0.2.1,10.0.3.1,10.0.0.2,10.0.1.2,10.0.2.2,10.0.3.2（逗号必须为英文）。detectip类似输入。
-    
-    4、inventory_file其他配置可直接参考inventory_file中的样例;
-
-7. kubeedge安装说明
+8. kubeedge安装说明
    ```
    cd /root/offline-deploy/scripts
    bash install_kubeedge.sh              # 安装kubeedge
    bash install_kubeedge.sh --uninstall  # 卸载kubeedge
    ```
    注意事项：安装kubeedge须在执行完`bash scripts/install.sh`操作后。
+
+9. 驱动、固件安装说明
+   ```
+   cd /root/offline-deploy/scripts
+   批量安装驱动、固件需编辑当前目录的inventory_file文件，格式如下：
+   [tools]
+   localhost ansible_connection='local'
+   ip_address_1
+   ip_address_2
+
+   [tools:vars]
+   user=HwHiAiUser
+   group=HwHiAiUser
+   ansible_ssh_user='root'
+   
+   bash install_npu.sh                   # 安装驱动、固件
+   bash install_npu.sh --type=run        # 默认使用zip包安装，可指定为用run包安装
+   ``` 
+   注意事项：
+   1. 环境已安装驱动、固件安装时所需依赖。
+   2. 若执行批量配置，需提前配置免密登录。
   
 
 # 常见问题
