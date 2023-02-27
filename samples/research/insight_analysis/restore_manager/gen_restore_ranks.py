@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # ============================================================================
 from restore_manager.restore_resilience_manager import RestoreManager
 from util.fault_ranks_manager import FaultRanksDLManager
-
+import json
 
 def serialization_restore_ranks():
     res_manager = RestoreManager()
@@ -24,4 +24,6 @@ def serialization_restore_ranks():
     restore_strategy_output_file_path = "/job/code/recovery_info.json"
 
     with open(restore_strategy_output_file_path, "w") as wfile:
-        wfile.write(f"normal_rank: {normal_ranks_json}, abnormal_rank: {restore_ranks_json}\n")
+        res_dict = {"normal_rank": eval(normal_ranks_json), "abnormal_rank": eval(restore_ranks_json)}
+        res_content = str(json.dumps(res_dict))
+        wfile.write(f"{res_content}\n")

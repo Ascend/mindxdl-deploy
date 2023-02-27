@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -252,10 +252,6 @@ class RestoreManager:
         return device_group_info_list
 
     def process_data_parallel_strategy(self, fault_ranks):
-        """
-        Process strategy for data parallel model
-        fault_ranks: abnormal device ids corresponding rank ids
-        """
         self._init_communication_group()
         device_num = self._get_communication_group_size()
         fault_ranks_check_flag = self._check_input_parameter_fault_ranks(fault_ranks)
@@ -351,3 +347,4 @@ class RestoreManager:
 
         fault_ranks_list = self._generate_fault_ranks_list(fault_ranks)
         return self._process_strategy(device_group_info_list, fault_ranks_list)
+
