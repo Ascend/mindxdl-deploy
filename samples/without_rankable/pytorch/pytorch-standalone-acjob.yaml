@@ -32,9 +32,9 @@ spec:
                 value: "1"
             resources:
               limits:
-                huawei.com/Ascend910: 8
+                huawei.com/Ascend910: 1
               requests:
-                huawei.com/Ascend910: 8
+                huawei.com/Ascend910: 1
             volumeMounts:
             - name: code
               mountPath: /job/code
