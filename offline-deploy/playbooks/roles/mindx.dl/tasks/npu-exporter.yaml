@@ -21,7 +21,7 @@
   when:
     - not use_harbor
 
-# 复制npu-exporter镜像到master_backup
+# 复制npu-exporter镜像到worker
 - name: copy npu-exporter images to remote worker
   copy:
     src: "{{mindxdl_images_dir}}/{{ ansible_architecture }}//{{item}}"
@@ -39,6 +39,59 @@
   loop: "{{npu_exporter_images.stdout_lines}}"
   when:
     - not use_harbor
+
+- name: list npu-exporter yaml
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  shell: "ls {{mindxdl_yaml_dir}} | grep {{NPU_EXPORTER_COMPONENT}} | grep -v '1usoc'"
+  register: yaml_file
+
+- name: modify npu-exporter yaml
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  delegate_facts: true
+  shell: |
+    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
+    sed -i '/      containers:/i\        - name: {{NPU_EXPORTER_SECRET_FOR_HARBOR}}' {{ mindxdl_yaml_dir }}/{{ item }};
+  loop: "{{ yaml_file.stdout_lines }}"
+  when:
+    - use_harbor
+
+- name: get npu-exporter image name when use harbor
+  delegate_to: localhost
+  run_once: true
+  shell:
+    cmd:
+      cd {{mindxdl_yaml_dir}};
+      cat $(find . -name "{{ NPU_EXPORTER_COMPONENT }}*.yaml" -type f  | grep -v "1usoc" | head -n 1) | grep 'image:' | awk '{print $2}'
+  register: image_name
+  when:
+    - do_upgrade is defined
+    - use_harbor
+
+- name: set fact npu-exporter image name
+  delegate_to: localhost
+  run_once: true
+  set_fact:
+    npu_image_name: "{{ image_name['stdout_lines'] | unique  }}"
+    cacheable: yes
+  when:
+    - do_upgrade is defined
+    - use_harbor
+    - image_name is defined and STDOUT_LINES_KEY in image_name and image_name[STDOUT_LINES_KEY] | length > 0
+
+- name: pull npu-exporter image
+  shell:
+    cmd:
+      docker pull "{{ item }}"
+  loop: "{{ hostvars['localhost'].npu_image_name }}"
+  when:
+    - do_upgrade is defined
+    - use_harbor
+    - "'npu_image_name' in hostvars['localhost']"
+    - HARBOR_SERVER in item
 
 - name: label worker
   shell: |
@@ -83,25 +136,6 @@
   when:
     - use_harbor
 
-- name: list npu-exporter yaml
-  delegate_to: "{{ groups['master'][0] }}"
-  run_once: true
-  shell: "ls {{mindxdl_yaml_dir}} | grep {{NPU_EXPORTER_COMPONENT}}"
-  register: yaml_file
-
-- name: modify npu-exporter yaml
-  delegate_to: "{{ groups['master'][0] }}"
-  run_once: true
-  delegate_facts: true
-  shell: |
-    sed -i 's/image: /image: {{ HARBOR_SERVER }}\/{{ HARBOR_MINDX_PROJECT }}\//' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i 's/imagePullPolicy: Never/imagePullPolicy: IfNotPresent/' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\      imagePullSecrets:' {{ mindxdl_yaml_dir }}/{{ item }};
-    sed -i '/      containers:/i\        - name: {{NPU_EXPORTER_SECRET_FOR_HARBOR}}' {{ mindxdl_yaml_dir }}/{{ item }};
-  loop: "{{ yaml_file.stdout_lines }}"
-  when:
-    - use_harbor
-
 # 部署npu-exporter应用
 - name: apply npu-exporter component
   shell:
@@ -116,3 +150,20 @@
     https_proxy: ""
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
+
+# 检查并更新npu-exporter应用
+- name: upgrade npu-exporter component
+  shell:
+    cmd:
+      exporter_info="$(kubectl get pods -n npu-exporter -o wide 2>/dev/null | grep 'npu-exporter-')";
+      npu_status=$(echo "$exporter_info" | grep "npu-exporter-.*Running" | wc -l);
+      if [ $npu_status = 0 ]; then exit 0; fi;
+      for i in $(seq $npu_status);do eval "$(echo "$exporter_info" | grep -w "{{ NODE_NAME }}" | awk '{print "kubectl delete pod -n npu-exporter "$1}')" || true; done
+  delegate_to: "{{ groups['master'][0] }}"
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    HTTP_PROXY: ""
+    HTTPS_PROXY: ""
+  when:
+    - do_upgrade is defined

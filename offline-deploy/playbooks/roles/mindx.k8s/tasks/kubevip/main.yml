@@ -6,15 +6,9 @@
   debug:
     msg: "kube_vip and kube_interface can not be empty in inventory_file, please check"
   failed_when: true
-  when:  KUBE_VIP is not defined or kube_interface is not defined or KUBE_VIP | length == 0 or kube_interface | length == 0
-
-- name: message
-  debug:
-    msg: "master_backup is suggested to contain 2 nodes at least in inventory_file, please check"
-  failed_when: true
   when:
-    - "'master_backup' in groups"
-    - "groups['master_backup'] | length == 1"
+    - KUBE_VIP is not defined or kube_interface is not defined or KUBE_VIP | length == 0 or kube_interface | length == 0
+
 
 - name: create /etc/kubernetes/manifests/
   file:
@@ -28,9 +22,14 @@
   when:
     - not use_harbor
 
+- name: pull kube-vip images on master
+  shell: "docker pull {{ HARBOR_SERVER }}/{{ KUBE_VIP_IMAGE }}:{{ KVVERSION }}"
+  when:
+    - use_harbor
+
 - name: generate kube-vip.yaml
   shell: |
-    docker run --network host --rm {{ KUBE_VIP_IMAGE }}:{{ KVVERSION }} manifest pod \
+    docker run --network host --rm {{ HARBOR_SERVER+'/' if use_harbor else '' }}{{ KUBE_VIP_IMAGE }}:{{ KVVERSION }} manifest pod \
     --interface {{ kube_interface }} \
     --address {{ KUBE_VIP }} \
     --controlplane \

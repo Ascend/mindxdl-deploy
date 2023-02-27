@@ -4,7 +4,7 @@
 
 - name: convert to dict
   set_fact:
-    daemon_dict: "{{ daemon_content.stdout | from_json }}"
+    daemon_dict: "{{ '{}' if daemon_content.stdout == '' else daemon_content.stdout | from_json }}"
     daemon_dict_new: ""
 
 # 如果不包含insecure-registries字段，则增加

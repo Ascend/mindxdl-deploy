@@ -20,7 +20,7 @@ VOLCANO_SCHEDULER_PREFIX: "volcano_scheduler"
 VOLCANO_CONTROLLER_PREFIX: "volcano_controller"
 DEVICE_PLUGIN_IMAGE: "ascend-k8sdeviceplugin"
 
-HETEROGENEOUS_DIR: "{{ 'aarch64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+HETEROGENEOUS_DIR: "{{ 'aarch64' if hostvars[groups['master'][0]].ansible_architecture == 'x86_64' else 'x86_64' }}"
 
 NODE_NAME: "{{ set_hostname if set_hostname is defined else ansible_hostname }}"
 
@@ -33,3 +33,5 @@ HARBOR_MINDX_PROJECT: "mindx"
 HARBOR_MINDX_PREFIX: "{{ HARBOR_SERVER }}/{{ HARBOR_MINDX_PROJECT }}"
 
 docker_20_bin_dir: "{{ resource_dir }}/do-not-change"
+
+STDOUT_LINES_KEY: "stdout_lines"

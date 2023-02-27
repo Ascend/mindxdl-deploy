@@ -6,41 +6,25 @@
     - SCENE_NUM in NO_DOCKER_K8S_SCENES
     - "K8S_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"
 
-- name: check k8s
-  shell: "kubectl cluster-info | grep 'is running at' | wc -l"
-  environment:
-    http_proxy: ""
-    https_proxy: ""
-    HTTP_PROXY: ""
-    HTTPS_PROXY: ""
-  register: cluster_info
-
-- name: set k8s service status
-  set_fact:
-    k8s_installed: "{{ cluster_info.stdout != '0' }}"
-  changed_when: false
-
-- name: message
-  fail:
-    msg: "k8s is running already. The script won't install k8s."
-  when: k8s_installed
-  ignore_errors: true
-
 - name: message
   debug:
     msg: "*************************start install k8s***************************"
-  when: not k8s_installed
+  when:
+    - inventory_hostname != "localhost"
+    - not k8s_installed
 
 - name: include copy software task
   include_tasks: copy_software.yml
   when:
+    - inventory_hostname != "localhost"
     - not k8s_installed
 
 # 复制离线镜像到各节点
 - name: include copy image task
   include_tasks: copy_image.yml
   when:
-    - not k8s_installed
+    - inventory_hostname != "localhost"
+    - not k8s_initialized
     - not use_harbor
 
 # 推送镜像到harbor
@@ -48,5 +32,13 @@
   include_tasks: push_image.yml
   when:
     - inventory_hostname == "localhost"
-    - not k8s_installed
     - use_harbor
+
+- name: create /etc/resolv.conf
+  shell:
+    cmd:
+      ls /etc/resolv.conf 2>/dev/null || touch /etc/resolv.conf && chmod 644 /etc/resolv.conf
+  changed_when: false
+  when:
+    - inventory_hostname != "localhost"
+    - not k8s_initialized

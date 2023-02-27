@@ -12,7 +12,6 @@
   ansible.builtin.unarchive:
     src: "{{ docker_pkg_dir }}/{{ ansible_architecture }}.tar.gz"
     dest: "{{ docker_pkg_dir }}"
-    mode: 0750
     remote_src: no
   when:
     - inventory_hostname != "localhost"

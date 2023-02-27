@@ -2,12 +2,6 @@
   debug:
     msg: "******************************start init k8s on master******************************"
 
-- name: message
-  debug:
-    msg: "master must be localhost in inventory_file, please check"
-  failed_when: true
-  when: "'master' not in groups or groups['master'] | length != 1"
-
 - name: not apiserver_advertise_address
   set_fact:
     addr_cmd: ""
@@ -28,8 +22,7 @@
   set_fact:
     control_plane_cmd: '--control-plane-endpoint "{{ KUBE_VIP }}:6443" --upload-certs'
   when:
-    - "'master_backup' in groups"
-    - "groups['master_backup'] | length != 0"
+    - groups['master'] | length > 2
 
 - name: set k8s image repository
   set_fact:
@@ -50,17 +43,21 @@
     HTTP_PROXY: ""
     HTTPS_PROXY: ""
 
-- name: create home kube directory
+- name: create home kube directory with root
   file:
-    path: "{{ ansible_env.HOME }}/.kube"
+    path: "/root/.kube"
     state: directory
+    owner: "root"
+    group: "root"
     mode: 0750
 
-- name: set cluster config
+- name: set cluster config with root
   copy:
     src: /etc/kubernetes/admin.conf
-    dest: "{{ ansible_env.HOME }}/.kube/config"
+    dest: "/root/.kube/config"
     mode: "0640"
+    owner: "root"
+    group: "root"
     remote_src: yes
 
 - name: remove coredns loop param

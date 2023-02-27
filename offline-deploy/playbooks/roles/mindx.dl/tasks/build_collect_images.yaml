@@ -3,7 +3,7 @@
   shell: "ls {{mindxdl_base_images_dir}}/{{ansible_architecture}}"
   register: base_image
   when:
-    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master'][0]
 
 # 加载基础镜像
 - name: load base images
@@ -12,13 +12,13 @@
       docker load -i {{mindxdl_base_images_dir}}/{{ansible_architecture}}/{{ item }};
   loop: "{{ base_image.stdout_lines }}"
   when:
-    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master'][0]
 
 - name: list mindxdl component dir
   shell: "ls {{mindxdl_deploy_package_dir}}/{{ansible_architecture}} | grep -vE 'zip|run' "
   register: component_list
   when:
-    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master'][0]
 
 # 制作 noded npu-exporter deviceplugin hccl-controller镜像
 - name: build mindxdl image
@@ -30,7 +30,7 @@
       cd {{mindxdl_deploy_package_dir}}/{{ansible_architecture}} && docker save -o "$(echo "$img_tag" | awk -F":" '{print $1}')_{{ansible_architecture}}.tar" "$img_tag";
   loop: "{{component_list.stdout_lines}}"
   when:
-    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master'][0]
     - not item.endswith("tar")
     - item.count('volcano') == 0
 
@@ -50,7 +50,7 @@
       cd {{mindxdl_deploy_package_dir}}/{{ansible_architecture}} && docker save -o "{{VOLCANO_CONTROLLER_PREFIX}}_{{ansible_architecture}}.tar" "$ctr_img_tag";
   loop: "{{component_list.stdout_lines}}"
   when:
-    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master'][0]
     - not item.endswith("tar")
     - item.count('volcano') != 0
 
@@ -59,14 +59,14 @@
   shell: "cp {{mindxdl_deploy_package_dir}}/{{ansible_architecture}}/{{item}}/*.yaml {{mindxdl_yaml_dir}}"
   loop: "{{component_list.stdout_lines}}"
   when:
-    - inventory_hostname in groups['master']
+    - inventory_hostname in groups['master'][0]
     - not item.endswith("tar")
 
 - name: list mindxdl component dir
   shell: "ls {{mindxdl_deploy_package_dir}}/{{ansible_architecture}} | grep tar"
   register: images_list
   when:
-    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master']
+    - inventory_hostname in groups['other_build_image'] or inventory_hostname in groups['master'][0]
 
 - name: fetch master dl images
   fetch:
@@ -78,7 +78,7 @@
     group: "{{ansible_user_id}}"
   loop: "{{images_list.stdout_lines}}"
   when:
-    - inventory_hostname in groups['master']
+    - inventory_hostname in groups['master'][0]
     - item.endswith("tar")
 
 # 从异构服务器上拷贝mindx dl镜像到master节点

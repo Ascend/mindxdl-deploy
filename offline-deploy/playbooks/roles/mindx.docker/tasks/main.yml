@@ -7,7 +7,7 @@
     - "DOCKER_COMPONENT in (SCENES[SCENE_NUM] + EXTRA_COMPONENT.split(','))"
 
 - name: check docker service
-  shell: systemctl is-active docker | grep '^active$' | wc -l
+  shell: docker info 2>/dev/null | wc -l
   register: docker_status
   changed_when: false
 
@@ -17,10 +17,10 @@
   changed_when: false
 
 - name: message
-  fail:
+  debug:
     msg: "docker is running already. The script won't install docker."
   when: docker_installed
-  ignore_errors: true
+  changed_when: false
 
 - name: message
   debug:

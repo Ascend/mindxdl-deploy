@@ -14,5 +14,4 @@
     mode: 0750
     remote_src: no
   when:
-    - inventory_hostname != "localhost"
     - no_copy_flag != "true"
