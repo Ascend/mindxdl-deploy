@@ -177,7 +177,6 @@ class ScheduleJob(object):
             return
 
         reset_devices = list(set([int(device) // 4 for device in clear_ecc_devices]))
-        # reset_devices = [3]
         print(f"reset devices {reset_devices}")
         for device_os_id in reset_devices:
             if device_os_id == 1:
@@ -229,7 +228,6 @@ class ScheduleJob(object):
             self.reset_status = "init"
             print("fault ranks is empty, skip hot reset")
             return
-
 
         fault_ranks_list = fault_ranks.split(",")
         if len(fault_ranks_list) % 8 == 0:
@@ -334,7 +332,6 @@ class ScheduleJob(object):
 
         fault_device_os_id = list(fault_device_os_ids)[0]
         normal_ranks = self.node_ranks - fault_extend_ranks
-        # todo 生成recovery_info.json文件
 
         self._kill_fault_ranks_process_v2(fault_extend_ranks)
 
@@ -343,10 +340,8 @@ class ScheduleJob(object):
         if self._check_card_status(fault_device_os_id):
             print("it is time for stop process", flush=True)
             time.sleep(40)
-            # todo: 这里的写法好像有问题，这里需要传送信号的进程是剩余的任务进程，只需要执行一次
             self._send_stop_process_signal_v2(normal_ranks)
             self._send_start_process_job_v2()
-
 
     def _check_card_status(self, device_os_id):
         print("start check card status", flush=True)
@@ -436,7 +431,6 @@ class ScheduleJob(object):
     @staticmethod
     def _get_device_os_ids(ranks):
         reset_devices = set(int(rank) // 4 for rank in ranks)
-        # reset_devices = [3]
         print(f"reset device os {reset_devices}")
         device_os_ids = set()
         for device_os_id in reset_devices:
@@ -449,9 +443,7 @@ class ScheduleJob(object):
 
     def _send_stop_process_signal(self):
         print("run into send stop signal")
-        fault_ranks = FaultRanksDLManager().get_fault_ranks()    # todo: 当芯片恢复了的时候过一段时间后这个不会被dp更新！！！！
-        # time.sleep(30)
-        # restore_ranks = FaultRanksDLManager().get_restore_ranks()
+        fault_ranks = FaultRanksDLManager().get_fault_ranks()
         if fault_ranks and len(fault_ranks) >= 1 and self.stop_process_flag == False:
             print("run into stop process")
             # stop all process
@@ -462,7 +454,6 @@ class ScheduleJob(object):
             for process in process_info:
                 cmd_lines = process.get("cmdline")
                 for cmd_line in cmd_lines:
-                    # todo resnet这个过滤条件 假如文件路径有这个就会出问题，改成train.py 会不会有问题呢
                     if "resnet" in cmd_line and "engine.py" not in cmd_line and process.get("pid") not in target_pid:
                         target_pid.append(process.get("pid"))
 
