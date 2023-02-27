@@ -181,7 +181,7 @@ func config(npuIDArray []string, count int) (err error) {
 	}
 	var ipArray []string
 	var detectIPArray []string
-	if strings.Contains(ip, ",") {
+	if strings.Contains(ip, ",") || count == 1 {
 		ipArray = strings.Split(ip, ",")
 		detectIPArray = strings.Split(detectIP, ",")
 		for i := 0; i < count; i++ {
