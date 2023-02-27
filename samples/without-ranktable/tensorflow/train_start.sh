@@ -175,10 +175,14 @@ if [[ "${device_count}" -ge 1 ]]; then
   for ((i = 0; i < ${CM_LOCAL_WORKER}; i++)); do
     export DEVICE_INDEX=`expr ${rank_start} + ${i}`
 	export ASCEND_DEVICE_ID=${i}
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --model_dir=./models/device_${DEVICE_INDEX}/ --pretrained_model_checkpoint_path=./models/device${i}/  && tee ${log_url}/device_${DEVICE_INDEX}/
-    check_return_code
+    if [[ "${i}" -eq 0 ]]
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --model_dir=./models/device_${DEVICE_INDEX}/ --pretrained_model_checkpoint_path=./models/device${i}/  && tee ${log_url}/device_${DEVICE_INDEX}/
+    else
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --model_dir=./models/device_${DEVICE_INDEX}/ --pretrained_model_checkpoint_path=./models/device${i}/  &> ${log_url}/device_${DEVICE_INDEX}/ &
+    fi
+	check_return_code
     if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --model_dir=./models/device_${DEVICE_INDEX}/  --pretrained_model_checkpoint_path=./models/device${i}/ && tee ${log_url}/device_${DEVICE_INDEX}
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --model_dir=./models/device_${DEVICE_INDEX}/  --pretrained_model_checkpoint_path=./models/device${i}/ && tee ${log_url}/device_${DEVICE_INDEX}/
       check_return_code
     fi
     done
