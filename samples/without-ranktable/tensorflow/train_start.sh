@@ -174,7 +174,7 @@ if [[ "${device_count}" -ge 1 ]]; then
   rank_start=`expr ${CM_RANK} \* ${CM_LOCAL_WORKER}`
   for ((i = 0; i < ${CM_LOCAL_WORKER}; i++)); do
     export DEVICE_INDEX=`expr ${rank_start} + ${i}`
-	export ASCEND_DEVICE_ID=${i}
+    export ASCEND_DEVICE_ID=${i}
     if [[ "${i}" -eq 0 ]]
       ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --model_dir=./models/device_${DEVICE_INDEX}/ --pretrained_model_checkpoint_path=./models/device${i}/  && tee ${log_url}/device_${DEVICE_INDEX}/
     else
