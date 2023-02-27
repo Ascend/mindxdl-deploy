@@ -80,7 +80,9 @@ fi
 if [ ${MS_ROLE} == "MS_WORKER" ]
 then
     echo "start worker"
-    for((i=0;i<${MS_LOCAL_WORKER};i++));
+	start_index=`expr ${MS_NODE_RANK} \* ${MS_LOCAL_WORKER}`
+	end_index=`expr ${start_index} + ${MS_LOCAL_WORKER}`
+    for((i=${start_index};i<${end_index};i++));
     do
        rm -rf ./worker_$i
        mkdir ./worker_$i
