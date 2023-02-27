@@ -70,7 +70,7 @@ then
     export DEVICE_ID=0
     if [ $# == 3 ]
     then 
-        python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output' 2>&1 && tee ./sched.log &
+        python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output' 2>&1 && tee ./sched.log
     fi
     if [ $# == 4 ]
     then

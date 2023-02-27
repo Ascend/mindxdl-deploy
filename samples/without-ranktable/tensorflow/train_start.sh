@@ -172,7 +172,7 @@ if [[ "${device_count}" -ge 1 ]]; then
   server_id=${CM_RANK}
   logger "server id is: ""${server_id}"
   rank_start=`expr ${CM_RANK} \* ${CM_LOCAL_WORKER}`
-  for ((i = 0; i < ${CM_LOCAL_WORKER}; i++)); do
+  for ((i = $((${CM_LOCAL_WORKER} - 1)); i >= 0; i--)); do
     export DEVICE_INDEX=`expr ${rank_start} + ${i}`
     export ASCEND_DEVICE_ID=${i}
     if [[ "${i}" -eq 0 ]]
