@@ -51,8 +51,59 @@ class ScheduleJob(object):
         self.rank_index = self._get_rank_index()
         self.job_replicas = self._get_job_replicas()
 
-    def create_job(self):
-        pass
+    @staticmethod
+    def _get_all_task_pids():
+        process_info = [p.info for p in psutil.process_iter(attrs=['pid', 'name', 'cmdline']) if 'python' in
+                        p.info['name']]
+
+        target_pid = []
+        for process in process_info:
+            cmd_lines = process.get("cmdline")
+            for cmd_line in cmd_lines:
+                if "resnet" in cmd_line and "engine" not in cmd_line and process.get("pid") not in target_pid:
+                    target_pid.append(process.get("pid"))
+        return target_pid
+
+    @staticmethod
+    def _get_device_os_ids(ranks):
+        reset_devices = set(int(rank) // 4 for rank in ranks)
+        print(f"reset device os {reset_devices}")
+        device_os_ids = set()
+        for device_os_id in reset_devices:
+            if device_os_id == 1:
+                device_id = 7
+            else:
+                device_id = 3
+            device_os_ids.add(device_id)
+        return device_os_ids
+
+    @staticmethod
+    def _check_exception_train_start(s):
+        if "exception" in s.decode("utf-8"):
+            return True
+        return False
+
+    @staticmethod
+    def _get_node_ranks():
+        node_ranks = set()
+        with open(RANK_TABLE_FILE, "r", encoding='utf-8') as hccl_out:
+            rank_table_content = json.load(hccl_out)
+            server_list = rank_table_content.get("server_list")
+            if not server_list:
+                return node_ranks
+            for server in server_list:
+                if server.get("server_id") == os.getenv("XDL_IP"):
+                    device_list = server.get("device")
+                    for device in device_list:
+                        node_ranks.add(int(device.get("rank_id")))
+        return node_ranks
+
+    @staticmethod
+    def _get_job_replicas():
+        with open(RANK_TABLE_FILE, "r", encoding='utf-8') as hccl_out:
+            rank_table_content = json.load(hccl_out)
+            server_list = rank_table_content.get("server_list")
+            return len(server_list) if server_list else 0
 
     def _kill_fault_ranks_process(self):
         print("run into kill fault ranks process")
@@ -118,8 +169,8 @@ class ScheduleJob(object):
                 fault_extend_ranks.add(rank_id)
         return fault_extend_ranks
 
-    def subprocess_popen(self, cmd, **kwargs):
-        p = subprocess.Popen(cmd, **kwargs)
+    def subprocess_popen(self, input_str, **kwargs):
+        p = subprocess.Popen(input_str, **kwargs)
         result = p.communicate()[0]
         return result
 
@@ -149,8 +200,8 @@ class ScheduleJob(object):
             json.dump(load_dict, f)
         print("add flag success")
 
-    def subprocess_popen_with_interactive(self, cmd, **kwargs):
-        p = subprocess.Popen(cmd, **kwargs)
+    def subprocess_popen_with_interactive(self, input_str, **kwargs):
+        p = subprocess.Popen(input_str, **kwargs)
         p.stdin.write(b'Yes')
         p.stdin.flush()
         result = p.communicate()[0]
@@ -262,7 +313,7 @@ class ScheduleJob(object):
                 rank_index = rank // 8
                 if rank_index not in fault_ranks_map:
                     fault_ranks_map[rank_index] = []
-                fault_ranks_map[rank_index].append(rank)
+                fault_ranks_map.get(rank_index).append(rank)
 
             if len(fault_ranks_map) == self.job_replicas:
                 return
@@ -374,19 +425,6 @@ class ScheduleJob(object):
         res_reset = self.dsmi_handle.dsmi_hot_reset_soc_v2(device_os_id, 0)
         print(f"reset npu result {res_reset}, type is {type(res_reset)}", flush=True)
 
-    @staticmethod
-    def _get_all_task_pids():
-        process_info = [p.info for p in psutil.process_iter(attrs=['pid', 'name', 'cmdline']) if 'python' in
-                        p.info['name']]
-
-        target_pid = []
-        for process in process_info:
-            cmd_lines = process.get("cmdline")
-            for cmd_line in cmd_lines:
-                if "resnet" in cmd_line and "engine" not in cmd_line and process.get("pid") not in target_pid:
-                    target_pid.append(process.get("pid"))
-        return target_pid
-
     def _get_need_kill_pids(self, fault_extend_ranks):
         all_task_pids = self._get_all_task_pids()
         if not all_task_pids:
@@ -419,19 +457,6 @@ class ScheduleJob(object):
             if int(p.environ().get("RANK_ID")) in rank_ids:
                 need_kill_pids.add(pid)
         return need_kill_pids
-
-    @staticmethod
-    def _get_device_os_ids(ranks):
-        reset_devices = set(int(rank) // 4 for rank in ranks)
-        print(f"reset device os {reset_devices}")
-        device_os_ids = set()
-        for device_os_id in reset_devices:
-            if device_os_id == 1:
-                device_id = 7
-            else:
-                device_id = 3
-            device_os_ids.add(device_id)
-        return device_os_ids
 
     def _send_stop_process_signal(self):
         print("run into send stop signal")
@@ -513,34 +538,6 @@ class ScheduleJob(object):
 
         self.restart_process_flag = True
 
-    @staticmethod
-    def _check_exception_train_start(s):
-        if "exception" in s.decode("utf-8"):
-            return True
-        return False
-
-    @staticmethod
-    def _get_node_ranks():
-        node_ranks = set()
-        with open(RANK_TABLE_FILE, "r", encoding='utf-8') as hccl_out:
-            rank_table_content = json.load(hccl_out)
-            server_list = rank_table_content.get("server_list")
-            if not server_list:
-                return
-            for server in server_list:
-                if server.get("server_id") == os.getenv("XDL_IP"):
-                    device_list = server.get("device")
-                    for device in device_list:
-                        node_ranks.add(int(device.get("rank_id")))
-        return node_ranks
-
-    @staticmethod
-    def _get_job_replicas():
-        with open(RANK_TABLE_FILE, "r", encoding='utf-8') as hccl_out:
-            rank_table_content = json.load(hccl_out)
-            server_list = rank_table_content.get("server_list")
-            return len(server_list) if server_list else 0
-
     def _get_rank_index(self):
         if not self.node_ranks:
             return -1
@@ -572,6 +569,10 @@ class ScheduleJob(object):
                     pass
 
             self.stop_process_flag = True
+
+    def create_job(self):
+        pass
+
 
 class ProcessJob(ScheduleJob):
     def __init__(self, scheduler):

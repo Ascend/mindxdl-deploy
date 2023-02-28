@@ -19,7 +19,6 @@ from pytz import utc
 from schedule.job import ProcessJob
 
 
-
 class Scheduler(object):
     """
     classdocs

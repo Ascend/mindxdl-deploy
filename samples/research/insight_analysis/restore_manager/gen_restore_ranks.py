@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import json
+
 from restore_manager.restore_resilience_manager import RestoreManager
 from util.fault_ranks_manager import FaultRanksDLManager
-import json
+
 
 def serialization_restore_ranks():
     res_manager = RestoreManager()

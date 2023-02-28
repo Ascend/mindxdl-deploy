@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from ctypes import *
 import json
 import os
+from ctypes import c_int
+from ctypes import cdll
+from ctypes import pointer
 
 from constants.constants import RANK_TABLE_FILE
 
@@ -30,6 +32,11 @@ class NPUHealthCheck:
         self.p_device_count = pointer(c_int())
         self.p_health = pointer(c_int())
 
+    @staticmethod
+    def read_from_file(file_path):
+        with open(file_path) as json_file:
+            return json.load(json_file)
+
     def get_device_count(self):
         """
         get device count on server
@@ -38,18 +45,14 @@ class NPUHealthCheck:
         device_count = self.p_device_count.contents.value
         return device_count
 
-    def read_from_file(self, file_path):
-        with open(file_path) as json_file:
-            return json.load(json_file)
-
     def get_device_rank_map(self, device_id):
-        RANK_TABLE_FILE_DEFAULT_VALUE = RANK_TABLE_FILE
+        rank_table_file = RANK_TABLE_FILE
         rank_table_file_content = self.read_from_file(
-            RANK_TABLE_FILE_DEFAULT_VALUE)
+            rank_table_file)
         rank_table_file_status = rank_table_file_content.get("status")
         if "completed" != rank_table_file_status:
             print("rank table file status is not completed")
-            return
+            return None
 
         server_list = rank_table_file_content.get("server_list")
         for server in server_list:
