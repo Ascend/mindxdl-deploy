@@ -99,13 +99,6 @@ class ScheduleJob(object):
         return node_ranks
 
     @staticmethod
-    def _get_job_replicas():
-        with open(RANK_TABLE_FILE, "r", encoding='utf-8') as hccl_out:
-            rank_table_content = json.load(hccl_out)
-            server_list = rank_table_content.get("server_list")
-            return len(server_list) if server_list else 0
-
-    @staticmethod
     def get_extend_fault_ranks(fault_ranks):
         fault_device_os_list = set()
         for rank in fault_ranks:
@@ -121,8 +114,15 @@ class ScheduleJob(object):
         return fault_extend_ranks
 
     @staticmethod
-    def subprocess_popen(input_str):
-        p = subprocess.Popen(input_str)
+    def _get_job_replicas():
+        with open(RANK_TABLE_FILE, "r", encoding='utf-8') as hccl_out:
+            rank_table_content = json.load(hccl_out)
+            server_list = rank_table_content.get("server_list")
+            return len(server_list) if server_list else 0
+
+    @staticmethod
+    def execute_input_str(input_str):
+        p = subprocess.Popen(input_str, shell=False)
         result = p.communicate()[0]
         return result
 
@@ -148,17 +148,9 @@ class ScheduleJob(object):
             json.dump(load_dict, f)
         print("add flag success")
 
-    @staticmethod
-    def subprocess_popen_with_interactive(input_str):
-        p = subprocess.Popen(input_str)
-        p.stdin.write(b'Yes')
-        p.stdin.flush()
-        result = p.communicate()[0]
-        return result
-
     def apl_tool_dos_get_result(self, commands=''):
         try:
-            result = self.subprocess_popen(commands)
+            result = self.execute_input_str(commands)
         except Exception as error:
             result = str(error)
         return result
@@ -550,6 +542,12 @@ class ScheduleJob(object):
         for rank in self.node_ranks:
             return rank // 8
 
+    def check_node_rank(self, fault_ranks):
+        for rank in self.node_ranks:
+            if rank in fault_ranks:
+                return False
+        return True
+
     def _node_fault_rank_process(self):
         print("run into check node rank", flush=True)
         print(f"stop process flag: {self.stop_process_flag}")
@@ -565,12 +563,6 @@ class ScheduleJob(object):
                     pass
 
             self.stop_process_flag = True
-
-    def check_node_rank(self, fault_ranks):
-        for rank in self.node_ranks:
-            if rank in fault_ranks:
-                return False
-        return True
 
     def create_process_job(self):
         self._sched.add_job(self._fault_rank_hot_reset_v3, "interval",
