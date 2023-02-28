@@ -84,21 +84,6 @@ class ScheduleJob(object):
         return False
 
     @staticmethod
-    def _get_node_ranks():
-        node_ranks = set()
-        with open(RANK_TABLE_FILE, "r", encoding='utf-8') as hccl_out:
-            rank_table_content = json.load(hccl_out)
-            server_list = rank_table_content.get("server_list")
-            if not server_list:
-                return node_ranks
-            for server in server_list:
-                if server.get("server_id") == os.getenv("XDL_IP"):
-                    device_list = server.get("device")
-                    for device in device_list:
-                        node_ranks.add(int(device.get("rank_id")))
-        return node_ranks
-
-    @staticmethod
     def get_extend_fault_ranks(fault_ranks):
         fault_device_os_list = set()
         for rank in fault_ranks:
@@ -114,17 +99,26 @@ class ScheduleJob(object):
         return fault_extend_ranks
 
     @staticmethod
+    def _get_node_ranks():
+        node_ranks = set()
+        with open(RANK_TABLE_FILE, "r", encoding='utf-8') as hccl_out:
+            rank_table_content = json.load(hccl_out)
+            server_list = rank_table_content.get("server_list")
+            if not server_list:
+                return node_ranks
+            for server in server_list:
+                if server.get("server_id") == os.getenv("XDL_IP"):
+                    device_list = server.get("device")
+                    for device in device_list:
+                        node_ranks.add(int(device.get("rank_id")))
+        return node_ranks
+
+    @staticmethod
     def _get_job_replicas():
         with open(RANK_TABLE_FILE, "r", encoding='utf-8') as hccl_out:
             rank_table_content = json.load(hccl_out)
             server_list = rank_table_content.get("server_list")
             return len(server_list) if server_list else 0
-
-    @staticmethod
-    def execute_input_str(input_str):
-        p = subprocess.Popen(input_str, shell=False)
-        result = p.communicate()[0]
-        return result
 
     @staticmethod
     def _get_clear_ecc_cmd(device_id):
@@ -148,12 +142,31 @@ class ScheduleJob(object):
             json.dump(load_dict, f)
         print("add flag success")
 
+    @staticmethod
+    def _execute_input_str(input_str):
+        p = subprocess.run(input_str, shell=False)
+        result = p.stdout
+        return result
+
     def apl_tool_dos_get_result(self, commands=''):
         try:
-            result = self.execute_input_str(commands)
+            result = self._execute_input_str(commands)
         except Exception as error:
             result = str(error)
         return result
+
+    def check_node_rank(self, fault_ranks):
+        for rank in self.node_ranks:
+            if rank in fault_ranks:
+                return False
+        return True
+
+    def create_process_job(self):
+        self._sched.add_job(self._fault_rank_hot_reset_v3, "interval",
+                            seconds=5)
+
+    def create_job(self):
+        pass
 
     def _kill_fault_ranks_process(self):
         print("run into kill fault ranks process")
@@ -542,12 +555,6 @@ class ScheduleJob(object):
         for rank in self.node_ranks:
             return rank // 8
 
-    def check_node_rank(self, fault_ranks):
-        for rank in self.node_ranks:
-            if rank in fault_ranks:
-                return False
-        return True
-
     def _node_fault_rank_process(self):
         print("run into check node rank", flush=True)
         print(f"stop process flag: {self.stop_process_flag}")
@@ -564,12 +571,7 @@ class ScheduleJob(object):
 
             self.stop_process_flag = True
 
-    def create_process_job(self):
-        self._sched.add_job(self._fault_rank_hot_reset_v3, "interval",
-                            seconds=5)
 
-    def create_job(self):
-        pass
 
 
 class ProcessJob(ScheduleJob):
