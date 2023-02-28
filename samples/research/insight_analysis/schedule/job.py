@@ -119,10 +119,6 @@ class ScheduleJob(object):
         return fault_extend_ranks
 
     def subprocess_popen(self, cmd, **kwargs):
-        kwargs['stdin'] = subprocess.PIPE
-        kwargs['stdout'] = subprocess.PIPE
-        kwargs['shell'] = True
-        kwargs['stderr'] = subprocess.PIPE
         p = subprocess.Popen(cmd, **kwargs)
         result = p.communicate()[0]
         return result
@@ -154,10 +150,6 @@ class ScheduleJob(object):
         print("add flag success")
 
     def subprocess_popen_with_interactive(self, cmd, **kwargs):
-        kwargs['stdin'] = subprocess.PIPE
-        kwargs['stdout'] = subprocess.PIPE
-        kwargs['shell'] = True
-        kwargs['stderr'] = subprocess.PIPE
         p = subprocess.Popen(cmd, **kwargs)
         p.stdin.write(b'Yes')
         p.stdin.flush()
@@ -561,6 +553,10 @@ class ScheduleJob(object):
                 return False
         return True
 
+    def create_process_job(self):
+        self._sched.add_job(self._fault_rank_hot_reset_v3, "interval",
+                            seconds=5)
+
     def _node_fault_rank_process(self):
         print("run into check node rank", flush=True)
         print(f"stop process flag: {self.stop_process_flag}")
@@ -570,17 +566,12 @@ class ScheduleJob(object):
             print(f"target pid {list(set(target_pid))}", flush=True)
             for pid in list(set(target_pid)):
                 try:
-                    os.kill(pid, signal.SIGUSR2)      # todo: 仅仅是发送这个信号？
+                    os.kill(pid, signal.SIGUSR2)
                 except ProcessLookupError:
                     print(f"kill process<{pid}> failed")
                     pass
 
             self.stop_process_flag = True
-
-    def create_process_job(self):
-        self._sched.add_job(self._fault_rank_hot_reset_v3, "interval",
-                            seconds=5)
-
 
 class ProcessJob(ScheduleJob):
     def __init__(self, scheduler):
