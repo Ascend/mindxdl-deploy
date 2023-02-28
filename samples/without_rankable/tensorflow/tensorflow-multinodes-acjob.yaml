@@ -27,7 +27,8 @@ spec:
             command:
               - /bin/bash
               - -c
-              - train_start.sh /job/code/ResNet50_for_Tensorflow_1.15_code/official/r1/resnet /job/code/ResNet50_for_Tensorflow_1.15_code/official/r1/resnet/output/logs
+              - cd /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet
+              - bash train_start.sh /job/code/ResNet50_for_Tensorflow_1.15_code/ /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet/output/ official/r1/resnet/imagenet_main.py --batch-size=32 --data_dir=/job/data/resnet50/imagenet_TF
             env:
               - name: GLOG_V
                 value: "1"
@@ -89,7 +90,8 @@ spec:
             command:
               - /bin/bash
               - -c
-              - train_start.sh /job/code/ResNet50_for_Tensorflow_1.15_code/official/r1/resnet /job/code/ResNet50_for_Tensorflow_1.15_code/official/r1/resnet/output/logs
+              - cd /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet
+              - bash train_start.sh /job/code/ResNet50_for_Tensorflow_1.15_code/ /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet/output/ official/r1/resnet/imagenet_main.py --batch-size=32 --data_dir=/job/data/resnet50/imagenet_TF
             env:
               - name: GLOG_V
                 value: 1

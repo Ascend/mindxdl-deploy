@@ -27,7 +27,8 @@ spec:
             command:
               - /bin/bash
               - -c
-              - train_start.sh /job/code/ResNet50_for_Pytorch_1.8_code /job/code/ResNet50_for_Pytorch_1.8_code/output/logs
+              - cd /job/code/Operator_ResNet50_for_Pytorch_1.8_code/scripts
+              - bash train_start.sh /job/code/ResNet50_for_Pytorch_1.8_code /job/code/ResNet50_for_Pytorch_1.8_code/output/logs
             env:
               - name: GLOG_V
                 value: "1"

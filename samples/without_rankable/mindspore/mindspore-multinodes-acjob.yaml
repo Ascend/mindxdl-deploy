@@ -27,7 +27,7 @@ spec:
             command:
               - /bin/bash
               - -c
-              - train_start.sh /job/data/resnet50/imagenet/ /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
+              - cd /job/code/Operator_ResNet50_for_MindSpre_2.0_code/scripts; bash train_start.sh /job/data/resnet50/imagenet/train /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
             env:
               - name: GLOG_V
                 value: "1"
@@ -88,7 +88,7 @@ spec:
             command:
               - /bin/bash
               - -c
-              - train_start.sh /job/data/resnet50/imagenet/ /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
+              - cd /job/code/Operator_ResNet50_for_MindSpre_2.0_code/scripts; bash train_start.sh /job/data/resnet50/imagenet/train /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
             env:
               - name: GLOG_V
                 value: 1
