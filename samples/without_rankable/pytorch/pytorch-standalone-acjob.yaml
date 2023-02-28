@@ -19,6 +19,7 @@ spec:
         spec:
           nodeSelector:
             host-arch: huawei-arm
+            accelerator-type: module
           containers:
           - name: ascend # do not modify
             image: pytorch-test
@@ -30,6 +31,9 @@ spec:
             env:
               - name: GLOG_V
                 value: "1"
+            ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
+              - containerPort: 2222         # determined by user
+                name: ascendjob-port        # do not modify
             resources:
               limits:
                 huawei.com/Ascend910: 1
