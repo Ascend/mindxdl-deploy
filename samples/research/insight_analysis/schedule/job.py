@@ -105,6 +105,64 @@ class ScheduleJob(object):
             server_list = rank_table_content.get("server_list")
             return len(server_list) if server_list else 0
 
+    @staticmethod
+    def get_extend_fault_ranks(fault_ranks):
+        fault_device_os_list = set()
+        for rank in fault_ranks:
+            fault_device_os = rank // 4
+            fault_device_os_list.add(fault_device_os)
+        print(f"fault device os list {fault_device_os_list}")
+        fault_extend_ranks = set()
+        for fault_device_os in fault_device_os_list:
+            print(f"fault device os {fault_device_os}")
+            for rank_id in range(fault_device_os * 4, (fault_device_os + 1) * 4):
+                print(f"rank {rank_id}")
+                fault_extend_ranks.add(rank_id)
+        return fault_extend_ranks
+
+    @staticmethod
+    def subprocess_popen(input_str):
+        p = subprocess.Popen(input_str)
+        result = p.communicate()[0]
+        return result
+
+    @staticmethod
+    def _get_clear_ecc_cmd(device_id):
+        clear_ecc_cmd = f"npu-smi clear -t ecc-info -i {device_id} -c 0"
+        return clear_ecc_cmd
+
+    @staticmethod
+    def _get_reset_npu_cmd(device_os_id):
+        reset_npu_cmd = f"npu-smi set -t reset -i {device_os_id} -c 0"
+        return reset_npu_cmd
+
+    @staticmethod
+    def _add_success_flag_in_file(flag):
+        fault_npu_file_path = os.path.join(constants.FAULT_RANK_CONFIG, constants.FAULT_NPU_FILE)
+        print(f"fault_npu_file_path={fault_npu_file_path}")
+        with open(fault_npu_file_path, "r", encoding='utf-8') as fault_config_out:
+            load_dict = json.load(fault_config_out)
+            load_dict["resetSuccess"] = flag
+
+        with open(fault_npu_file_path, 'w') as f:
+            json.dump(load_dict, f)
+        print("add flag success")
+
+    @staticmethod
+    def subprocess_popen_with_interactive(input_str):
+        p = subprocess.Popen(input_str)
+        p.stdin.write(b'Yes')
+        p.stdin.flush()
+        result = p.communicate()[0]
+        return result
+
+    def apl_tool_dos_get_result(self, commands=''):
+        try:
+            result = self.subprocess_popen(commands)
+        except Exception as error:
+            result = str(error)
+        return result
+
     def _kill_fault_ranks_process(self):
         print("run into kill fault ranks process")
         fault_ranks = FaultRanksDLManager().get_fault_ranks()
@@ -154,58 +212,6 @@ class ScheduleJob(object):
                 except ProcessLookupError:
                     pass
             self.kill_fault_npu_process_flag = True
-
-    def get_extend_fault_ranks(self, fault_ranks):
-        fault_device_os_list = set()
-        for rank in fault_ranks:
-            fault_device_os = rank // 4
-            fault_device_os_list.add(fault_device_os)
-        print(f"fault device os list {fault_device_os_list}")
-        fault_extend_ranks = set()
-        for fault_device_os in fault_device_os_list:
-            print(f"fault device os {fault_device_os}")
-            for rank_id in range(fault_device_os * 4, (fault_device_os + 1) * 4):
-                print(f"rank {rank_id}")
-                fault_extend_ranks.add(rank_id)
-        return fault_extend_ranks
-
-    def subprocess_popen(self, input_str, **kwargs):
-        p = subprocess.Popen(input_str, **kwargs)
-        result = p.communicate()[0]
-        return result
-
-    def apl_tool_dos_get_result(self, commands=''):
-        try:
-            result = self.subprocess_popen(commands)
-        except Exception as error:
-            result = str(error)
-        return result
-
-    def _get_clear_ecc_cmd(self, device_id):
-        clear_ecc_cmd = f"npu-smi clear -t ecc-info -i {device_id} -c 0"
-        return clear_ecc_cmd
-
-    def _get_reset_npu_cmd(self, device_os_id):
-        reset_npu_cmd = f"npu-smi set -t reset -i {device_os_id} -c 0"
-        return reset_npu_cmd
-
-    def _add_success_flag_in_file(self, flag):
-        fault_npu_file_path = os.path.join(constants.FAULT_RANK_CONFIG, constants.FAULT_NPU_FILE)
-        print(f"fault_npu_file_path={fault_npu_file_path}")
-        with open(fault_npu_file_path, "r", encoding='utf-8') as fault_config_out:
-            load_dict = json.load(fault_config_out)
-            load_dict["resetSuccess"] = flag
-
-        with open(fault_npu_file_path, 'w') as f:
-            json.dump(load_dict, f)
-        print("add flag success")
-
-    def subprocess_popen_with_interactive(self, input_str, **kwargs):
-        p = subprocess.Popen(input_str, **kwargs)
-        p.stdin.write(b'Yes')
-        p.stdin.flush()
-        result = p.communicate()[0]
-        return result
 
     def _reset_npu(self):
         if self.reset_npu or self.reset_status == "running" or self.reset_status == "completed":
@@ -429,7 +435,7 @@ class ScheduleJob(object):
         all_task_pids = self._get_all_task_pids()
         if not all_task_pids:
             print("task pid is empty")
-            return
+            return None
         need_kill_pids = []
         if len(all_task_pids) == 2:
             fault_rank_id = fault_extend_ranks[0]
@@ -450,7 +456,7 @@ class ScheduleJob(object):
         all_task_pids = self._get_all_task_pids()
         if not all_task_pids:
             print("task pid is empty")
-            return
+            return None
         need_kill_pids = set()
         for pid in all_task_pids:
             p = psutil.Process(pid)
@@ -544,16 +550,6 @@ class ScheduleJob(object):
         for rank in self.node_ranks:
             return rank // 8
 
-    def check_node_rank(self, fault_ranks):
-        for rank in self.node_ranks:
-            if rank in fault_ranks:
-                return False
-        return True
-
-    def create_process_job(self):
-        self._sched.add_job(self._fault_rank_hot_reset_v3, "interval",
-                            seconds=5)
-
     def _node_fault_rank_process(self):
         print("run into check node rank", flush=True)
         print(f"stop process flag: {self.stop_process_flag}")
@@ -569,6 +565,16 @@ class ScheduleJob(object):
                     pass
 
             self.stop_process_flag = True
+
+    def check_node_rank(self, fault_ranks):
+        for rank in self.node_ranks:
+            if rank in fault_ranks:
+                return False
+        return True
+
+    def create_process_job(self):
+        self._sched.add_job(self._fault_rank_hot_reset_v3, "interval",
+                            seconds=5)
 
     def create_job(self):
         pass
