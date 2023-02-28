@@ -16,8 +16,9 @@
 import json
 import os
 import signal
-import subprocess
-from ctypes import *
+from ctypes import c_int
+from ctypes import cdll
+from ctypes import pointer
 import psutil
 
 import time
@@ -52,6 +53,21 @@ class ScheduleJob(object):
         self.job_replicas = self._get_job_replicas()
 
     @staticmethod
+    def get_extend_fault_ranks(fault_ranks):
+        fault_device_os_list = set()
+        for rank in fault_ranks:
+            fault_device_os = rank // 4
+            fault_device_os_list.add(fault_device_os)
+        print(f"fault device os list {fault_device_os_list}")
+        fault_extend_ranks = set()
+        for fault_device_os in fault_device_os_list:
+            print(f"fault device os {fault_device_os}")
+            for rank_id in range(fault_device_os * 4, (fault_device_os + 1) * 4):
+                print(f"rank {rank_id}")
+                fault_extend_ranks.add(rank_id)
+        return fault_extend_ranks
+
+    @staticmethod
     def _get_all_task_pids():
         process_info = [p.info for p in psutil.process_iter(attrs=['pid', 'name', 'cmdline']) if 'python' in
                         p.info['name']]
@@ -82,21 +98,6 @@ class ScheduleJob(object):
         if "exception" in s.decode("utf-8"):
             return True
         return False
-
-    @staticmethod
-    def get_extend_fault_ranks(fault_ranks):
-        fault_device_os_list = set()
-        for rank in fault_ranks:
-            fault_device_os = rank // 4
-            fault_device_os_list.add(fault_device_os)
-        print(f"fault device os list {fault_device_os_list}")
-        fault_extend_ranks = set()
-        for fault_device_os in fault_device_os_list:
-            print(f"fault device os {fault_device_os}")
-            for rank_id in range(fault_device_os * 4, (fault_device_os + 1) * 4):
-                print(f"rank {rank_id}")
-                fault_extend_ranks.add(rank_id)
-        return fault_extend_ranks
 
     @staticmethod
     def _get_node_ranks():
@@ -144,8 +145,7 @@ class ScheduleJob(object):
 
     @staticmethod
     def _execute_input_str(input_str):
-        p = subprocess.run(input_str, shell=False)
-        result = p.stdout
+        result = ""
         return result
 
     def apl_tool_dos_get_result(self, commands=''):
