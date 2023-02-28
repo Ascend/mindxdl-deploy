@@ -1,0 +1,142 @@
+apiVersion: mindxdl.gitee.com/v1
+kind: AscendJob
+metadata:
+  name: default-test-tensorflow
+  labels:
+    framework: tensorflow
+spec:
+  schedulerName: volcano    # work when enableGangScheduling is true
+  runPolicy:
+    schedulingPolicy:       # work when enableGangScheduling is true
+      minAvailable: 2
+      queue: default
+  successPolicy: AllWorkers
+  replicaSpecs:
+    Chief:
+      replicas: 1
+      restartPolicy: Never
+      template:
+        spec:
+          nodeSelector:
+            host-arch: huawei-arm
+            accelerator-type: module
+          containers:
+          - name: ascend # do not modify
+            image: tensorflow-test:latest
+            imagePullPolicy: IfNotPresent
+            command:
+              - /bin/bash
+              - -c
+              - cd /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet
+              - bash train_start.sh /job/code/ResNet50_for_Tensorflow_1.15_code/ /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet/output/ official/r1/resnet/imagenet_main.py --batch-size=32 --data_dir=/job/data/resnet50/imagenet_TF
+            env:
+              - name: GLOG_V
+                value: "1"
+            ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
+              - containerPort: 2222         # determined by user
+                name: ascendjob-port        # do not modify
+            resources:
+              limits:
+                huawei.com/Ascend910: 8
+              requests:
+                huawei.com/Ascend910: 8
+            volumeMounts:
+            - name: code
+              mountPath: /job/code
+            - name: data
+              mountPath: /job/data
+            - name: output
+              mountPath: /job/output
+            - name: ascend-driver
+              mountPath: /usr/local/Ascend/driver
+            - name: ascend-add-ons
+              mountPath: /usr/local/Ascend/add-ons
+            - name: localtime
+              mountPath: /etc/localtime
+          volumes:
+          - name: code
+            nfs:
+              server: 127.0.0.1
+              path: "/data/atlas_dls/public/code/"
+          - name: data
+            nfs:
+              server: 127.0.0.1
+              path: "/data/atlas_dls/public/dataset/"
+          - name: output
+            nfs:
+              server: 127.0.0.1
+              path: "/data/atlas_dls/output/"
+          - name: ascend-driver
+            hostPath:
+              path: /usr/local/Ascend/driver
+          - name: ascend-add-ons
+            hostPath:
+              path: /usr/local/Ascend/add-ons
+          - name: localtime
+            hostPath:
+              path: /etc/localtime
+    Worker:
+      replicas: 1
+      restartPolicy: Never
+      template:
+        spec:
+          nodeSelector:
+            host-arch: huawei-arm
+            accelerator-type: module
+          containers:
+          - name: ascend # do not modify
+            image: tensorflow-test:latest
+            imagePullPolicy: IfNotPresent
+            command:
+              - /bin/bash
+              - -c
+              - cd /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet
+              - bash train_start.sh /job/code/ResNet50_for_Tensorflow_1.15_code/ /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet/output/ official/r1/resnet/imagenet_main.py --batch-size=32 --data_dir=/job/data/resnet50/imagenet_TF
+            env:
+              - name: GLOG_V
+                value: 1
+            ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
+              - containerPort: 2222         # determined by user
+                name: ascendjob-port        # do not modify
+            resources:
+              limits:
+                huawei.com/Ascend910: 8
+              requests:
+                huawei.com/Ascend910: 8
+            volumeMounts:
+            - name: code
+              mountPath: /job/code
+            - name: data
+              mountPath: /job/data
+            - name: output
+              mountPath: /job/output
+            - name: ascend-driver
+              mountPath: /usr/local/Ascend/driver
+            - name: ascend-add-ons
+              mountPath: /usr/local/Ascend/add-ons
+            - name: localtime
+              mountPath: /etc/localtime
+          volumes:
+          - name: code
+            nfs:
+              server: 127.0.0.1
+              path: "/data/atlas_dls/public/code/"
+          - name: data
+            nfs:
+              server: 127.0.0.1
+              path: "/data/atlas_dls/public/dataset/"
+          - name: output
+            nfs:
+              server: 127.0.0.1
+              path: "/data/atlas_dls/output/"
+          - name: ascend-driver
+            hostPath:
+              path: /usr/local/Ascend/driver
+          - name: ascend-add-ons
+            hostPath:
+              path: /usr/local/Ascend/add-ons
+          - name: localtime
+            hostPath:
+              path: /etc/localtime
+
+
