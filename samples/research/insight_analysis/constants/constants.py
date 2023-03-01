@@ -42,6 +42,8 @@ FAULT_CHECK_CODE = "checkCode"
 DEFAULT_STRATEGY_INPUT_ENV = "GROUP_INFO_FILE"
 DEFAULT_JOB_NAMESPACE = "vcjob"
 
+RANK_TABLE_FILE = "/user/serverid/devindex/config/hccl.json"
+
 NAMESPACE_PATTERN = "^[a-z0-9]([-a-z0-9]{0,48}[a-z0-9])?$"
 
 LOG_PRIVILEGE = 0o640

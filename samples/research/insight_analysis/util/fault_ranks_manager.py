@@ -1,4 +1,5 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# -*- coding: utf-8 -*-
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,15 +17,16 @@ import collections
 import glob
 import os
 import re
+import stat
 from abc import ABC, abstractmethod
 from ast import literal_eval
-from typing import Optional, List
 from hashlib import sha256
+from typing import Optional, List
 
 from constants import constants
 from constants.constants import MAX_FILE_PATH_LENGTH
-from constants.constants import MAX_SIZE
 from constants.constants import MAX_RANK_STRING_LENGTH
+from constants.constants import MAX_SIZE
 from logger.log import run_log
 from validator.validators import ClassValidator, FileValidator
 from validator.validators import DirectoryValidator
@@ -82,45 +84,8 @@ class FaultRanksDLManager(FaultRanksManager):
             return False
         return True
 
-    def _fault_ranks_process(self, res: Optional[str], fault_ranks: str) -> str:
-        """
-        Get fault ranks process.
-        :param res: configmap content
-        :param fault_ranks: fault rank string
-        :return: processed fault rank string
-        """
-        if not StringValidator(res).is_valid():
-            run_log.error("The content of the fault config file is invalid.")
-            return fault_ranks
-
-        if not MapValidator(literal_eval(res), inclusive_keys=["FaultRankIds"]).is_valid():
-            run_log.error("The content of the fault config file has not key(FaultRankIds)")
-            return fault_ranks
-
-        record_fault_rank_list_content = str(literal_eval(res)["FaultRankIds"])
-        if not StringValidator(record_fault_rank_list_content,
-                               max_len=MAX_RANK_STRING_LENGTH).check_string_length().check().is_valid():
-            run_log.error("The content of fault rank exceed the max string length.")
-            return fault_ranks
-
-        record_fault_rank_list = literal_eval(record_fault_rank_list_content)
-        if not ClassValidator(record_fault_rank_list, collections.Iterable) \
-                .check_isinstance() \
-                .check().is_valid():
-            run_log.error("The value of the key(FaultRankIds) is not list")
-            return fault_ranks
-
-        clear_fault_rank_list = []
-        for ele in record_fault_rank_list:
-            if ele.isdigit() and RankSizeValidator(literal_eval(ele)).check_rank_size_valid().check().is_valid():
-                clear_fault_rank_list.append(ele)
-
-        res_config_map_fault_ranks = ",".join(clear_fault_rank_list)
-        fault_ranks += res_config_map_fault_ranks
-        run_log.info(f"Fault ranks is {fault_ranks}, type is {type(fault_ranks)}")
-        return fault_ranks
-
-    def _restore_ranks_process(self, res: Optional[str], restore_ranks: str) -> str:
+    @staticmethod
+    def _restore_ranks_process(res: Optional[str], restore_ranks: str) -> str:
         """
         Get fault ranks process.
         :param res: configmap content
@@ -159,44 +124,45 @@ class FaultRanksDLManager(FaultRanksManager):
         run_log.info(f"Fault ranks is {restore_ranks}, type is {type(restore_ranks)}")
         return restore_ranks
 
-    def _clear_ecc_ranks(self, res: Optional[str], clear_ecc_ranks: str) -> str:
+    @staticmethod
+    def _fault_ranks_process(res: Optional[str], fault_ranks: str) -> str:
         """
         Get fault ranks process.
         :param res: configmap content
         :param fault_ranks: fault rank string
         :return: processed fault rank string
         """
+        res = res.replace("null", "[]")
         if not StringValidator(res).is_valid():
             run_log.error("The content of the fault config file is invalid.")
-            return clear_ecc_ranks
+            return fault_ranks
 
-        if not MapValidator(literal_eval(res), inclusive_keys=["ClearEccRankIds"]).is_valid():
-            run_log.error("The content of the fault config file has not key(ClearEccRankIds)")
-            return clear_ecc_ranks
+        if not MapValidator(literal_eval(res), inclusive_keys=["FaultRankIds"]).is_valid():
+            run_log.error("The content of the fault config file has not key(FaultRankIds)")
+            return fault_ranks
 
-        clear_ecc_ranks_content = str(literal_eval(res)["ClearEccRankIds"])
-
-        if not StringValidator(clear_ecc_ranks_content,
+        record_fault_rank_list_content = str(literal_eval(res)["FaultRankIds"])
+        if not StringValidator(record_fault_rank_list_content,
                                max_len=MAX_RANK_STRING_LENGTH).check_string_length().check().is_valid():
-            run_log.error("The content of clear ecc rank exceed the max string length.")
-            return clear_ecc_ranks
+            run_log.error("The content of fault rank exceed the max string length.")
+            return fault_ranks
 
-        record_clear_ecc_ranks_list = literal_eval(clear_ecc_ranks_content)
-        if not ClassValidator(record_clear_ecc_ranks_list, collections.Iterable) \
+        record_fault_rank_list = literal_eval(record_fault_rank_list_content)
+        if not ClassValidator(record_fault_rank_list, collections.Iterable) \
                 .check_isinstance() \
                 .check().is_valid():
-            run_log.error("The value of the key(ClearEccRankIds) is not list")
-            return clear_ecc_ranks
+            run_log.error("The value of the key(FaultRankIds) is not list")
+            return fault_ranks
 
-        clear_ecc_ranks_list = []
-        for ele in record_clear_ecc_ranks_list:
+        clear_fault_rank_list = []
+        for ele in record_fault_rank_list:
             if ele.isdigit() and RankSizeValidator(literal_eval(ele)).check_rank_size_valid().check().is_valid():
-                clear_ecc_ranks_list.append(ele)
+                clear_fault_rank_list.append(ele)
 
-        res_config_map_clear_ecc_ranks = ",".join(clear_ecc_ranks_list)
-        clear_ecc_ranks += res_config_map_clear_ecc_ranks
-        run_log.info(f"Fault ranks is {clear_ecc_ranks}, type is {type(clear_ecc_ranks)}")
-        return clear_ecc_ranks
+        res_config_map_fault_ranks = ",".join(clear_fault_rank_list)
+        fault_ranks += res_config_map_fault_ranks
+        run_log.info(f"Fault ranks is {fault_ranks}, type is {type(fault_ranks)}")
+        return fault_ranks
 
     def get_fault_ranks(self, ckpt_local_path: Optional[str] = None) -> str:
         """
@@ -204,9 +170,8 @@ class FaultRanksDLManager(FaultRanksManager):
         :param ckpt_local_path: default is None for DL sutiation
         :return: fault ranks
         """
-
+        print("Start query fault ranks")
         run_log.info("Start query fault ranks.")
-
         fault_npu_file_path = os.path.join(self.fault_config_path, constants.FAULT_NPU_FILE)
         if not self.check_input_file(fault_npu_file_path):
             run_log.error("Fault npu file path is invalid or check code file path is invalid")
@@ -248,29 +213,27 @@ class FaultRanksDLManager(FaultRanksManager):
 
         return restore_ranks
 
-    def get_clear_ecc_ranks(self, ckpt_local_path: Optional[str] = None) -> str:
-        """
-        Get fault ranks in training job when exception happens.
-        :param ckpt_local_path: default is None for DL sutiation
-        :return: fault ranks
-        """
-        run_log.info("Start query clear ecc ranks.")
+    def clear_fault_ranks(self):
+        run_log.info("Start clear fault ranks.")
 
         fault_npu_file_path = os.path.join(self.fault_config_path, constants.FAULT_NPU_FILE)
         if not self.check_input_file(fault_npu_file_path):
-            run_log.error("fault npu file path is invalid or check code file path is invalid")
-            return ""
-
-        ecc_ranks = ""
+            run_log.error("Fault npu file path is invalid or check code file path is invalid")
+            return
         try:
             with open(fault_npu_file_path, "r", encoding='utf-8') as fault_config_out:
-                ecc_ranks = self._clear_ecc_ranks(fault_config_out.read(MAX_SIZE), "")
+                fault_map = literal_eval(fault_config_out.read(MAX_SIZE))
+                if isinstance(fault_map, dict):
+                    fault_map["RestoreRankIds"] = ""
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+            modes = stat.S_IWUSR | stat.S_IRUSR
+            with os.fdopen(os.open(fault_npu_file_path, flags, modes), "w", encoding='utf-8') as fault_config_out:
+                fault_config_out.write(str(fault_map))
         except OSError:
             run_log.error(f"Load fault config file failed, OSError raised")
         finally:
             run_log.info("Finish the operation for querying fault ranks")
 
-        return ecc_ranks
 
 class FaultRanksMAManager(FaultRanksManager):
     @staticmethod
