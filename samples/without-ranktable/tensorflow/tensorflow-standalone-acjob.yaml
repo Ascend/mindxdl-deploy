@@ -22,13 +22,14 @@ spec:
             accelerator-type: module
           containers:
           - name: ascend # do not modify
-            image: tensorflow-test:latest
+            image: tensorflow-test:latest   # training framework image， which can be modified
             imagePullPolicy: IfNotPresent
-            command:
+            command:                        # training command, which can be modified
               - /bin/bash
               - -c
               - cd /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet
-              - bash train_start.sh /job/code/ResNet50_for_Tensorflow_1.15_code/ /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet/output/ official/r1/resnet/imagenet_main.py --batch-size=32 --data_dir=/job/data/resnet50/imagenet_TF
+              - chmod +x train_start.sh
+              - bash train_start.sh /job/code/ResNet50_for_Tensorflow_1.15_code/ /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet/output/ official/r1/resnet/imagenet_main.py --batch-size=32 --data_dir=/job/data/resnet50/imagenet_TF/ --hooks=ExamplesPerSecondHook
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify

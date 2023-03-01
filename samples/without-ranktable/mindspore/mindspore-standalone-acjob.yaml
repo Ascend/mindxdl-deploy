@@ -22,14 +22,15 @@ spec:
             accelerator-type: module
           containers:
           - name: ascend # do not modify
-            image: mindspore-test:latest
+            image: mindspore-test:latest       # training framework image， which can be modified
             imagePullPolicy: IfNotPresent
-            command:
+            command:                           # training command, which can be modified
               - /bin/bash
               - -c
-              - cd /job/code/Operator_ResNet50_for_MindSpre_2.0_code/scripts; bash train_start.sh /job/data/resnet50/imagenet/train /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
+              - cd /job/code/Operator_ResNet50_for_MindSpre_2.0_code/;
+              - python train.py --data_path=/job/data/resnet50/imagenet/train --device_target=Ascend --config_path=/job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml --output_path './output' 2>&1 && tee worker_$i.log
             env:
-              - name: GLOG_V
+              - name: GLOG_v                # mindspore log level
                 value: 1
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user

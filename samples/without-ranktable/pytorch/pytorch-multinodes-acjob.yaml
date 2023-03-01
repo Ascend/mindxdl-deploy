@@ -22,15 +22,13 @@ spec:
             accelerator-type: module
           containers:
           - name: ascend # do not modify
-            image: pytorch-test:latest
+            image: pytorch-test:latest         # trainning framework image， which can be modified
             imagePullPolicy: IfNotPresent
-            command:
+            command:                           # training command, which can be modified
               - /bin/bash
               - -c
-              - train_start.sh /job/code/ResNet50_for_Pytorch_1.8_code /job/code/ResNet50_for_Pytorch_1.8_code/output/logs
-            env:
-              - name: GLOG_V
-                value: "1"
+              - chmod +x train_start.sh
+              - bash train_start.sh /job/code/ResNet50_for_Pytorch_1.8_code /job/code/ResNet50_for_Pytorch_1.8_code/output/logs --data=/job/data/imagenet_full --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --multiprocessing-distributed --benchmark=0 --device='npu' --epoch=90 --batch-size=4096
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
@@ -89,13 +87,14 @@ spec:
             accelerator-type: module
           containers:
           - name: ascend # do not modify
-            image: ubuntu:18.04
+            image: pytorch-test:latest                # trainning framework image， which can be modified
             imagePullPolicy: IfNotPresent
-            command:
+            command:                                  # training command, which can be modified
               - /bin/bash
               - -c
               - cd /job/code/Operator_ResNet50_for_Pytorch_1.8_code/scripts
-              - bash train_start.sh /job/code/ResNet50_for_Pytorch_1.8_code /job/code/ResNet50_for_Pytorch_1.8_code/output/logs
+              - chmod +x train_start.sh
+              - bash train_start.sh /job/code/ResNet50_for_Pytorch_1.8_code /job/code/ResNet50_for_Pytorch_1.8_code/output/logs --data=/job/data/imagenet_full --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --multiprocessing-distributed --benchmark=0 --device='npu' --epoch=90 --batch-size=4096
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
