@@ -1,18 +1,18 @@
 apiVersion: mindxdl.gitee.com/v1
 kind: AscendJob
 metadata:
-  name: default-test-pytorch
+  name: default-test-mindspore
   labels:
-    framework: pytorch
+    framework: mindspore
 spec:
-  schedulerName: volcano   # work when enableGangScheduling is true
+  schedulerName: volcano    # work when enableGangScheduling is true
   runPolicy:
-    schedulingPolicy:      # work when enableGangScheduling is true
-      minAvailable: 2
+    schedulingPolicy:
+      minAvailable: 3       # work when enableGangScheduling is true
       queue: default
   successPolicy: AllWorkers
   replicaSpecs:
-    Master:
+    Scheduler:
       replicas: 1
       restartPolicy: Never
       template:
@@ -22,23 +22,20 @@ spec:
             accelerator-type: module
           containers:
           - name: ascend # do not modify
-            image: pytorch-test:latest
+            image: mindspore-test:latest       # training framework image， which can be modified
             imagePullPolicy: IfNotPresent
-            command:
+            command:                           # training command, which can be modified
               - /bin/bash
               - -c
-              - train_start.sh /job/code/ResNet50_for_Pytorch_1.8_code /job/code/ResNet50_for_Pytorch_1.8_code/output/logs
+              - cd /job/code/Operator_ResNet50_for_MindSpre_2.0_code/scripts;
+              - chmod +x train_start.sh
+              - bash train_start.sh /job/data/resnet50/imagenet/train /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
             env:
-              - name: GLOG_V
+              - name: GLOG_v                # mindspore log level
                 value: "1"
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
-            resources:
-              limits:
-                huawei.com/Ascend910: 8
-              requests:
-                huawei.com/Ascend910: 8
             volumeMounts:
             - name: code
               mountPath: /job/code
@@ -80,24 +77,24 @@ spec:
             hostPath:
               path: /etc/localtime
     Worker:
-      replicas: 1
+      replicas: 2
       restartPolicy: Never
       template:
         spec:
           nodeSelector:
             host-arch: huawei-arm
-            accelerator-type: module
           containers:
           - name: ascend # do not modify
-            image: ubuntu:18.04
+            image: mindspore-test:latest   # training framework image， which can be modified
             imagePullPolicy: IfNotPresent
-            command:
+            command:                       # training command, which can be modified
               - /bin/bash
               - -c
-              - cd /job/code/Operator_ResNet50_for_Pytorch_1.8_code/scripts
-              - bash train_start.sh /job/code/ResNet50_for_Pytorch_1.8_code /job/code/ResNet50_for_Pytorch_1.8_code/output/logs
+              - cd /job/code/Operator_ResNet50_for_MindSpre_2.0_code/scripts;
+              - chmod +x train_start.sh
+              - bash train_start.sh /job/data/resnet50/imagenet/train /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
             env:
-              - name: GLOG_V
+              - name: GLOG_v                # mindspore log level
                 value: 1
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user

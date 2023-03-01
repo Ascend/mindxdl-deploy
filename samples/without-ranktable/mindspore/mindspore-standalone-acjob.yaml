@@ -1,18 +1,18 @@
 apiVersion: mindxdl.gitee.com/v1
 kind: AscendJob
 metadata:
-  name: default-test-tensorflow
+  name: default-test-mindspore
   labels:
-    framework: tensorflow
+    framework: mindspore
 spec:
-  schedulerName: volcano        # work when enableGangScheduling is true
+  schedulerName: volcano    # work when enableGangScheduling is true
   runPolicy:
-    schedulingPolicy:           # work when enableGangScheduling is true
+    schedulingPolicy:       # work when enableGangScheduling is true
       minAvailable: 1
       queue: default
   successPolicy: AllWorkers
   replicaSpecs:
-    Chief:
+    Worker:
       replicas: 1
       restartPolicy: Never
       template:
@@ -22,16 +22,16 @@ spec:
             accelerator-type: module
           containers:
           - name: ascend # do not modify
-            image: tensorflow-test:latest
+            image: mindspore-test:latest       # training framework image， which can be modified
             imagePullPolicy: IfNotPresent
-            command:
+            command:                           # training command, which can be modified
               - /bin/bash
               - -c
-              - cd /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet
-              - bash train_start.sh /job/code/ResNet50_for_Tensorflow_1.15_code/ /job/code/Operator_ResNet50_for_Tensorflow_1.15_code/official/r1/resnet/output/ official/r1/resnet/imagenet_main.py --batch-size=32 --data_dir=/job/data/resnet50/imagenet_TF
+              - cd /job/code/Operator_ResNet50_for_MindSpre_2.0_code/;
+              - python train.py --data_path=/job/data/resnet50/imagenet/train --device_target=Ascend --config_path=/job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml --output_path './output' 2>&1 && tee worker_$i.log
             env:
-              - name: GLOG_V
-                value: "1"
+              - name: GLOG_v                # mindspore log level
+                value: 1
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
@@ -51,6 +51,8 @@ spec:
               mountPath: /usr/local/Ascend/driver
             - name: ascend-add-ons
               mountPath: /usr/local/Ascend/add-ons
+            - name: dshm
+              mountPath: /dev/shm
             - name: localtime
               mountPath: /etc/localtime
           volumes:
@@ -72,7 +74,11 @@ spec:
           - name: ascend-add-ons
             hostPath:
               path: /usr/local/Ascend/add-ons
+          - name: dshm
+            emptyDir:
+              medium: Memory
           - name: localtime
             hostPath:
               path: /etc/localtime
+
 
