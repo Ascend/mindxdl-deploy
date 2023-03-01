@@ -96,9 +96,6 @@ spec:
               - -c
               - cd /job/code/Operator_ResNet50_for_Pytorch_1.8_code/scripts
               - bash train_start.sh /job/code/ResNet50_for_Pytorch_1.8_code /job/code/ResNet50_for_Pytorch_1.8_code/output/logs
-            env:
-              - name: GLOG_V
-                value: 1
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
