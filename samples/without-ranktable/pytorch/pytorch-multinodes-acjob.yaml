@@ -17,6 +17,16 @@ spec:
       restartPolicy: Never
       template:
         spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: job-name
+                        operator: In
+                        values:
+                          - default-test-pytorch
+                  topologyKey: kubernetes.io/hostname
           nodeSelector:
             host-arch: huawei-arm
             accelerator-type: module
@@ -82,6 +92,16 @@ spec:
       restartPolicy: Never
       template:
         spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: job-name
+                        operator: In
+                        values:
+                          - default-test-pytorch
+                  topologyKey: kubernetes.io/hostname
           nodeSelector:
             host-arch: huawei-arm
             accelerator-type: module

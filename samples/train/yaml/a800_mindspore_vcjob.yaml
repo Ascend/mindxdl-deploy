@@ -40,6 +40,16 @@ spec:
           app: mindspore
           ring-controller.atlas: ascend-910  # The value must be the same as the label in ConfigMap and cannot be changed.
       spec:
+        affinity:
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: volcano.sh/job-name
+                      operator: In
+                      values:
+                        - mindx-dls-test
+                topologyKey: kubernetes.io/hostname
         containers:
         - image: ms-arm:b120               # Training framework image, which can be modified.
           imagePullPolicy: IfNotPresent
