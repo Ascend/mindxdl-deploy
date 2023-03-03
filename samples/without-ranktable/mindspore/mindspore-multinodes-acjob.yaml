@@ -81,6 +81,20 @@ spec:
       restartPolicy: Never
       template:
         spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: job-name
+                        operator: In
+                        values:
+                          - default-test-mindspore
+                      - key: replica-type
+                        operator: In
+                        values:
+                          - worker
+                  topologyKey: kubernetes.io/hostname
           nodeSelector:
             host-arch: huawei-arm
           containers:
