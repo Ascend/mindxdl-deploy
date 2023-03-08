@@ -27,7 +27,7 @@ spec:
             command:                           # training command, which can be modified
               - /bin/bash
               - -c
-              - cd /job/code/Operator_ResNet50_for_MindSpre_2.0_code/scripts;
+              - cd /job/code/ResNet50_for_MindSpore_2.0_code/scripts;
               - chmod +x train_start.sh
               - bash train_start.sh /job/data/resnet50/imagenet/train /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
             env:
@@ -104,7 +104,7 @@ spec:
             command:                       # training command, which can be modified
               - /bin/bash
               - -c
-              - cd /job/code/Operator_ResNet50_for_MindSpre_2.0_code/scripts;
+              - cd /job/code/ResNet50_for_MindSpore_2.0_code/scripts;
               - chmod +x train_start.sh
               - bash train_start.sh /job/data/resnet50/imagenet/train /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend
             env:
