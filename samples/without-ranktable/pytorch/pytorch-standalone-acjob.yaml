@@ -27,9 +27,7 @@ spec:
             command:                        # training command, which can be modified
               - /bin/bash
               - -c
-              - cd /job/code/ResNet50_for_Pytorch_1.8_code/scripts
-              - chmod +x train_start.sh
-              - bash train_start.sh /job/code/ResNet50_for_Pytorch_1.8_code /job/code/ResNet50_for_Pytorch_1.8_code/output/logs pytorch_resnet50_apex.py --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1   --epoch=90 --batch-size=4096
+            args: ["cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code /job/code/ResNet50_for_Pytorch_1.8_code/output/logs pytorch_resnet50_apex.py --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1   --epoch=90 --batch-size=512"]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify

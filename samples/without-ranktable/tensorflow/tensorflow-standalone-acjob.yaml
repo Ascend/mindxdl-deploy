@@ -27,9 +27,7 @@ spec:
             command:                        # training command, which can be modified
               - /bin/bash
               - -c
-              - cd /job/code/ResNet50_for_TensorFlow_1.15_code/official/r1/resnet
-              - chmod +x train_start.sh
-              - bash train_start.sh /job/code/ResNet50_for_TensorFlow_1.15_code/ /job/code/ResNet50_for_TensorFlow_1.15_code/official/r1/resnet/output/ official/r1/resnet/imagenet_main.py --batch-size=32 --data_dir=/job/data/resnet50/imagenet_TF/ --hooks=ExamplesPerSecondHook
+            args: ["cd /job/code/ResNet50_for_TensorFlow_1.15_code/official/r1/resnet; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_TensorFlow_1.15_code/ /job/code/ResNet50_for_TensorFlow_1.15_code/official/r1/resnet/output/ official/r1/resnet/imagenet_main.py --batch-size=32 --data_dir=/job/data/resnet50/imagenet_TF/ --hooks=ExamplesPerSecondHook"]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
