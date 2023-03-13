@@ -28,9 +28,6 @@ spec:
               - /bin/bash
               - -c
             args: ["cd /job/code/ResNet50_for_MindSpore_2.0_code/; python train.py --data_path=/job/data/resnet50/imagenet/train --device_target=Ascend --config_path=/job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml --output_path './output' 2>&1 && tee worker_0.log"]
-            env:
-              - name: GLOG_v                # mindspore log level
-                value: "1"
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
