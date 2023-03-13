@@ -28,9 +28,6 @@ spec:
               - /bin/bash
               - -c
             args: ["cd /job/code/ResNet50_for_MindSpore_2.0_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/data/resnet50/imagenet/train /job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml Ascend "]
-            env:
-              - name: GLOG_v                # mindspore log level
-                value: "1"
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
