@@ -140,6 +140,13 @@ export JOB_ID=123456789
 
 # 单卡训练场景
 if [[ "${MS_ROLE}" -eq "" ]]; then
+  rm -rf ${boot_file_path}/scripts/worker
+  mkdir ${boot_file_path}/scripts/worker
+  cp ${boot_file_path}/config/*.yaml ${boot_file_path}/scripts/worker
+  cp ${boot_file_path}/*.py ${boot_file_path}/scripts/worker
+  cp ${boot_file_path}/scripts/*.sh ${boot_file_path}/scripts/worker
+  cp -r ${boot_file_path}/src ${boot_file_path}/scripts/worker
+  cd ${boot_file_path}/scripts/worker || exit
   ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${log_url}
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
