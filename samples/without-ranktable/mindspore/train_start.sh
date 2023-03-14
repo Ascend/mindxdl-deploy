@@ -126,22 +126,6 @@ logger "Training start at ${start_time}"
 
 sleep 1
 
-# 获取环境变量中的device_count字段
-device_count=${LOCAL_WORLD_SIZE}
-if [[ "${device_count}" -eq 0 ]]; then
-  echo "device count is 0, train job failed." | tee -a hccl.log
-  chmod 440 ${log_url}
-  exit 1
-fi
-
-# 获取环境变量中的server_count字段
-server_count=`expr ${WORLD_SIZE} / ${LOCAL_WORLD_SIZE}`
-if [[ "${server_count}" == "" ]]; then
-  echo "server count is 0, train job failed." | tee -a hccl.log
-  chmod 440 ${log_url}
-  exit 1
-fi
-
 function check_return_code() {
     if [[ $? -ne 0 ]]; then
       logger "running job failed." | tee ${log_url}
