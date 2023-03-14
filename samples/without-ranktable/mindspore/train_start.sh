@@ -108,7 +108,6 @@ function param_check() {
     echo "log url is a link!"
     exit 1
   fi
-
 }
 
 boot_file_path=${app_url}
@@ -147,11 +146,12 @@ if [[ "${MS_ROLE}" == "" ]]; then
   cp ${boot_file_path}/scripts/*.sh ${boot_file_path}/scripts/worker
   cp -r ${boot_file_path}/src ${boot_file_path}/scripts/worker
   cd ${boot_file_path}/scripts/worker || exit
-  run_file_path=${boot_file_path}/scripts/worker
-  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --device_target=Ascend 2>&1 && tee ${log_url}
+  run_file_path=${boot_file_path}/scripts/worker/
+  export DEVICE_ID=0
+  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --device_target=Ascend 2>&1 && tee ${log_url}/worker.log
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --device_target=Ascend 2>&1 && tee ${log_url}
+    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --device_target=Ascend 2>&1 && tee ${log_url}/worker.log
     check_return_code
   fi
   chmod 440 ${log_url}
@@ -168,7 +168,8 @@ if [[ "${MS_ROLE}" == "MS_SCHED" ]]; then
   cp ${boot_file_path}/scripts/*.sh ${boot_file_path}/scripts/sched
   cp -r ${boot_file_path}/src ${boot_file_path}/scripts/sched
   cd ${boot_file_path}/scripts/sched || exit
-  run_file_path=${boot_file_path}/scripts/sched
+  run_file_path=${boot_file_path}/scripts/sched/
+  export DEVICE_ID=0
   ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend  && tee ${log_url}/sched.log
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
@@ -191,14 +192,14 @@ if [[ "${MS_ROLE}" == "MS_WORKER" ]]; then
      cp ${boot_file_path}/scripts/*.sh ${boot_file_path}/scripts/worker_$i
      cp -r ${boot_file_path}/src ${boot_file_path}/scripts/worker_$i
      cd ${boot_file_path}/scripts/worker_$i || exit
-	 run_file_path=${boot_file_path}/scripts/worker_$i
-	 if [[ "${i}" -eq "${start_index}" ]]; then
+     run_file_path=${boot_file_path}/scripts/worker_$i/
+     if [[ "${i}" -eq "${start_index}" ]]; then
         ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend  && tee ${log_url}/worker_$i.log
-	 else 
-	    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend   &> ${log_url}/worker_$i.log &
-	 fi
+     else 
+        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend   &> ${log_url}/worker_$i.log &
+     fi
      check_return_code
-	 cd ..
+     cd ..
   done
 fi
 

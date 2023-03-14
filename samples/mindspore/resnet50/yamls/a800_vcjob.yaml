@@ -30,12 +30,13 @@ metadata:
   namespace: vcjob                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
   labels:
     ring-controller.atlas: ascend-910   # The HCCL-Controller distinguishes Ascend 910 and other processors based on this label.
+    fault-scheduling: "grace"           # Switch for enabling the task rescheduling feature
 spec:
   minAvailable: 1                       # The value of minAvailable is 1 in a single-node scenario and N in an N-node distributed scenario.
   schedulerName: volcano                # Use the Volcano scheduler to schedule jobs.
   policies:
     - event: PodEvicted
-      action: RestartJob
+      action: RestartJob                 
   plugins:
     ssh: []
     env: []
