@@ -147,10 +147,11 @@ if [[ "${MS_ROLE}" == "" ]]; then
   cp ${boot_file_path}/scripts/*.sh ${boot_file_path}/scripts/worker
   cp -r ${boot_file_path}/src ${boot_file_path}/scripts/worker
   cd ${boot_file_path}/scripts/worker || exit
-  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --device_target=Ascend 2>&1 && tee ${log_url}
+  run_file_path=${boot_file_path}/scripts/worker
+  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --device_target=Ascend 2>&1 && tee ${log_url}
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --device_target=Ascend 2>&1 && tee ${log_url}
+    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --device_target=Ascend 2>&1 && tee ${log_url}
     check_return_code
   fi
   chmod 440 ${log_url}
