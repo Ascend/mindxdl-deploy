@@ -159,7 +159,7 @@ set_env
 export JOB_ID=123456789
 
 # 单卡训练场景
-if [[ [ "${device_count}" -eq 1 ] && [ "${server_count}" -eq 1 ] ]]; then
+if [ ${device_count} == 1 -a ${server_count} == 1 ]; then
   server_id=0
   ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${log_url}
   check_return_code
