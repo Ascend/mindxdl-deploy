@@ -126,20 +126,24 @@ logger "Training start at ${start_time}"
 
 sleep 1
 
-# 获取环境变量中的device_count字段
-device_count=${LOCAL_WORLD_SIZE}
-if [[ "${device_count}" -eq 0 ]]; then
-  echo "device count is 0, train job failed." | tee -a hccl.log
-  chmod 440 ${log_url}
-  exit 1
-fi
-
-# 获取环境变量中的server_count字段
-server_count=`expr ${WORLD_SIZE} / ${LOCAL_WORLD_SIZE}`
-if [[ "${server_count}" == "" ]]; then
-  echo "server count is 0, train job failed." | tee -a hccl.log
-  chmod 440 ${log_url}
-  exit 1
+if [[ "${LOCAL_WORLD_SIZE}" == "" ]]; then
+    device_count=1
+    server_count=1
+else 
+    # 获取环境变量中的device_count字段
+    device_count=${LOCAL_WORLD_SIZE}
+    if [[ "${device_count}" -eq 0 ]]; then
+      echo "device count is 0, train job failed." | tee -a hccl.log
+      chmod 440 ${log_url}
+      exit 1
+    fi
+    # 获取环境变量中的server_count字段
+    server_count=`expr ${WORLD_SIZE} / ${LOCAL_WORLD_SIZE}`
+    if [[ "${server_count}" == "" ]]; then
+      echo "server count is 0, train job failed." | tee -a hccl.log
+      chmod 440 ${log_url}
+      exit 1
+    fi
 fi
 
 function check_return_code() {
@@ -155,18 +159,16 @@ set_env
 export JOB_ID=123456789
 
 # 单卡训练场景
-if [[ "${device_count}" -eq 1 ]]; then
+if [[ "${device_count}" -eq 1 ] && [ "${server_count}" -eq 1 ]]; then
   server_id=0
-  if [ "${device_count}" -eq 1 ]; then
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${log_url}
+  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${log_url}
+  check_return_code
+  if [[ $@ =~ need_freeze ]]; then
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${log_url}
     check_return_code
-    if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${log_url}
-      check_return_code
-    fi
-    chmod 440 ${log_url}
-    exit 0
   fi
+  chmod 440 ${log_url}
+  exit 0
 fi
 
 # 分布式场景
