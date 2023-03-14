@@ -139,7 +139,7 @@ set_env
 export JOB_ID=123456789
 
 # 单卡训练场景
-if [[ "${MS_ROLE}" -eq "" ]]; then
+if [[ "${MS_ROLE}" == "" ]]; then
   rm -rf ${boot_file_path}/scripts/worker
   mkdir ${boot_file_path}/scripts/worker
   cp ${boot_file_path}/config/*.yaml ${boot_file_path}/scripts/worker
