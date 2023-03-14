@@ -159,6 +159,7 @@ fi
 
 # 分布式场景Scheduler
 if [[ "${MS_ROLE}" == "MS_SCHED" ]]; then
+  echo "start scheduler"
   rm -rf ${boot_file_path}/scripts/sched
   mkdir ${boot_file_path}/scripts/sched
   cp ${boot_file_path}/config/*.yaml ${boot_file_path}/scripts/sched
@@ -166,11 +167,11 @@ if [[ "${MS_ROLE}" == "MS_SCHED" ]]; then
   cp ${boot_file_path}/scripts/*.sh ${boot_file_path}/scripts/sched
   cp -r ${boot_file_path}/src ${boot_file_path}/scripts/sched
   cd ${boot_file_path}/scripts/sched || exit
-  logger "server id is: ""${server_id}"
-  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend  && tee ${log_url}/sched.log
+  run_file_path=${boot_file_path}/scripts/sched
+  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend  && tee ${log_url}/sched.log
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend && tee ${log_url}/sched.log
+    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend && tee ${log_url}/sched.log
     check_return_code
   fi
 fi
@@ -189,10 +190,11 @@ if [[ "${MS_ROLE}" == "MS_WORKER" ]]; then
      cp ${boot_file_path}/scripts/*.sh ${boot_file_path}/scripts/worker_$i
      cp -r ${boot_file_path}/src ${boot_file_path}/scripts/worker_$i
      cd ${boot_file_path}/scripts/worker_$i || exit
+	 run_file_path=${boot_file_path}/scripts/worker_$i
 	 if [[ "${i}" -eq "${start_index}" ]]; then
-        ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend  && tee ${log_url}/worker_$i.log
+        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend  && tee ${log_url}/worker_$i.log
 	 else 
-	    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend   &> ${log_url}/worker_$i.log &
+	    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend   &> ${log_url}/worker_$i.log &
 	 fi
      check_return_code
 	 cd ..
