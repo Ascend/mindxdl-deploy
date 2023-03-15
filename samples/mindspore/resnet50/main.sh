@@ -50,15 +50,15 @@ if [ $# == 6 ]; then
     export SERVER_ID=$4
     device_each_server=$((DEVICE_NUM / SERVER_NUM))
     rank_start=$((${device_each_server} * SERVER_ID))
-
+	
     DATA_PATH=$5
     CONFIG_PATH=$6
-	device_start=${ASCEND_VISIBLE_DEVICES:0:1}
+
     # 先启动后台任务，最后留一个前台任务查看日志输出
     for((i=$((${device_each_server}-1)); i>=0; i--))
     do
         rankid=$((rank_start + i))
-        export DEVICE_ID=$((device_start + i))
+        export DEVICE_ID=${i}
         export RANK_ID=${rankid}
         rm -rf ${ROOT_PATH}/train_parallel${rankid}
         mkdir ${ROOT_PATH}/train_parallel${rankid}
