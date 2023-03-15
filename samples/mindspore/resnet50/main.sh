@@ -50,7 +50,7 @@ if [ $# == 6 ]; then
     export SERVER_ID=$4
     device_each_server=$((DEVICE_NUM / SERVER_NUM))
     rank_start=$((${device_each_server} * SERVER_ID))
-	
+
     DATA_PATH=$5
     CONFIG_PATH=$6
 

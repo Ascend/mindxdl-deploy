@@ -135,7 +135,6 @@ function check_return_code() {
 DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
 # set training env
 set_env
-export JOB_ID=123456789
 
 # 单卡训练场景
 if [[ "${MS_ROLE}" == "" ]]; then
