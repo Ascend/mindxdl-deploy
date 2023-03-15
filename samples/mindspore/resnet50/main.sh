@@ -53,7 +53,7 @@ if [ $# == 6 ]; then
 
     DATA_PATH=$5
     CONFIG_PATH=$6
-	device_start=${ASCEND_VISIBLE_DEVICES: 1}
+	device_start=${ASCEND_VISIBLE_DEVICES:0:1}
     # 先启动后台任务，最后留一个前台任务查看日志输出
     for((i=$((${device_each_server}-1)); i>=0; i--))
     do
