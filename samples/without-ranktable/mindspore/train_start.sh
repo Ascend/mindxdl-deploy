@@ -1,113 +1,205 @@
 #!/bin/bash
 # default start shell path
-
-CURPATH="$(dirname "$0")"
-. ${CURPATH}/cache_util.sh
-if [ $# != 3 ] && [ $# != 4] && [ $# != 5 ]
-then
-    echo "Usage: bash train_start.sh [DATASET_PATH] [CONFIG_PATH] [DEVICE_TARGET] [PRETRAINED_CKPT_PATH](optional)"
-    echo "       bash train_start.sh [DATASET_PATH] [CONFIG_PATH] [DEVICE_TARGET] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)"
+DLS_USER_HOME_DIR="$(
+  cd "$(dirname "$0")" || exit 1
+  if [[ $? -eq 1 ]]; then
     exit 1
+  fi
+  pwd -P
+)"
+cd "$DLS_USER_HOME_DIR" || exit 1
+
+# set pythonpath(especially for tensorflow)
+export PYTHONPATH="$DLS_USER_JOB_DIR:$PYTHONPATH"
+export PYTHONUNBUFFERED=1
+
+function dls_get_executor {
+    local filename="$(basename -- "$1")"
+    local extension="${filename##*.}"
+    extension="$(echo "$extension" | tr '[:upper:]' '[:lower:]')"
+    case "$extension" in
+    py|pyc|pyw|pyo|pyd)
+        which python
+        ;;
+    sh)
+        which bash
+        ;;
+    *)
+        ;;
+    esac
+}
+
+function set_env {
+    local install_path=/usr/local/Ascend
+    if [ -d ${install_path}/ascend-toolkit/latest ]; then
+      # use toolkit env
+      source ${install_path}/ascend-toolkit/set_env.sh
+    elif [ -d ${install_path}/nnae/latest ]; then
+      # use nnae env
+      source ${install_path}/nnae/set_env.sh
+    fi
+
+    # use tfplugin env
+    if [ -d ${install_path}/tfplugin/latest ]; then
+      source ${install_path}/tfplugin/set_env.sh
+    fi
+}
+
+function logger {
+    echo "[$(date +%Y%m%d-%H:%M:%S)] [MindXDL Service Log]$*"
+}
+
+echo $@ |grep -q -E '^[ 0-9a-zA-Z,./:_=-]*$'
+ret=$?
+if [ "${ret}" -ne 0 ]; then
+  echo "params error!"
+  exit 1
 fi
 
-get_real_path(){
-  if [ "${1:0:1}" == "/" ]; then
-    echo "$1"
-  else
-    echo "$(realpath -m $PWD/$1)"
+# training job input parameters
+code_real_dir=`readlink -f $1`
+if [ -d "${code_real_dir}" ]; then
+    app_url="${code_real_dir}/"
+fi
+log_real_path=`readlink -f $2`
+if [ -f "${log_real_path}" ]; then
+    log_url="${log_real_path}"
+else
+    touch ${log_real_path}
+    log_url="${log_real_path}"
+fi
+boot_file="$3"
+shift 3
+
+function show_help() {
+  echo "Usage train_start.sh /job/code/resnet50 /tmp/log/training.log train.py"
+}
+
+function param_check() {
+  if [ -z "${app_url}" ]; then
+    echo "please input code dir"
+    show_help
+    exit 1
+  fi
+
+  if [ -L ${app_url} ]; then
+    echo "code dir is a link!"
+    exit 1
+  fi
+
+  if [ -z "${boot_file}" ]; then
+    echo "please input boot file"
+    show_help
+    exit 1
+  fi
+
+  if [ -L ${boot_file} ]; then
+    echo "boot file is a link!"
+    exit 1
+  fi
+
+  if [ -z "${log_url}" ]; then
+    echo "please input log url"
+    show_help
+    exit 1
+  fi
+
+  if [ -L ${log_url} ]; then
+    echo "log url is a link!"
+    exit 1
   fi
 }
 
-PATH1=$(get_real_path $1)
-CONFIG_PATH=$(get_real_path $2)
-DEVICE_TARGET=$3
-
-if [ $# == 4 ]
-then 
-    PATH2=$(get_real_path $4)
+boot_file_path=${app_url}
+params="$@"
+train_param=${params%%need_freeze*}
+if [[ $@ =~ need_freeze ]]; then
+    freeze_cmd=${params##*need_freeze }
 fi
 
-if [ $# == 5 ]
-then
-  RUN_EVAL=$4
-  EVAL_DATASET_PATH=$(get_real_path $5)
-fi
+param_check
+chmod 640 ${log_url}
 
-if [ ! -d $PATH1 ]
-then
-    echo "error: DATASET_PATH=$PATH1 is not a directory"
-    exit 1
-fi
+start_time=$(date +%Y-%m-%d-%H:%M:%S)
+logger "Training start at ${start_time}"
 
-if [ $# == 4 ] && [ ! -f $PATH2 ]
-then
-    echo "error: PRETRAINED_CKPT_PATH=$PATH2 is not a file"
-    exit 1
-fi
+sleep 1
 
-if [ "x${RUN_EVAL}" == "xTrue" ] && [ ! -d $EVAL_DATASET_PATH ]
-then
-    echo "error: EVAL_DATASET_PATH=$EVAL_DATASET_PATH is not a directory"
-    exit 1
-fi
-
-if [ "x${RUN_EVAL}" == "xTrue" ]
-then
-  bootup_cache_server
-  CACHE_SESSION_ID=$(generate_cache_session)
-fi
-
-if [ ${MS_ROLE} == "MS_SCHED" ]
-then
-    rm -rf ./sched
-    mkdir ./sched
-    cp ../config/*.yaml ./sched
-    cp ../*.py ./sched
-    cp ./*.sh ./sched
-    cp -r ../src ./sched
-    cd ./sched || exit
-    echo "start scheduler"
-    export DEVICE_ID=0
-    if [ $# == 3 ]
-    then 
-        python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output' 2>&1 && tee ./sched.log
+function check_return_code() {
+    if [[ $? -ne 0 ]]; then
+      logger "running job failed." | tee ${log_url}
+      exit 1
     fi
-    if [ $# == 4 ]
-    then
-        python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output' 2>&1 && tee sched.log 
-    fi
+}
+
+DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
+# set training env
+set_env
+
+# 单卡训练场景
+if [[ "${MS_ROLE}" == "" ]]; then
+  rm -rf ${boot_file_path}/scripts/worker
+  mkdir ${boot_file_path}/scripts/worker
+  cp ${boot_file_path}/config/*.yaml ${boot_file_path}/scripts/worker
+  cp ${boot_file_path}/*.py ${boot_file_path}/scripts/worker
+  cp ${boot_file_path}/scripts/*.sh ${boot_file_path}/scripts/worker
+  cp -r ${boot_file_path}/src ${boot_file_path}/scripts/worker
+  cd ${boot_file_path}/scripts/worker || exit
+  run_file_path=${boot_file_path}/scripts/worker/
+  export DEVICE_ID=0
+  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --device_target=Ascend --output_path './output' 2>&1 && tee ${log_url}/worker.log
+  check_return_code
+  if [[ $@ =~ need_freeze ]]; then
+    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --device_target=Ascend --output_path './output' 2>&1 && tee ${log_url}/worker.log
+    check_return_code
+  fi
+  chmod 440 ${log_url}
+  exit 0
 fi
 
-if [ ${MS_ROLE} == "MS_WORKER" ]
-then
-    echo "start worker"
-    start_index=`expr ${MS_NODE_RANK} \* ${MS_LOCAL_WORKER}`
-    end_index=`expr ${start_index} + ${MS_LOCAL_WORKER}`
-    for((i=((${end_index}-1));i>=${start_index};i--));
-    do
-       rm -rf ./worker_$i
-       mkdir ./worker_$i
-       cp ../config/*.yaml ./worker_$i
-       cp ../*.py ./worker_$i
-       cp ./*.sh ./worker_$i
-       cp -r ../src ./worker_$i
-       cd ./worker_$i || exit
-       if [ $# == 3 ]
-       then 
-         if [[ "${i}" -eq "${start_index}" ]]; then
-           python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output' 2>&1 && tee worker_$i.log  
-         else 
-           python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --output_path './output' &> worker_$i.log &		  
-         fi
-       fi
-       if [ $# == 4 ]
-       then
-         if [[ "${i}" -eq "${start_index}" ]]; then
-           python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output' 2>&1 && tee worker_$i.log 
-         else
-           python train.py --run_distribute=True --device_num=${MS_LOCAL_WORKER} --data_path=$PATH1 --parameter_server=False --device_target=$DEVICE_TARGET --config=$CONFIG_PATH --pre_trained=$PATH2 --output_path './output'  &> worker_$i.log & 
-         fi
-       fi
-       cd ..
-    done
+# 分布式场景Scheduler
+if [[ "${MS_ROLE}" == "MS_SCHED" ]]; then
+  echo "start scheduler"
+  rm -rf ${boot_file_path}/scripts/sched
+  mkdir ${boot_file_path}/scripts/sched
+  cp ${boot_file_path}/config/*.yaml ${boot_file_path}/scripts/sched
+  cp ${boot_file_path}/*.py ${boot_file_path}/scripts/sched
+  cp ${boot_file_path}/scripts/*.sh ${boot_file_path}/scripts/sched
+  cp -r ${boot_file_path}/src ${boot_file_path}/scripts/sched
+  cd ${boot_file_path}/scripts/sched || exit
+  run_file_path=${boot_file_path}/scripts/sched/
+  export DEVICE_ID=0
+  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path './output' && tee ${log_url}/sched.log
+  check_return_code
+  if [[ $@ =~ need_freeze ]]; then
+    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path './output' && tee ${log_url}/sched.log
+    check_return_code
+  fi
 fi
+
+# 分布式场景Worker
+if [[ "${MS_ROLE}" == "MS_WORKER" ]]; then
+  echo "start worker"
+  start_index=`expr ${MS_NODE_RANK} \* ${MS_LOCAL_WORKER}`
+  end_index=`expr ${start_index} + ${MS_LOCAL_WORKER}`
+  for((i=((${end_index}-1));i>=${start_index};i--));
+  do
+     rm -rf ${boot_file_path}/scripts/worker_$i
+     mkdir ${boot_file_path}/scripts/worker_$i
+     cp ${boot_file_path}/config/*.yaml ${boot_file_path}/scripts/worker_$i
+     cp ${boot_file_path}/*.py ${boot_file_path}/scripts/worker_$i
+     cp ${boot_file_path}/scripts/*.sh ${boot_file_path}/scripts/worker_$i
+     cp -r ${boot_file_path}/src ${boot_file_path}/scripts/worker_$i
+     cd ${boot_file_path}/scripts/worker_$i || exit
+     run_file_path=${boot_file_path}/scripts/worker_$i/
+     if [[ "${i}" -eq "${start_index}" ]]; then
+        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path './output' && tee ${log_url}/worker_$i.log
+     else 
+        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path './output' &> ${log_url}/worker_$i.log &
+     fi
+     check_return_code
+     cd ..
+  done
+fi
+
+chmod 440 ${log_url}
