@@ -36,7 +36,7 @@ spec:
   schedulerName: volcano                # Use the Volcano scheduler to schedule jobs.
   policies:
     - event: PodEvicted
-      action: RestartJob                 
+      action: RestartJob           
   plugins:
     ssh: []
     env: []
