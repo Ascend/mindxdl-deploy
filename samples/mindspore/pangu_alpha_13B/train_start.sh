@@ -17,6 +17,23 @@
 # hccl-controller组件生成的rank_table_file
 export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
 
+# 设置环境变量
+function set_env {
+    local install_path=/usr/local/Ascend
+    if [ -d ${install_path}/ascend-toolkit/latest ]; then
+      # use toolkit env
+      source ${install_path}/ascend-toolkit/set_env.sh
+    elif [ -d ${install_path}/nnae/latest ]; then
+      # use nnae env
+      source ${install_path}/nnae/set_env.sh
+    fi
+
+    # use tfplugin env
+    if [ -d ${install_path}/tfplugin/latest ]; then
+      source ${install_path}/tfplugin/set_env.sh
+    fi
+}
+
 # 解析rank_table_file
 function get_json_value()
 {
@@ -91,6 +108,9 @@ fi
 
 # 训练数据集路径，根据实际情况修改
 dataset="/job/data/train_data"
+
+# 设置训练环境变量
+set_env
 
 # 单节点训练场景
 if [[ "$server_count" == "1" ]]; then
