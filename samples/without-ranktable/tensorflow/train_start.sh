@@ -175,7 +175,7 @@ if [[ "${device_count}" -ge 1 ]]; then
   for ((i = $((${CM_LOCAL_WORKER} - 1)); i >= 0; i--)); do
     export DEVICE_INDEX=`expr ${rank_start} + ${i}`
     export ASCEND_DEVICE_ID=${i}
-    if [[ "${i}" -eq 0 ]]
+    if [[ "${i}" -eq 0 ]]; then
       ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --model_dir=${output_url}/models/device_${DEVICE_INDEX}/   2>&1 && tee ${output_url}/device_${DEVICE_INDEX}.log
       check_return_code
       if [[ $@ =~ need_freeze ]]; then
