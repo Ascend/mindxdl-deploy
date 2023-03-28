@@ -69,7 +69,7 @@ spec:
           - "/bin/bash"
           - "-c"
           # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
-          - "cd /job/code/ResNet50_for_MindSpore_1.9_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_MindSpore_1.9_code/ /job/output/logs train.py --net=resnet50 --dataset=imagenet2012 --run_distribute=True --device_num=8 --dataset_path=/job/data/imagenet/train"
+          - "cd /job/code/ResNet50_for_MindSpore_2.0.0-alpha_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_MindSpore_2.0.0-alpha_code/ /job/output/ train.py  --config_path=/job/code/ResNet50_for_MindSpore_2.0.0-alpha_code/config/resnet50_imagenet2012_config.yaml --output_path=/job/output --run_distribute=True --device_num=8 --dataset_path=/job/data/imagenet/train"
           #args: [ "while true; do sleep 30000; done;"  ]     # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                               # The command is 'kubectl exec -it -n {namespace} {podname} bash'
           resources:
@@ -101,7 +101,7 @@ spec:
         - name: code
           nfs:
             server: 127.0.0.1                         # IP address of the NFS server. In this example, the shared path is /data/atlas_dls/.
-            path: "/data/atlas_dls/code/"             # Configure the training script path.
+            path: "/data/atlas_dls/public/code/"             # Configure the training script path.
         - name: data
           nfs:
             server: 127.0.0.1
