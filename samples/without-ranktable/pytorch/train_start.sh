@@ -61,18 +61,18 @@ code_real_dir=`readlink -f $1`
 if [ -d "${code_real_dir}" ]; then
     app_url="${code_real_dir}/"
 fi
-log_real_path=`readlink -f $2`
-if [ -f "${log_real_path}" ]; then
-    log_url="${log_real_path}"
+output_real_path=`readlink -f $2`
+if [ -f "${output_real_path}" ]; then
+    output_url="${output_real_path}"
 else
-    touch ${log_real_path}
-    log_url="${log_real_path}"
+    touch ${output_real_path}
+    output_url="${output_real_path}"
 fi
 boot_file="$3"
 shift 3
 
 function show_help() {
-  echo "Usage train_start.sh /job/code/resnet50 /tmp/log/training.log train.py"
+  echo "Usage train_start.sh /job/code/resnet50 /tmp/output train.py"
 }
 
 function param_check() {
@@ -98,14 +98,14 @@ function param_check() {
     exit 1
   fi
 
-  if [ -z "${log_url}" ]; then
-    echo "please input log url"
+  if [ -z "${output_url}" ]; then
+    echo "please input output url"
     show_help
     exit 1
   fi
 
-  if [ -L ${log_url} ]; then
-    echo "log url is a link!"
+  if [ -L ${output_url} ]; then
+    echo "output url is a link!"
     exit 1
   fi
 
@@ -119,7 +119,7 @@ if [[ $@ =~ need_freeze ]]; then
 fi
 
 param_check
-chmod 640 ${log_url}
+chmod 640 ${output_url}
 
 start_time=$(date +%Y-%m-%d-%H:%M:%S)
 logger "Training start at ${start_time}"
@@ -134,21 +134,21 @@ else
     device_count=${LOCAL_WORLD_SIZE}
     if [[ "${device_count}" -eq 0 ]]; then
       echo "device count is 0, train job failed." | tee -a hccl.log
-      chmod 440 ${log_url}
+      chmod 440 ${output_url}
       exit 1
     fi
     # 获取环境变量中的server_count字段
     server_count=`expr ${WORLD_SIZE} / ${LOCAL_WORLD_SIZE}`
     if [[ "${server_count}" == "" ]]; then
       echo "server count is 0, train job failed." | tee -a hccl.log
-      chmod 440 ${log_url}
+      chmod 440 ${output_url}
       exit 1
     fi
 fi
 
 function check_return_code() {
     if [[ $? -ne 0 ]]; then
-      logger "running job failed." | tee ${log_url}
+      logger "running job failed." | tee ${output_url}/log
       exit 1
     fi
 }
@@ -161,13 +161,13 @@ export JOB_ID=123456789
 # 单卡训练场景
 if [ "${device_count}" -eq 1 ] && [ "${server_count}" -eq 1 ]; then
   server_id=0
-  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${log_url}
+  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${output_url}/log
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${log_url}
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${output_url}/log
     check_return_code
   fi
-  chmod 440 ${log_url}
+  chmod 440 ${output_url}/log
   exit 0
 fi
 
@@ -175,12 +175,12 @@ fi
 if [[ "${device_count}" -ge 1 ]]; then
   server_id=${RANK}
   logger "server id is: ""${server_id}"
-  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --multiprocessing-distributed --device-list=${LOCAL_RANK} --benchmark=0 --device='npu' --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} && tee ${log_url}
+  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --multiprocessing-distributed --device-list=${LOCAL_RANK} --benchmark=0 --device='npu' --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} && tee ${output_url}/log
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/log
     check_return_code
   fi
 fi
 
-chmod 440 ${log_url}
+chmod 440 ${output_url}

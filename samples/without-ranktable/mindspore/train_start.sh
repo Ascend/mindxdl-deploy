@@ -61,18 +61,18 @@ code_real_dir=`readlink -f $1`
 if [ -d "${code_real_dir}" ]; then
     app_url="${code_real_dir}/"
 fi
-log_real_path=`readlink -f $2`
-if [ -f "${log_real_path}" ]; then
-    log_url="${log_real_path}"
+output_real_path=`readlink -f $2`
+if [ -f "${output_real_path}" ]; then
+    output_url="${output_real_path}"
 else
-    touch ${log_real_path}
-    log_url="${log_real_path}"
+    touch ${output_real_path}
+    output_url="${output_real_path}"
 fi
 boot_file="$3"
 shift 3
 
 function show_help() {
-  echo "Usage train_start.sh /job/code/resnet50 /tmp/log/training.log train.py"
+  echo "Usage train_start.sh /job/code/resnet50 /tmp/output train.py"
 }
 
 function param_check() {
@@ -98,14 +98,14 @@ function param_check() {
     exit 1
   fi
 
-  if [ -z "${log_url}" ]; then
-    echo "please input log url"
+  if [ -z "${output_url}" ]; then
+    echo "please input output url"
     show_help
     exit 1
   fi
 
-  if [ -L ${log_url} ]; then
-    echo "log url is a link!"
+  if [ -L ${output_url} ]; then
+    echo "output url is a link!"
     exit 1
   fi
 }
@@ -118,7 +118,7 @@ if [[ $@ =~ need_freeze ]]; then
 fi
 
 param_check
-chmod 640 ${log_url}
+chmod 640 ${output_url}
 
 start_time=$(date +%Y-%m-%d-%H:%M:%S)
 logger "Training start at ${start_time}"
@@ -127,7 +127,7 @@ sleep 1
 
 function check_return_code() {
     if [[ $? -ne 0 ]]; then
-      logger "running job failed." | tee ${log_url}
+      logger "running job failed." | tee ${output_url}/log
       exit 1
     fi
 }
@@ -147,13 +147,13 @@ if [[ "${MS_ROLE}" == "" ]]; then
   cd ${boot_file_path}/scripts/worker || exit
   run_file_path=${boot_file_path}/scripts/worker/
   export DEVICE_ID=0
-  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --device_target=Ascend --output_path './output' 2>&1 && tee ${log_url}/worker.log
+  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --device_target=Ascend --output_path './output' 2>&1 && tee ${output_url}/worker.log
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --device_target=Ascend --output_path './output' 2>&1 && tee ${log_url}/worker.log
+    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --device_target=Ascend --output_path './output' 2>&1 && tee ${output_url}/worker.log
     check_return_code
   fi
-  chmod 440 ${log_url}
+  chmod 440 ${output_url}
   exit 0
 fi
 
@@ -169,10 +169,10 @@ if [[ "${MS_ROLE}" == "MS_SCHED" ]]; then
   cd ${boot_file_path}/scripts/sched || exit
   run_file_path=${boot_file_path}/scripts/sched/
   export DEVICE_ID=0
-  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path './output' && tee ${log_url}/sched.log
+  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path=${output_url}/output && tee ${output_url}/sched.log
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path './output' && tee ${log_url}/sched.log
+    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path=${output_url}/output && tee ${output_url}/sched.log
     check_return_code
   fi
 fi
@@ -193,13 +193,13 @@ if [[ "${MS_ROLE}" == "MS_WORKER" ]]; then
      cd ${boot_file_path}/scripts/worker_$i || exit
      run_file_path=${boot_file_path}/scripts/worker_$i/
      if [[ "${i}" -eq "${start_index}" ]]; then
-        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path './output' && tee ${log_url}/worker_$i.log
+        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path=${output_url}/output && tee ${output_url}/worker_$i.log
      else 
-        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path './output' &> ${log_url}/worker_$i.log &
+        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_path=${output_url}/output &> ${output_url}/worker_$i.log &
      fi
      check_return_code
      cd ..
   done
 fi
 
-chmod 440 ${log_url}
+chmod 440 ${output_url}
