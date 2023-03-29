@@ -4,6 +4,7 @@ metadata:
   name: default-test-tensorflow
   labels:
     framework: tensorflow
+    ring-controller.atlas: ascend-910b
 spec:
   schedulerName: volcano    # work when enableGangScheduling is true
   runPolicy:
@@ -16,6 +17,9 @@ spec:
       replicas: 1
       restartPolicy: Never
       template:
+        metadata:
+          labels:
+            ring-controller.atlas: ascend-910b
         spec:
           affinity:
             podAntiAffinity:
@@ -29,7 +33,7 @@ spec:
                   topologyKey: kubernetes.io/hostname
           nodeSelector:
             host-arch: huawei-arm
-            accelerator-type: module
+            accelerator-type: card-910b-2
           containers:
           - name: ascend # do not modify
             image: tensorflow-test:latest     # training framework image， which can be modified
@@ -85,6 +89,9 @@ spec:
       replicas: 1
       restartPolicy: Never
       template:
+        metadata:
+          labels:
+            ring-controller.atlas: ascend-910b
         spec:
           affinity:
             podAntiAffinity:
@@ -98,7 +105,7 @@ spec:
                   topologyKey: kubernetes.io/hostname
           nodeSelector:
             host-arch: huawei-arm
-            accelerator-type: module
+            accelerator-type: card-910b-2
           containers:
           - name: ascend # do not modify
             image: tensorflow-test:latest          # training framework image， which can be modified

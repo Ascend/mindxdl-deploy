@@ -1,21 +1,25 @@
 apiVersion: mindxdl.gitee.com/v1
 kind: AscendJob
 metadata:
-  name: default-test-tensorflow
+  name: default-test-pytorch
   labels:
-    framework: tensorflow
+    framework: pytorch
+    ring-controller.atlas: ascend-910b
 spec:
-  schedulerName: volcano    # work when enableGangScheduling is true
+  schedulerName: volcano   # work when enableGangScheduling is true
   runPolicy:
-    schedulingPolicy:       # work when enableGangScheduling is true
+    schedulingPolicy:      # work when enableGangScheduling is true
       minAvailable: 2
       queue: default
   successPolicy: AllWorkers
   replicaSpecs:
-    Chief:
+    Master:
       replicas: 1
       restartPolicy: Never
       template:
+        metadata:
+          labels:
+            ring-controller.atlas: ascend-910b
         spec:
           affinity:
             podAntiAffinity:
@@ -25,19 +29,19 @@ spec:
                       - key: job-name
                         operator: In
                         values:
-                          - default-test-tensorflow
+                          - default-test-pytorch
                   topologyKey: kubernetes.io/hostname
           nodeSelector:
             host-arch: huawei-arm
-            accelerator-type: module
+            accelerator-type: card-910b-2
           containers:
           - name: ascend # do not modify
-            image: tensorflow-test:latest     # training framework image， which can be modified
+            image: pytorch-test:latest         # trainning framework image， which can be modified
             imagePullPolicy: IfNotPresent
-            command:                          # training command, which can be modified
+            command:                           # training command, which can be modified
               - /bin/bash
               - -c
-            args: ["cd /job/code/ResNet50_for_TensorFlow_2.6_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_TensorFlow_2.6_code/ /job/output/ tensorflow/resnet_ctl_imagenet_main.py --data_dir=/job/data/resnet50/imagenet_TF/ --distributed_strategy=one_device --use_tf_while_loop=true --epochs_between_evals=1 --skip_eval --enable_checkpoint_and_export"]
+            args: [ "cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code /job/code/ResNet50_for_PyTorch_1.8_code/output/logs DistributedResnet50/main_apex_d76_npu.py --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --multiprocessing-distributed --benchmark=0 --device='npu' --epoch=90 --batch-size=4096" ]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
@@ -57,6 +61,8 @@ spec:
               mountPath: /usr/local/Ascend/driver
             - name: ascend-add-ons
               mountPath: /usr/local/Ascend/add-ons
+            - name: dshm
+              mountPath: /dev/shm
             - name: localtime
               mountPath: /etc/localtime
           volumes:
@@ -78,6 +84,9 @@ spec:
           - name: ascend-add-ons
             hostPath:
               path: /usr/local/Ascend/add-ons
+          - name: dshm
+            emptyDir:
+              medium: Memory
           - name: localtime
             hostPath:
               path: /etc/localtime
@@ -85,6 +94,9 @@ spec:
       replicas: 1
       restartPolicy: Never
       template:
+        metadata:
+          labels:
+            ring-controller.atlas: ascend-910b
         spec:
           affinity:
             podAntiAffinity:
@@ -94,19 +106,19 @@ spec:
                       - key: job-name
                         operator: In
                         values:
-                          - default-test-tensorflow
+                          - default-test-pytorch
                   topologyKey: kubernetes.io/hostname
           nodeSelector:
             host-arch: huawei-arm
-            accelerator-type: module
+            accelerator-type: card-910b-2
           containers:
           - name: ascend # do not modify
-            image: tensorflow-test:latest          # training framework image， which can be modified
+            image: pytorch-test:latest                # trainning framework image， which can be modified
             imagePullPolicy: IfNotPresent
-            command:                               # training command, which can be modified
+            command:                                  # training command, which can be modified
               - /bin/bash
               - -c
-            args: [ "cd /job/code/ResNet50_for_TensorFlow_2.6_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_TensorFlow_2.6_code/ /job/output/ tensorflow/resnet_ctl_imagenet_main.py --data_dir=/job/data/resnet50/imagenet_TF/ --distributed_strategy=one_device --use_tf_while_loop=true --epochs_between_evals=1 --skip_eval --enable_checkpoint_and_export" ]
+            args: ["cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code /job/code/ResNet50_for_PyTorch_1.8_code/output/logs DistributedResnet50/main_apex_d76_npu.py --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --multiprocessing-distributed --benchmark=0 --device='npu' --epoch=90 --batch-size=4096"]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
@@ -126,6 +138,8 @@ spec:
               mountPath: /usr/local/Ascend/driver
             - name: ascend-add-ons
               mountPath: /usr/local/Ascend/add-ons
+            - name: dshm
+              mountPath: /dev/shm
             - name: localtime
               mountPath: /etc/localtime
           volumes:
@@ -147,6 +161,9 @@ spec:
           - name: ascend-add-ons
             hostPath:
               path: /usr/local/Ascend/add-ons
+          - name: dshm
+            emptyDir:
+              medium: Memory
           - name: localtime
             hostPath:
               path: /etc/localtime
