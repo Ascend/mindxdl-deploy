@@ -47,9 +47,9 @@ spec:
                 name: ascendjob-port        # do not modify
             resources:
               limits:
-                huawei.com/Ascend910: 16
+                huawei.com/Ascend910: 2
               requests:
-                huawei.com/Ascend910: 16
+                huawei.com/Ascend910: 2
             volumeMounts:
             - name: code
               mountPath: /job/code
@@ -124,9 +124,9 @@ spec:
                 name: ascendjob-port        # do not modify
             resources:
               limits:
-                huawei.com/Ascend910: 16
+                huawei.com/Ascend910: 2
               requests:
-                huawei.com/Ascend910: 16
+                huawei.com/Ascend910: 2
             volumeMounts:
             - name: code
               mountPath: /job/code
