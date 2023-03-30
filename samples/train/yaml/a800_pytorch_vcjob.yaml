@@ -106,7 +106,7 @@ spec:
         - name: code
           nfs:
             server: 127.0.0.1                         # IP address of the NFS server. In this example, the shared path is /data/atlas_dls/.
-            path: "/data/atlas_dls/code/"             # Configure the training script path.
+            path: "/data/atlas_dls/public/code/"             # Configure the training script path.
         - name: data
           nfs:
             server: 127.0.0.1
