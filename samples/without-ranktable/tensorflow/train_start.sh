@@ -156,10 +156,10 @@ export JOB_ID=10086
 if [[ "${device_count}" -eq 1 ]]; then
   server_id=0
   if [ "${device_count}" -eq 1 ]; then
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${output_url}/log
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --model_dir=${output_url}/models/device 2>&1 && tee ${output_url}/log
     check_return_code
     if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${output_url}/log
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --model_dir=${output_url}/models/device 2>&1 && tee ${output_url}/log
       check_return_code
     fi
     chmod 440 ${output_url}
