@@ -27,17 +27,17 @@ code_real_dir=`readlink -f $1`
 if [ -d "${code_real_dir}" ]; then
     app_url="${code_real_dir}/"
 fi
-log_real_path=`readlink -f $2`
-if [ -f "${log_real_path}" ]; then
-    log_url="${log_real_path}"
+output_real_path=`readlink -f $2`
+if [ -f "${output_real_path}" ]; then
+    output_url="${output_real_path}"
 else
-    touch ${log_real_path}
-    log_url="${log_real_path}"
+    touch ${output_real_path}
+    output_url="${output_real_path}"
 fi
 shift 2
 
 function show_help() {
-  echo "Usage train_start.sh /job/code/resnet50 /tmp/log/training.log train.py"
+  echo "Usage train_start.sh /job/code/resnet50 /tmp/output/ train.py"
 }
 
 function param_check() {
@@ -52,14 +52,14 @@ function param_check() {
     exit 1
   fi
 
-  if [ -z "${log_url}" ]; then
-    echo "please input log url"
+  if [ -z "${output_url}" ]; then
+    echo "please input output url"
     show_help
     exit 1
   fi
 
-  if [ -L ${log_url} ]; then
-    echo "log url is a link!"
+  if [ -L ${output_url} ]; then
+    echo "output url is a link!"
     exit 1
   fi
 
@@ -73,7 +73,7 @@ if [[ $@ =~ need_freeze ]]; then
 fi
 
 param_check
-chmod 640 ${log_url}
+chmod 640 ${output_url}
 
 start_time=$(date +%Y-%m-%d-%H:%M:%S)
 logger "Training start at ${start_time}"
@@ -84,7 +84,7 @@ source rank_table.sh
 check_hccl_status
 if [ $? -eq 1 ]; then
   echo "wait hccl status timeout, train job failed." | tee -a hccl.log
-  chmod 440 ${log_url}
+  chmod 440 ${output_url}
   exit 1
 fi
 
@@ -94,7 +94,7 @@ sleep 1
 device_count=$(cat "${RANK_TABLE_FILE}" | grep -o device_id | wc -l)
 if [[ "${device_count}" -eq 0 ]]; then
   echo "device count is 0, train job failed." | tee -a hccl.log
-  chmod 440 ${log_url}
+  chmod 440 ${output_url}
   exit 1
 fi
 
@@ -102,7 +102,7 @@ fi
 server_count=$(get_json_value ${RANK_TABLE_FILE} server_count)
 if [[ "${server_count}" == "" ]]; then
   echo "server count is 0, train job failed." | tee -a hccl.log
-  chmod 440 ${log_url}
+  chmod 440 ${output_url}
   exit 1
 fi
 
@@ -143,16 +143,6 @@ function get_env_for_1p_job() {
   export WORLD_SIZE=${server_count}
 }
 
-function get_env_for_multi_card_job() {
-  export JOB_ID=123456789
-  rankid=$((rank_start + i))
-  export DEVICE_ID=${i}
-  export ASCEND_DEVICE_ID=${DEVICE_ID}
-  export RANK_ID=${rankid}
-  export RANK_SIZE=${device_count}
-  export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
-}
-
 function get_env_for_pytorch_multi_node_job() {
   export JOB_ID=123456789
   export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
@@ -174,7 +164,7 @@ function get_env_for_pytorch_multi_node_job() {
 
 function check_return_code() {
     if [[ $? -ne 0 ]]; then
-      logger "running job failed." | tee ${log_url}
+      logger "running job failed." | tee ${output_url}/log
       exit 1
     fi
 }
@@ -188,13 +178,13 @@ if [[ "${server_count}" -eq 1 ]]; then
   server_id=0
   if [ "${device_count}" -eq 1 ]; then
     get_env_for_1p_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --rank=${RANK} 2>&1 && tee ${log_url}
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --rank=${RANK} 2>&1 && tee ${output_url}/log
     check_return_code
     if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${log_url}
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${output_url}/log
       check_return_code
     fi
-    chmod 440 ${log_url}
+    chmod 440 ${output_url}
     exit 0
   fi
 fi
@@ -204,62 +194,23 @@ if [[ "${server_count}" -ge 1 ]]; then
   server_id=$(get_server_id)
   if [ -z "${framework}" ]; then
     echo "framework is null."
-    chmod 440 ${log_url}
+    chmod 440 ${output_url}
     exit 1
   fi
 
   logger "server id is: ""${server_id}"
   if [ "${framework}" == "PyTorch" ]; then
     get_env_for_pytorch_multi_node_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --device-list=${device_list} --multiprocessing-distributed --benchmark=0 --device='npu'  --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --device-list=${device_list} --multiprocessing-distributed --benchmark=0 --device='npu'  --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/log
 
     check_return_code
     if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${log_url}
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/log
       check_return_code
     fi
-  elif [ "${framework}" == "Tensorflow" ]; then
-    # CPU核心数
-    core_num=`cat /proc/cpuinfo | grep "processor" | wc -l`
-    device_each_server=$((device_count / server_count))
-    rank_start=$((device_each_server * server_id))
-    for ((i = $((device_each_server - 1)); i >= 0; i--)); do
-      get_env_for_multi_card_job
-      export DEVICE_INDEX=${RANK_ID}
-      logger "start training for rank ${RANK_ID}, device ${DEVICE_ID}"
-      # 设置绑定范围，如:0-11
-      core_range="$((i*${core_num}/8))-$(((i+1)*${core_num}/8-1))"
-      if [ "${i}" -eq 0 ]; then
-          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} && tee ${log_url}
-          check_return_code
-          if [[ $@ =~ need_freeze ]]; then
-            taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} && tee ${log_url}
-            check_return_code
-          fi
-      else
-          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> ${log_url} &
-      fi
-    done
-  elif [ "${framework}" == "MindSpore" ]; then
-    device_each_server=$((device_count / server_count))
-    rank_start=$((device_each_server * server_id))
-    for ((i = $((device_each_server - 1)); i >= 0; i--)); do
-      get_env_for_multi_card_job
-      echo "start training for rank ${RANK_ID}, device ${DEVICE_ID}"
-      if [ "${i}" -eq 0 ]; then
-          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} && tee ${log_url}
-          check_return_code
-          if [[ $@ =~ need_freeze ]]; then
-            ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} && tee ${log_url}
-            check_return_code
-          fi
-      else
-          ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} &>> ${log_url} &
-      fi
-    done
   else
     logger "framework error"
   fi
 fi
 
-chmod 440 ${log_url}
+chmod 440 ${output_url}
