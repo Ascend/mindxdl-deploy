@@ -16,18 +16,18 @@ kind: Deployment
 metadata:
   name: mindx-dls-test               # The value of this parameter must be consistent with the name of ConfigMap.
   labels:
-    app: tf
+    app: pytorch
     ring-controller.atlas: ascend-910
   namespace: vcjob                   # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and deployments must be the same.)
 spec:
   replicas: 1                        # The value of replicas is 1 in a single-node scenario and N in an N-node scenario. The number of NPUs in the requests field is 8 in an N-node scenario.
   selector:
     matchLabels:
-      app: tf
+      app: pytorch
   template:
     metadata:
       labels:
-        app: tf
+        app: pytorch
         ring-controller.atlas: ascend-910
         deploy-name: mindx-dls-test  # The value must be the same as that of Deployment name.
     spec:
@@ -39,7 +39,7 @@ spec:
       containers:
         - image: torch:b035          # Training framework image, which can be modified.
           imagePullPolicy: IfNotPresent
-          name: tf
+          name: pytorch
           env:
           - name: mindx-dls-test                               # The value must be the same as that of Deployment.
             valueFrom:
@@ -55,7 +55,7 @@ spec:
           - "/bin/bash"
           - "-c"
           # In the next line, the '-npu' parameter indicates that chip 0 is used. Please modify it with actual conditions
-          - "cd /job/code/ResNet50_for_PyTorch_1.4_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_PyTorch_1.4_code/ /job/output/logs --data=/job/data/imagenet_full -npu 0 -j64 -b512 --lr 0.2 --warmup=5 --label-smoothing=0.1 --epoch=90 --optimizer-batch-size 512;"
+          - "cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code/ /job/output/ --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --print-freq=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --epoch=90 --batch-size=512 --resume=true;"
           #args: [ "while true; do sleep 30000; done;"  ]     # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                               # The command is 'kubectl exec -it -n {namespace} {podname} bash'
           resources:
@@ -87,7 +87,7 @@ spec:
       - name: code
         nfs:
           server: 127.0.0.1                                           # IP address of the NFS server. In this example, the shared path is /data/atlas_dls/.
-          path: "/data/atlas_dls/code/"                               # Configure the path of the training script. Modify the path based on the actual script name and path.
+          path: "/data/atlas_dls/public/code/"                               # Configure the path of the training script. Modify the path based on the actual script name and path.
       - name: data
         nfs:
           server: 127.0.0.1                                           # IP address of the NFS server
