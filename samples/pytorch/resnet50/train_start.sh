@@ -37,7 +37,7 @@ fi
 shift 2
 
 function show_help() {
-  echo "Usage train_start.sh /job/code/resnet50 /tmp/output/ train.py"
+  echo "Usage train_start.sh /job/code/resnet50 /tmp/output/"
 }
 
 function param_check() {
