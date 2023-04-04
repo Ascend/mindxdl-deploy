@@ -37,7 +37,7 @@ fi
 shift 2
 
 function show_help() {
-  echo "Usage train_start.sh /job/code/resnet50 /tmp/output/ train.py"
+  echo "Usage train_start.sh /job/code/resnet50 /tmp/output/"
 }
 
 function param_check() {
@@ -111,7 +111,7 @@ device_list=""
 device_list_len=${device_count}
 
 if [[ "${server_count}" -gt 1 ]]; then
-  device_list_len=8
+  device_list_len=$((device_count / server_count))
 fi
 for ((i = 1; i <= ${device_list_len}; i++)); do
   dev_id=$(get_json_value ${RANK_TABLE_FILE} rank_id ${i})
