@@ -125,7 +125,7 @@ done
 echo "device_list: ${device_list}"
 
 boot_file=""
-if [[ "${device_list_len}" == "1" ]]; then
+if [ "${device_list_len}" == "1" ] && [ "${server_count}" == "1" ]; then
    boot_file="pytorch_resnet50_apex.py"
 else 
    boot_file="DistributedResnet50/main_apex_d76_npu.py"
