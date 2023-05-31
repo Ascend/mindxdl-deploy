@@ -1,2 +1,0 @@
-# defaults file for ascend.docker
-docker_pkg_dir: "{{ resource_dir }}/docker/{{ os_package_name }}"

@@ -1,5 +1,0 @@
----
-# master install kubeedge
-- hosts: tools
-  roles:
-    - role: mindx.kubeedge

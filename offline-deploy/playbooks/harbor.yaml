@@ -1,8 +1,0 @@
-- hosts:
-    - localhost
-    - master
-    - worker
-  gather_facts: false
-  become: yes
-  roles:
-    - role: mindx.harbor

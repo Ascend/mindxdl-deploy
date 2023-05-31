@@ -1,4 +1,0 @@
----
-- import_playbook: ../playbooks/harbor.yaml
-  when:
-    - use_harbor
