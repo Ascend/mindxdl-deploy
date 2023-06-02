@@ -1,0 +1,69 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: resnetinfer1-1-1usoc
+spec:
+  template:
+    spec:
+      nodeSelector:
+        host-arch: huawei-arm
+        servertype: soc                         # Cannot be delete. And node should be labeled with this label.
+      containers:
+      - image: ubuntu-infer:v1                  # Inference image name
+        imagePullPolicy: IfNotPresent
+        name: resnet50infer
+        resources:
+          requests:
+            huawei.com/Ascend310P: 1             # Number of the Ascend 310P Processors.
+          limits:
+            huawei.com/Ascend310P: 1             # The value should be the same as that of requests .
+        volumeMounts:
+        - name: hiai-driver
+          mountPath: /usr/local/Ascend/driver
+          readOnly: true
+        - name: slog
+          mountPath: /etc/slog.conf
+        - name: localtime                       #The container time must be the same as the host time.
+          mountPath: /etc/localtime
+        - name: dmp
+          mountPath: /var/dmp_daemon
+        - name: slogd
+          mountPath: /var/slogd
+        - name: hbasic
+          mountPath: /etc/hdcBasic.cfg
+        - name: sys-version
+          mountPath: /etc/sys_version.conf
+        - name: aicpu
+          mountPath: /usr/lib64/aicpu_kernels
+        - name: tfso
+          mountPath: /usr/lib64/libtensorflow.so
+      volumes:
+      - name: hiai-driver
+        hostPath:
+          path: /usr/local/Ascend/driver
+      - name: slog
+        hostPath:
+          path: /etc/slog.conf
+          type: File
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: dmp
+        hostPath:
+          path: /var/dmp_daemon
+      - name: slogd
+        hostPath:
+          path: /var/slogd
+      - name: hbasic
+        hostPath:
+          path: /etc/hdcBasic.cfg
+      - name: sys-version
+        hostPath:
+          path: /etc/sys_version.conf
+      - name: aicpu
+        hostPath:
+          path: /usr/lib64/aicpu_kernels
+      - name: tfso
+        hostPath:
+          path: /usr/lib64/libtensorflow.so
+      restartPolicy: OnFailure
