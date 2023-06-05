@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rings-config-mindx-dls-test  # The value of DepolymentName must be the same as the name attribute of the following deployment. The prefix rings-config- cannot be modified.
+  namespace: vcjob
+  labels:
+    ring-controller.atlas: ascend-910b
+data:
+  hccl.json: |
+    {
+        "status":"initializing"
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mindx-dls-test               # The value of this parameter must be consistent with the name of ConfigMap.
+  labels:
+    app: tf
+    ring-controller.atlas: ascend-910b
+  namespace: vcjob                   # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and deployments must be the same.)
+spec:
+  replicas: 1                        # The value of replicas is 1 in a single-node scenario and N in an N-node scenario. The number of NPUs in the requests field is 8 in an N-node scenario.
+  selector:
+    matchLabels:
+      app: tf
+  template:
+    metadata:
+      labels:
+        app: tf
+        ring-controller.atlas: ascend-910b
+        deploy-name: mindx-dls-test  # The value must be the same as that of Deployment name.
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: deploy-name
+                    operator: In
+                    values:
+                      - mindx-dls-test
+              topologyKey: kubernetes.io/hostname
+      hostNetwork: true
+      schedulerName: volcano         # Use the Volcano scheduler to schedule jobs.
+      nodeSelector:
+        host-arch: huawei-x86        # Configure the label based on the actual job.
+        accelerator-type: module-910b-16
+      containers:
+        - image: torch:b035          # Training framework image, which can be modified.
+          imagePullPolicy: IfNotPresent
+          name: tf
+          env:
+          - name: mindx-dls-test                               # The value must be the same as that of Deployment.
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: XDL_IP                                       # IP address of the physical node, which is used to identify the node where the pod is running
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: framework
+            value: "PyTorch"
+          command:
+          - "/bin/bash"
+          - "-c"
+          - "cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code/ /job/output/ DistributedResnet50/main_apex_d76_npu.py --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --multiprocessing-distributed --benchmark=0 --device='npu' --epoch=90 --batch-size=1024;"
+          #args: [ "while true; do sleep 30000; done;"  ]     # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
+                                                              # The command is 'kubectl exec -it -n {namespace} {podname} bash'
+          resources:
+            requests:
+              huawei.com/Ascend910: 16                         # Number of required NPUs. The maximum value is 16. You can add lines below to configure resources such as memory and CPU.
+            limits:
+              huawei.com/Ascend910: 16                         # The value must be consistent with that in requests.
+          volumeMounts:
+          - name: ascend-910-config
+            mountPath: /user/serverid/devindex/config
+          - name: code
+            mountPath: /job/code/
+          - name: data
+            mountPath: /job/data
+          - name: output
+            mountPath: /job/output
+          - name: ascend-driver
+            mountPath: /usr/local/Ascend/driver
+          - name: ascend-add-ons
+            mountPath: /usr/local/Ascend/add-ons
+          - name: dshm
+            mountPath: /dev/shm
+          - name: localtime
+            mountPath: /etc/localtime
+      volumes:
+      - name: ascend-910-config
+        configMap:
+          name: rings-config-mindx-dls-test                           # Correspond to the ConfigMap name above.
+      - name: code
+        nfs:
+          server: 127.0.0.1                                           # IP address of the NFS server. In this example, the shared path is /data/atlas_dls/public/code/.
+          path: "/data/atlas_dls/public/code/"                               # Configure the path of the training script. Modify the path based on the actual script name and path.
+      - name: data
+        nfs:
+          server: 127.0.0.1                                           # IP address of the NFS server
+          path: "/data/atlas_dls/public/dataset/"                     # Configure the path of the training set.
+      - name: output
+        nfs:
+          server: 127.0.0.1                                           # IP address of the NFS server
+          path: "/data/atlas_dls/output/"                             # Configure the path for saving the configuration model, which is related to the script.
+      - name: ascend-driver
+        hostPath:
+          path: /usr/local/Ascend/driver                              # Configure the NPU driver and mount it to Docker.
+      - name: ascend-add-ons
+        hostPath:
+          path: /usr/local/Ascend/add-ons                             # Configure the add-ons driver of the NPU and mount it to Docker.
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      - name: localtime
+        hostPath:
+          path: /etc/localtime                                        # Configure the Docker time.

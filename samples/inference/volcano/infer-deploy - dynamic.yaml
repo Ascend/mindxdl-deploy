@@ -13,10 +13,10 @@ spec:
     metadata: 
       labels:
          app: infers
-         host-arch: huawei-arm         # Select the os arch. If the os arch is arm, change it to huawei-x86.
-         npu-310-strategy: card        # Select the 310 scheduling policy. If choose to schedule by chip, change it to chip.
          fault-scheduling: grace       # Add this Labels, will reschedule pods in the event of chip failures.
-         ring-controller.atlas: ascend-310 # Add this Label, used to check job kind.
+         ring-controller.atlas: ascend-310P # Add this Label, used to check job kind.
+         vnpu-dvpp: yes                 # For NPU dynamic segmentation,yes means used dvpp,no means ndvpp
+         vnpu-level: low                # For NPU dynamic segmentation,low means low-level configuration,high means performance first,default low.
     spec:
       schedulerName: volcano
       nodeSelector:
@@ -27,9 +27,9 @@ spec:
         name: resnet50infer
         resources:
           requests:
-            huawei.com/Ascend310: 1             # Number of the Ascend 310 Processors. If the Ascend 310P Processor is used, change it to huawei.com/Ascend310P.
+            huawei.com/npu-core: 1             # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
           limits:
-            huawei.com/Ascend310: 1             # The value should be the same as that of requests . If the Ascend 310P Processor is used, change it to huawei.com/Ascend310P.
+            huawei.com/npu-core: 1             # The value should be the same as that of requests .
         volumeMounts:
         - name: slog
           mountPath: /var/log/npu/conf/slog/    #Log path
