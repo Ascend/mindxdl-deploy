@@ -35,5 +35,5 @@ else
     echo "Invalid input parameter, usage: main.sh device_count server_count RANK_TABLE_FILE server_id dataset" | tee log
     exit 1
 fi
-
+python -u ./reset_process.py
 wait
