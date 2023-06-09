@@ -77,5 +77,5 @@ else
     echo "Invalid input parameter, usage: main.sh device_count server_count rank_table_file server_id dataset config_file_path" | tee log
     exit 1
 fi
-
+python -u ./reset_process.py
 wait
