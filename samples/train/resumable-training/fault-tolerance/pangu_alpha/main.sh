@@ -2,6 +2,7 @@
 
 
 ulimit -u unlimited
+count=0
 ROOT_PATH=$(cd "`dirname $0`" || exit; pwd)
 export REPEAT_TUNE=false
 export TE_PARALLEL_COMPILER=10
@@ -40,5 +41,19 @@ else
     echo "Invalid input parameter, usage: main.sh device_count server_count RANK_TABLE_FILE server_id dataset" | tee log
     exit 1
 fi
-python -u ${ROOT_PATH}/reset_process.py
-wait
+python -u ${ROOT_PATH}/reset_process.py &
+
+while true :
+do
+    pid=`ps -ef|grep train.py|grep -v "grep"|awk '{print $2}'`
+    if [[ "$pid" = "" ]]; then
+        if [[ $count = 40 ]]; then
+            exit 0
+        else 
+            let count=count+1
+            sleep 5
+        fi
+    else
+        count=0
+    fi
+done
