@@ -2,9 +2,6 @@
 
 ulimit -u unlimited
 
-# checkpoint save path
-OUTPUT_PATH="/job/code/output"
-
 ROOT_PATH=$(cd "`dirname $0`" || exit; pwd)
 
 # 单机单卡
@@ -30,7 +27,7 @@ if [ $# == 2 ]; then
     env > env.log
 
     # 保持前台输出
-    python ${ROOT_PATH}/../train.py --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH}
+    python ${ROOT_PATH}/../train.py --data_path=${DATA_PATH} --config_path=${CONFIG_PATH}
     if [ $? -eq 0 ]; then
       echo "run training job complete." | tee log
       exit 0
@@ -68,9 +65,7 @@ if [ $# == 6 ]; then
         cd ${ROOT_PATH}/train_parallel${rankid} || exit
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
-
-        python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${RANK_SIZE} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} --output_path=${OUTPUT_PATH} &> log &
-
+        python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${RANK_SIZE} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH}  &> log &
 
     done
 else
