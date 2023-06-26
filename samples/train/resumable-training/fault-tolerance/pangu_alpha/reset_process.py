@@ -3,6 +3,7 @@ import argparse
 import signal
 import time
 import logging
+import re
 from ast import literal_eval
 from apscheduler.executors.pool import ProcessPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -14,6 +15,8 @@ from mindx_elastic.constants import constants
 
 logger = logging.getLogger('recover_logger')
 logger.setLevel(logging.INFO)
+pattern = re.compile(r'^[a-z0-9]+[a-z0-9\-]*[a-z0-9]+$')
+MAX_STR_LEN = 1024
 
 
 def get_file_info(file_path: str) -> dict:
@@ -113,8 +116,6 @@ class ResetWorker:
         rank_list = []
         for rank_info in file_content[fault_key]:
             rank_id = int(rank_info["RankId"])
-            if rank_id not in self._local_rank:
-                return []
             if rank_info["Status"] == key and rank_id not in rank_list:
                 rank_list.append(rank_id)
 
@@ -288,7 +289,14 @@ if __name__ == "__main__":
         logger.error('get unexpected input')
         exit(1)
 
-    file_handler = logging.FileHandler('/job/code/scripts/recover.log')
+    host_name = os.getenv("HOSTNAME")
+    if len(host_name) > MAX_STR_LEN:
+        logger.error('HOSTNAME is too long')
+        exit(1)
+    if not pattern.match(host_name):
+        logger.error('HOSTNAME is invalid')
+        exit(1)
+    file_handler = logging.FileHandler(f'/job/code/scripts/recover-{host_name}.log')
 
     LOG_FORMAT = '%(asctime)s - %(pathname)s[line:%(lineno)d] - [%(levelname)s]: %(message)s'
     formatter = logging.Formatter(LOG_FORMAT)
