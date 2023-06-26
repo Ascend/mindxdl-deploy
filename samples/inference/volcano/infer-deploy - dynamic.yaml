@@ -15,7 +15,7 @@ spec:
          app: infers
          fault-scheduling: grace       # Add this Labels, will reschedule pods in the event of chip failures.
          ring-controller.atlas: ascend-310P # Add this Label, used to check job kind.
-         vnpu-dvpp: yes                 # For NPU dynamic segmentation,yes means used dvpp,no means ndvpp
+         vnpu-dvpp: "null"                 # For NPU dynamic segmentation,null means don't care dvpp resource ,yes means used dvpp,no means ndvpp
          vnpu-level: low                # For NPU dynamic segmentation,low means low-level configuration,high means performance first,default low.
     spec:
       schedulerName: volcano
