@@ -1,0 +1,56 @@
+apiVersion: batch.volcano.sh/v1alpha1   # The value cannot be changed. The volcano API must be used.
+kind: Job                               # Only the job type is supported at present.
+metadata:
+  name: mindx-dls-test                  # The value must be consistent with the name of ConfigMap.
+  namespace: vnpu                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
+  labels:
+    ring-controller.atlas: ascend-310P   # The value must be the same as the label in ConfigMap and cannot be changed.
+spec:
+  minAvailable: 1                       # The value of minAvailable is 1 in a single-node scenario and N in an N-node distributed scenario.
+  schedulerName: volcano                # Use the Volcano scheduler to schedule jobs.
+  policies:
+    - event: PodEvicted
+      action: RestartJob
+  plugins:
+    ssh: []
+    env: []
+    svc: []
+  maxRetry: 3
+  queue: default
+  tasks:
+    - name: "default-test"
+      replicas: 1                              # The value of replicas is 1 in a single-node scenario and N in an N-node scenario. The number of NPUs in the requests field is 8 in an N-node scenario.
+      template:
+        metadata:
+          labels:
+            app: infers
+            ring-controller.atlas: ascend-310P # Add this Label, used to check job kind.
+            vnpu-dvpp: "null"                  # For NPU dynamic segmentation,null means don't care dvpp resource,yes means used dvpp,no means ndvpp
+            vnpu-level: low                    # For NPU dynamic segmentation,low means low-level configuration,high means performance first,default low.
+        spec:
+          schedulerName: volcano
+          containers:
+            - image: ascendhub.huawei.com/public-ascendhub/infer-modelzoo:23.0.RC1-mxvision                  # Inference image name
+              imagePullPolicy: IfNotPresent
+              name: resnet50infer
+              command: ["/bin/bash", "-c", "bash test_model.sh"]
+              resources:
+                requests:
+                  huawei.com/npu-core: 1             # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
+                limits:
+                  huawei.com/npu-core: 1             # The value should be the same as that of requests .
+              volumeMounts:
+                - name: slog
+                  mountPath: /var/log/npu/conf/slog/    #Log path
+                - name: localtime                       #The container time must be the same as the host time.
+                  mountPath: /etc/localtime
+          nodeSelector:
+            host-arch: huawei-arm        # Configure the label based on the actual job.
+          volumes:
+            - name: slog
+              hostPath:
+                path: /var/log/npu/conf/slog/
+            - name: localtime
+              hostPath:
+                path: /etc/localtime
+          restartPolicy: OnFailure
