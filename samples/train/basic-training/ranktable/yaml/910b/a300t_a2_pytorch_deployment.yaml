@@ -31,6 +31,16 @@ spec:
         ring-controller.atlas: ascend-910b
         deploy-name: mindx-dls-test  # The value must be the same as that of Deployment name.
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: deploy-name
+                    operator: In
+                    values:
+                      - mindx-dls-test
+              topologyKey: kubernetes.io/hostname
       hostNetwork: true
       schedulerName: volcano         # Use the Volcano scheduler to schedule jobs.
       nodeSelector:
