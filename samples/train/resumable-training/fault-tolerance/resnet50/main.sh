@@ -1,7 +1,6 @@
 #!/bin/bash
 
 ulimit -u unlimited
-count=0
 ROOT_PATH=$(cd "`dirname $0`" || exit; pwd)
 
 # 单机单卡
@@ -72,19 +71,5 @@ else
     echo "Invalid input parameter, usage: main.sh device_count server_count rank_table_file server_id dataset config_file_path" | tee log
     exit 1
 fi
-python -u ${ROOT_PATH}/reset_process.py &
-
-while true :
-do
-    pid=`ps -ef|grep train.py|grep -v "grep"|awk '{print $2}'`
-    if [[ "$pid" = "" ]]; then
-        if [[ $count = 40 ]]; then
-            exit 0
-        else 
-            let count=count+1
-            sleep 5
-        fi
-    else
-        count=0
-    fi
-done
+python -u ${ROOT_PATH}/reset_process.py
+wait
