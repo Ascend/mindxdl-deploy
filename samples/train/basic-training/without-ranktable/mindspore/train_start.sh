@@ -62,10 +62,10 @@ if [ -d "${code_real_dir}" ]; then
     app_url="${code_real_dir}/"
 fi
 output_real_path=`readlink -f $2`
-if [ -f "${output_real_path}" ]; then
+if [ -d "${output_real_path}" ]; then
     output_url="${output_real_path}"
 else
-    touch ${output_real_path}
+    mkdir -p ${output_real_path}
     output_url="${output_real_path}"
 fi
 boot_file="$3"
