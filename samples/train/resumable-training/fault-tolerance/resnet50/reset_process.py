@@ -124,10 +124,15 @@ class ResetWorker:
     def exit_recover_process(self):
         pid = os.getpid()
         try:
+            logger.info("the training process may terminate, reset process done")
             os.kill(pid, signal.SIGKILL)
         except Exception as e:
             logger.error(f"terminate cur process failed, because {e}")
             self._sched.shutdown()
+
+    def check_all_alive(self):
+        if self._process_manager.all_stopped() and not (self.killed_abnormal or self.killed_normal):
+            self.exit_recover_process()
 
     def _kill_abnormal_process(self, abnormal_rank_list: list):
         if self.killed_abnormal:
@@ -243,6 +248,7 @@ class ResetWorker:
 
     def reset_npu_process(self):
         logger.info("new loop start")
+        self.check_all_alive()
         fault_rank_list = self.get_fault_ranks()
         if len(fault_rank_list) != 0:
             logger.info(f"fault rank list is {fault_rank_list}")
