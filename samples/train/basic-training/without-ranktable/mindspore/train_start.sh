@@ -203,3 +203,5 @@ if [[ "${MS_ROLE}" == "MS_WORKER" ]]; then
 fi
 
 chmod 440 ${output_url}
+
+wait

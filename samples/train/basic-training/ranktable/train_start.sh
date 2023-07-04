@@ -266,3 +266,5 @@ if [[ "${server_count}" -ge 1 ]]; then
 fi
 
 chmod 440 ${output_url}
+
+wait
