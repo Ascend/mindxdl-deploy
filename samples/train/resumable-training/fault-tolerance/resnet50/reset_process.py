@@ -229,7 +229,8 @@ class ResetWorker:
         logger.info("to recover task with elastic")
         if self._is_cur_node():
             normal_rank_list = list(set(self._local_rank) - set(self.fault_rank_list))
-            self._stop_normal_process(normal_rank_list)
+            self._stop_normal_process(self._local_rank)
+            time.sleep(5)
             self._kill_abnormal_process(self.fault_rank_list)
             self.now_time = int(time.time())
             if self.now_time - self.begin_time < self.kill_time:
