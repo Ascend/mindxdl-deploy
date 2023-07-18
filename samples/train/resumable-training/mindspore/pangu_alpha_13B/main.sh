@@ -48,9 +48,9 @@ if [ $# == 5 ]; then
         env > env.log
 
         if [ $i -eq 0 ]; then
-            python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp32 --mode=2.6B | tee log
+            python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp16 --mode=13B | tee log
         else
-            python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp32 --mode=2.6B &> log &
+            python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp16 --mode=13B &> log &
         fi
     done
 else
