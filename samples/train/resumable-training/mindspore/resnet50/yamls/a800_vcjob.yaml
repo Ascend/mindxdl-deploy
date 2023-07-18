@@ -95,6 +95,8 @@ spec:
             mountPath: /var/log/mindx-dl/elastic
           - name: localtime
             mountPath: /etc/localtime
+          - name: shm
+            mountPath: /dev/shm
         nodeSelector:
           host-arch: huawei-arm                                # Configure the label based on the actual job.
         volumes:
@@ -125,4 +127,8 @@ spec:
         - name: localtime
           hostPath:
             path: /etc/localtime                               # Configure the Docker time.
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi
         restartPolicy: OnFailure

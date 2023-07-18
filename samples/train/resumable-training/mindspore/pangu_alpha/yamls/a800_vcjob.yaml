@@ -30,8 +30,9 @@ metadata:
   namespace: vcjob                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
   labels:
     ring-controller.atlas: ascend-910   # The HCCL-Controller distinguishes Ascend 910 and other processors based on this label.
+    fault-scheduling: "grace"
 spec:
-  minAvailable: 1                       # The value of minAvailable is 1 in a single-node scenario and N in an N-node distributed scenario.
+  minAvailable: 2                       # The value of minAvailable is 1 in a single-node scenario and N in an N-node distributed scenario.
   schedulerName: volcano                # Use the Volcano scheduler to schedule jobs.
   policies:
     - event: PodEvicted
@@ -44,7 +45,7 @@ spec:
   queue: default
   tasks:
   - name: "default-test"
-    replicas: 1                         # The value of replicas is 1 in a single-node scenario and N in an N-node scenario. The number of NPUs in the requests field is 8 in an N-node scenario.
+    replicas: 2                         # The value of replicas is 1 in a single-node scenario and N in an N-node scenario. The number of NPUs in the requests field is 8 in an N-node scenario.
     template:
       metadata:
         labels:
@@ -76,9 +77,9 @@ spec:
                 command: ["/bin/bash", "-c", "cd /job/code/pangu_alpha/scripts; bash pre_stop.sh"]
           resources:
             requests:
-              huawei.com/Ascend910: 1                                                # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
+              huawei.com/Ascend910: 8                                                # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
             limits:
-              huawei.com/Ascend910: 1                                                # The value must be consistent with that in requests.
+              huawei.com/Ascend910: 8                                                # The value must be consistent with that in requests.
           volumeMounts:
           - name: ascend-910-config
             mountPath: /user/serverid/devindex/config
@@ -96,6 +97,8 @@ spec:
             mountPath: /var/log/mindx-dl/elastic
           - name: localtime
             mountPath: /etc/localtime
+          - name: shm
+            mountPath: /dev/shm
         nodeSelector:
           host-arch: huawei-arm                                # Configure the label based on the actual job.
         volumes:
@@ -126,4 +129,8 @@ spec:
         - name: localtime
           hostPath:
             path: /etc/localtime                               # Configure the Docker time.
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 200Gi
         restartPolicy: OnFailure
