@@ -33,7 +33,7 @@ if [ $# == 5 ]; then
         export GROUP_INFO_FILE=${group_info_file_tmp}
         echo "start training for rank ${RANK_ID}, device ${DEVICE_ID}"
         env > env.log
-        python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp32 --mode=2.6B &> log &
+        python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp16 --mode=2.6B &> log &
 
     done
 else
