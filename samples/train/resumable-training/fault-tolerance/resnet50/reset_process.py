@@ -131,7 +131,8 @@ class ResetWorker:
             self._sched.shutdown()
 
     def check_all_alive(self):
-        if self._process_manager.all_stopped() and not (self.killed_abnormal or self.killed_normal):
+        killed_by_process = self.killed_abnormal or self.killed_normal or self.stopped_normal
+        if self._process_manager.all_stopped() and not killed_by_process:
             self.exit_recover_process()
 
     def _kill_abnormal_process(self, abnormal_rank_list: list):
@@ -230,7 +231,7 @@ class ResetWorker:
         if self._is_cur_node():
             normal_rank_list = list(set(self._local_rank) - set(self.fault_rank_list))
             self._stop_normal_process(self._local_rank)
-            time.sleep(5)
+            time.sleep(10)
             self._kill_abnormal_process(self.fault_rank_list)
             self.now_time = int(time.time())
             if self.now_time - self.begin_time < self.kill_time:
