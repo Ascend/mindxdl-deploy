@@ -5,7 +5,6 @@ metadata:
   labels:
     framework: mindspore
     ring-controller.atlas: ascend-910b
-
 spec:
   schedulerName: volcano    # work when enableGangScheduling is true
   runPolicy:
