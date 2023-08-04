@@ -4,6 +4,30 @@
 # hccl-controller组件生成的rank_table_file
 export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
 
+function check_npu_availability {
+    i=0
+    while [ $i -lt 10 ]; do
+        npu_info=$(npu-smi info)
+        if [[ $npu_info == *"command not found"* ]]; then
+          echo "the container doesn't mount 'npu-smi' cmd, skip it now. you could mount 'npu-smi' cmd by yaml or
+          ascend docker runtime"
+          break
+        elif [[ $npu_info == *"8020"* ]]; then
+          echo "npu is busy, check again"
+        else
+          # npu maybe free
+          break
+        fi
+        sleep 5
+        let i++
+    done
+
+    if [ $i -eq 10 ]; then
+      echo "npu is occupied by others too long, please release it"
+      exit 1
+    fi
+}
+
 # 设置环境变量
 function set_env {
     local install_path=/usr/local/Ascend
@@ -98,6 +122,9 @@ dataset="/job/data/train_data"
 
 # 设置训练环境变量
 set_env
+
+# check npu status and wait some time if it is used by others
+check_npu_availability
 
 # 单节点训练场景
 if [[ "$server_count" == "1" ]]; then

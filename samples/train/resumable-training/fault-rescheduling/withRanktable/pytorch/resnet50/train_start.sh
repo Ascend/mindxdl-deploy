@@ -36,6 +36,30 @@ else
 fi
 shift 2
 
+function check_npu_availability {
+    i=0
+    while [ $i -lt 10 ]; do
+        npu_info=$(npu-smi info)
+        if [[ $npu_info == *"command not found"* ]]; then
+          echo "the container doesn't mount 'npu-smi' cmd, skip it now. you could mount 'npu-smi' cmd by yaml or
+          ascend docker runtime"
+          break
+        elif [[ $npu_info == *"8020"* ]]; then
+          echo "npu is busy, check again"
+        else
+          # npu maybe free
+          break
+        fi
+        sleep 5
+        let i++
+    done
+
+    if [ $i -eq 10 ]; then
+      echo "npu is occupied by others too long, please release it"
+      exit 1
+    fi
+}
+
 function show_help() {
   echo "Usage train_start.sh /job/code/resnet50 /tmp/output/"
 }
@@ -172,6 +196,9 @@ function check_return_code() {
 DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
 # set training env
 set_env
+
+# check npu status and wait some time if it is used by others
+check_npu_availability
 
 # 单节点训练场景
 if [[ "${server_count}" -eq 1 ]]; then
