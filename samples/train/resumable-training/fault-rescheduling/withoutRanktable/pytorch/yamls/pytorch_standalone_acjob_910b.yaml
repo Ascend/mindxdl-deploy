@@ -1,3 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: server-config-default-test-pytorch  # the deployment name is compounded from `server-config-` and job name
+  namespace: default # the namespace must same as job's namespace
+data:
+  serverList: |
+    {
+        "status":"initializing"
+    }
+---
 apiVersion: mindxdl.gitee.com/v1
 kind: AscendJob
 metadata:
@@ -5,6 +16,7 @@ metadata:
   labels:
     framework: pytorch
     ring-controller.atlas: ascend-910b
+    tor-affinity: "null" #该标签为任务是否使用交换机亲和性调度标签，null或者不写该标签则不适用。large-model-schema表示大模型任务，normal-schema 普通任务
 spec:
   schedulerName: volcano  # work when enableGangScheduling is true
   runPolicy:
@@ -28,6 +40,11 @@ spec:
           - name: ascend # do not modify
             image: pytorch-test:latest      # training framework image， which can be modified
             imagePullPolicy: IfNotPresent
+            env:
+              - name: XDL_IP                                       # IP address of the physical node, which is used to identify the node where the pod is running
+                valueFrom:
+                  fieldRef:
+                    fieldPath: status.hostIP
             command:                        # training command, which can be modified
               - /bin/bash
               - -c
@@ -41,6 +58,8 @@ spec:
               requests:
                 huawei.com/Ascend910: 1
             volumeMounts:
+            - name: ascend-server-config
+              mountPath: /user/serverid/devindex/config
             - name: code
               mountPath: /job/code
             - name: data
@@ -56,6 +75,9 @@ spec:
             - name: localtime
               mountPath: /etc/localtime
           volumes:
+          - name: ascend-server-config
+            configMap:
+              name: server-config-default-test-pytorch                  # Correspond to the ConfigMap name above.
           - name: code
             nfs:
               server: 127.0.0.1
