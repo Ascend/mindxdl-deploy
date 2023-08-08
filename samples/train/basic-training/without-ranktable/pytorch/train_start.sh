@@ -158,6 +158,9 @@ DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
 set_env
 export JOB_ID=123456789
 
+source node_rank.sh
+set_node_rank_env
+
 # 单卡训练场景
 if [ "${device_count}" -eq 1 ] && [ "${server_count}" -eq 1 ]; then
   server_id=0
