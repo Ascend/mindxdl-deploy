@@ -5,6 +5,7 @@ metadata:
   namespace: vcjob                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
   labels:
     ring-controller.atlas: ascend-910
+    fault-scheduling: "force"
 data:
   hccl.json: |
     {
