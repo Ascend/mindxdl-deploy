@@ -5,6 +5,7 @@ metadata:
   labels:
     framework: mindspore
     ring-controller.atlas: ascend-910b
+    fault-scheduling: "force"
 spec:
   schedulerName: volcano    # work when enableGangScheduling is true
   runPolicy:
@@ -15,7 +16,7 @@ spec:
   replicaSpecs:
     Worker:
       replicas: 1
-      restartPolicy: Never
+      restartPolicy: OnFailure
       template:
         metadata:
           labels:

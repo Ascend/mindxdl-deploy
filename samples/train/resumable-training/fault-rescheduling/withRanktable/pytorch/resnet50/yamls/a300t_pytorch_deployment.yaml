@@ -18,6 +18,7 @@ metadata:
   labels:
     app: pytorch
     ring-controller.atlas: ascend-910
+    fault-scheduling: "force"
   namespace: vcjob                   # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and deployments must be the same.)
 spec:
   replicas: 1                        # The value of replicas is 1 in a single-node scenario and N in an N-node scenario. The number of NPUs in the requests field is 8 in an N-node scenario.
