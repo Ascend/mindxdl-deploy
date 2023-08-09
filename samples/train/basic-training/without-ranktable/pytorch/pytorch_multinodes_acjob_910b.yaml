@@ -50,11 +50,6 @@ spec:
           - name: ascend # do not modify
             image: pytorch-test:latest         # trainning framework image， which can be modified
             imagePullPolicy: IfNotPresent
-            env:
-              - name: XDL_IP                                       # IP address of the physical node, which is used to identify the node where the pod is running
-                valueFrom:
-                  fieldRef:
-                    fieldPath: status.hostIP
             command:                           # training command, which can be modified
               - /bin/bash
               - -c
@@ -68,8 +63,6 @@ spec:
               requests:
                 huawei.com/Ascend910: 2
             volumeMounts:
-            - name: ascend-server-config
-              mountPath: /user/serverid/devindex/config
             - name: code
               mountPath: /job/code
             - name: data
@@ -85,9 +78,6 @@ spec:
             - name: localtime
               mountPath: /etc/localtime
           volumes:
-          - name: ascend-server-config
-            configMap:
-              name: server-config-default-test-pytorch                  # Correspond to the ConfigMap name above.
           - name: code
             nfs:
               server: 127.0.0.1
@@ -137,6 +127,11 @@ spec:
           - name: ascend # do not modify
             image: pytorch-test:latest                # trainning framework image， which can be modified
             imagePullPolicy: IfNotPresent
+            env:
+              - name: XDL_IP                                       # IP address of the physical node, which is used to identify the node where the pod is running
+                valueFrom:
+                  fieldRef:
+                    fieldPath: status.hostIP
             command:                                  # training command, which can be modified
               - /bin/bash
               - -c
@@ -150,6 +145,8 @@ spec:
               requests:
                 huawei.com/Ascend910: 2
             volumeMounts:
+            - name: ascend-server-config
+              mountPath: /user/serverid/devindex/config
             - name: code
               mountPath: /job/code
             - name: data
@@ -165,6 +162,9 @@ spec:
             - name: localtime
               mountPath: /etc/localtime
           volumes:
+          - name: ascend-server-config
+            configMap:
+              name: server-config-default-test-pytorch                  # Correspond to the ConfigMap name above.
           - name: code
             nfs:
               server: 127.0.0.1
