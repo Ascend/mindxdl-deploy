@@ -24,6 +24,7 @@ function get_node_rank()
     local part_server_list=${server_list%${XDL_IP}*}
     local index=$(echo "${part_server_list}" | grep -o "server_ip" | wc -l)
     echo `expr ${index} - 1`
+    return
   fi
   echo 0
 }
