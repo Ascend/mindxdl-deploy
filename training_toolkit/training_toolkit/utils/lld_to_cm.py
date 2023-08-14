@@ -44,7 +44,7 @@ def handler():
     yaml.write("kind: ConfigMap\n")
     yaml.write("metadata:\n")
     yaml.write("  name: basic-tor-node-cm\n")
-    yaml.write("  namespace: volcano-system\n")
+    yaml.write("  namespace: kube-system\n")
     yaml.write("data:\n")
     yaml.write("  tor_info: |\n")
     yaml.write("    {\n")
@@ -63,7 +63,7 @@ def handler():
             yaml.write("            {\n")
             yaml.write("              \"server_ip\": \"" + str(node["server_ip"]) + "\",\n")
             yaml.write("              \"npu_count\": 8,\n")
-            yaml.write("              \"slice_id\": " + str(slice_num) + ",\n")
+            yaml.write("              \"slice_id\": " + str(slice_num) + "\n")
             slice_num = slice_num + 1
             if slice_num == len(tor):
                 yaml.write("            }\n")
