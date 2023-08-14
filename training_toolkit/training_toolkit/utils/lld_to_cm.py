@@ -44,7 +44,7 @@ def handler():
     yaml.write("kind: ConfigMap\n")
     yaml.write("metadata:\n")
     yaml.write("  name: basic-tor-node-cm\n")
-    yaml.write("  namespace: volcano-system\n")
+    yaml.write("  namespace: kube-system\n")
     yaml.write("data:\n")
     yaml.write("  tor_info: |\n")
     yaml.write("    {\n")
