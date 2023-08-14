@@ -44,6 +44,7 @@ function set_node_rank_env()
         else
             local node_rank=$(get_node_rank ${NODE_RANK_FILE})
             export NODE_RANK=${node_rank}
+            export MASTER_ADDR=$(get_json_value ${NODE_RANK_FILE} server_ip)
             return 0
         fi
     }
