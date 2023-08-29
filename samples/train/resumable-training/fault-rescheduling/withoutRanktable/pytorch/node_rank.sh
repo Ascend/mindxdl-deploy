@@ -24,6 +24,7 @@ function get_node_rank()
     local part_server_list=${server_list%${XDL_IP}*}
     local index=$(echo "${part_server_list}" | grep -o "server_ip" | wc -l)
     echo `expr ${index} - 1`
+    return
   fi
   echo 0
 }
@@ -36,13 +37,14 @@ function set_node_rank_env()
     for (( n=1;n<=$retry_times;n++ ));do
     {
         local status=$(get_json_value ${NODE_RANK_FILE} status)
-        if [[ "$status" != "completed" ]]; then
+        if [[ "$status" == "initializing" ]]; then
             echo "node rank status is not completed, wait 5s and retry." | tee -a node_rank.log
             sleep ${retry_interval}
             continue
         else
             local node_rank=$(get_node_rank ${NODE_RANK_FILE})
             export NODE_RANK=${node_rank}
+            export MASTER_ADDR=$(get_json_value ${NODE_RANK_FILE} server_ip)
             return 0
         fi
     }

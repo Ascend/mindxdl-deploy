@@ -4,7 +4,7 @@ metadata:
   name: rings-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix rings-config- cannot be modified.
   namespace: vcjob                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
   labels:
-    ring-controller.atlas: ascend-910   # The value cannot be modified. Service operations will be performed based on this label.
+    ring-controller.atlas: ascend-910b   # The value cannot be modified. Service operations will be performed based on this label.
 data:
   hccl.json: |
     {
@@ -17,8 +17,8 @@ metadata:
   name: mindx-dls-test                  # The value must be consistent with the name of ConfigMap.
   namespace: vcjob                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
   labels:
-    ring-controller.atlas: ascend-910   # The value must be the same as the label in ConfigMap and cannot be changed.
-    fault-scheduling: "force"
+    ring-controller.atlas: ascend-910b   # The value must be the same as the label in ConfigMap and cannot be changed.
+    fault-scheduling: "grace"
 spec:
   minAvailable: 1                       # The value of minAvailable is 1 in a single-node scenario and N in an N-node distributed scenario.
   schedulerName: volcano                # Use the Volcano scheduler to schedule jobs.
@@ -38,8 +38,9 @@ spec:
       metadata:
         labels:
           app: pytorch
-          ring-controller.atlas: ascend-910  # The value must be the same as the label in ConfigMap and cannot be changed.
+          ring-controller.atlas: ascend-910b  # The value must be the same as the label in ConfigMap and cannot be changed.
       spec:
+        terminationGracePeriodSeconds: 900
         affinity:
           podAntiAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -73,6 +74,10 @@ spec:
           - "cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code/ /job/output/ --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --multiprocessing-distributed --benchmark=0 --device='npu' --epoch=90 --batch-size=1024 --resume=true;"
           #args: [ "while true; do sleep 30000; done;"  ]     # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                               # The command is 'kubectl exec -it -n {namespace} {podname} bash'
+          lifecycle:
+            preStop:
+              exec:
+                command: [ "/bin/bash", "-c", "cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts; bash pre_stop.sh" ]
           resources:
             requests:
               huawei.com/Ascend910: 8                 # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
@@ -99,6 +104,7 @@ spec:
             mountPath: /etc/localtime
         nodeSelector:
           host-arch: huawei-arm                       # Configure the label based on the actual job.
+          accelerator-type: module-910b-8
         volumes:
         - name: ascend-910-config
           configMap:

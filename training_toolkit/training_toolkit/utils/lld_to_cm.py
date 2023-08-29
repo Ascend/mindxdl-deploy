@@ -4,10 +4,9 @@ import os
 import openpyxl
 
 
-def readExcel():
+def read_excel():
     lld_excel = openpyxl.load_workbook("lld.xlsx")
     if lld_excel is None or len(lld_excel._sheets) < 13:
-        print("error excel.")
         return
     node_sheet = lld_excel._sheets[12]
     start_raw = 0
@@ -24,7 +23,7 @@ def readExcel():
     return node_list
 
 
-def getTorList(node_list):
+def get_tor_list(node_list):
     tor_list = [[]]
     tor_ip = node_list[0]["tor_ip"]
     tor_id = 0
@@ -38,14 +37,14 @@ def getTorList(node_list):
 
 
 def handler():
-    node_list = readExcel()
-    tor_list = getTorList(node_list)
+    node_list = read_excel()
+    tor_list = get_tor_list(node_list)
     yaml = open("basic-tor-node-cm.yaml", 'w')
     yaml.write("apiVersion: v1\n")
     yaml.write("kind: ConfigMap\n")
     yaml.write("metadata:\n")
     yaml.write("  name: basic-tor-node-cm\n")
-    yaml.write("  namespace: volcano-system\n")
+    yaml.write("  namespace: kube-system\n")
     yaml.write("data:\n")
     yaml.write("  tor_info: |\n")
     yaml.write("    {\n")
@@ -64,7 +63,7 @@ def handler():
             yaml.write("            {\n")
             yaml.write("              \"server_ip\": \"" + str(node["server_ip"]) + "\",\n")
             yaml.write("              \"npu_count\": 8,\n")
-            yaml.write("              \"slice_id\": " + str(slice_num) + ",\n")
+            yaml.write("              \"slice_id\": " + str(slice_num) + "\n")
             slice_num = slice_num + 1
             if slice_num == len(tor):
                 yaml.write("            }\n")
@@ -81,3 +80,6 @@ def handler():
     os.system("kubectl apply -f basic-tor-node-cm.yaml")
     os.system("rm basic-tor-node-cm.yaml")
     os.system("kubectl get cm -A")
+
+if __name__ == '__main__':
+    handler()
