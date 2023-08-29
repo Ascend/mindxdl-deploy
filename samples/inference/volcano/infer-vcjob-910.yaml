@@ -1,0 +1,46 @@
+apiVersion: batch.volcano.sh/v1alpha1
+kind: Job
+metadata:
+  name: mindx-infer-test
+  namespace: vcjob                      # Select a proper namespace based on the site requirements.
+  labels:
+    ring-controller.atlas: ascend-910b
+    fault-scheduling: "force"
+spec:
+  minAvailable: 1                       # The value of minAvailable is 1 in a single-node scenario, only set as 1 when infer task
+  schedulerName: volcano                # Use the Volcano scheduler to schedule jobs.
+  policies:
+    - event: PodEvicted
+      action: RestartJob
+  maxRetry: 3
+  queue: default
+  tasks:
+  - name: "default-test"
+    replicas: 1                         # The value of replicas is 1 in a single-node scenario, only set as 1 when infer task
+    template:
+      metadata:
+        labels:
+          app: infer
+          ring-controller.atlas: ascend-910b
+      spec:
+        containers:
+          - image: infer_image:latest             # Inference image, which can be modified.
+            imagePullPolicy: IfNotPresent
+            name: infer
+            command: ["/bin/bash", "-c", "./infer.sh"]
+            resources:
+              requests:
+                huawei.com/Ascend910: 1          # Number of required NPUs. The maximum value is 2. You can add lines below to configure resources such as memory and CPU.
+              limits:
+                huawei.com/Ascend910: 1          # The value must be consistent with that in requests.
+            volumeMounts:
+              - name: localtime                  # The container time must be the same as the host time.
+                mountPath: /etc/localtime
+        nodeSelector:
+          host-arch: huawei-arm                  # Configure the label based on the actual job.
+          accelerator-type: card-910b-infer      # servers (with Atlas 300I A2 cards)
+        volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        restartPolicy: OnFailure
