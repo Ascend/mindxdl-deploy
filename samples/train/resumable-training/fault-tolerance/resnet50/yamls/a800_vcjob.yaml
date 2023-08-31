@@ -96,7 +96,7 @@ spec:
           - name: fault-config
             mountPath: /user/restore/fault/config
           - name: reset-config
-          - mountPath: /user/restore/reset/config
+            mountPath: /user/restore/reset/config
           - name: code
             mountPath: /job/code/
           - name: data
