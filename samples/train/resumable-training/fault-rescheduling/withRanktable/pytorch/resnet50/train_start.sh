@@ -13,6 +13,9 @@ cd "$DLS_USER_HOME_DIR" || exit 1
 export PYTHONPATH="$DLS_USER_JOB_DIR:$PYTHONPATH"
 export PYTHONUNBUFFERED=1
 
+# env for breakpoint ckpt
+export RESUME_MODE_ENABLE=1
+
 # use utils.sh env and functions
 source utils.sh
 echo $@ |grep -q -E '^[ 0-9a-zA-Z,./:_=-]*$'
