@@ -163,6 +163,10 @@ set_env
 # check npu status and wait some time if it is used by others
 check_npu_availability
 
+source node_rank.sh
+set_node_rank_env
+
+
 # 单卡训练场景
 if [[ "${MS_ROLE}" == "" ]]; then
   rm -rf ${boot_file_path}/scripts/worker
@@ -219,9 +223,10 @@ if [[ "${MS_ROLE}" == "MS_WORKER" ]]; then
      cp -r ${boot_file_path}/src ${boot_file_path}/scripts/worker_$i
      cd ${boot_file_path}/scripts/worker_$i || exit
      run_file_path=${boot_file_path}/scripts/worker_$i/
+     export MS_NODE_ID=$i
      if [[ "${i}" -eq "${start_index}" ]]; then
         ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_dir=${output_url} && tee ${output_url}/worker_$i.log
-     else 
+     else
         ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_dir=${output_url} &> ${output_url}/worker_$i.log &
      fi
      check_return_code

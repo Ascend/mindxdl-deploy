@@ -1,3 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: server-config-default-test-mindspore  # the deployment name is compounded from `server-config-` and job name
+  namespace: default # the namespace must same as job's namespace
+data:
+  serverList: |
+    {
+        "status":"initializing"
+    }
+---
 apiVersion: mindxdl.gitee.com/v1
 kind: AscendJob
 metadata:
@@ -36,6 +47,8 @@ spec:
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
             volumeMounts:
+            - name: ascend-server-config
+              mountPath: /user/serverid/devindex/config
             - name: code
               mountPath: /job/code
             - name: data
@@ -51,6 +64,9 @@ spec:
             - name: localtime
               mountPath: /etc/localtime
           volumes:
+          - name: ascend-server-config
+            configMap:
+              name: server-config-default-test-mindspore                  # Correspond to the ConfigMap name above.
           - name: code
             nfs:
               server: 127.0.0.1
