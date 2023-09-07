@@ -1,60 +1,48 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: server-config-default-test-mindspore  # the deployment name is compounded from `server-config-` and job name
-  namespace: default # the namespace must same as job's namespace
-data:
-  serverList: |
-    {
-        "status":"initializing"
-    }
----
 apiVersion: mindxdl.gitee.com/v1
 kind: AscendJob
 metadata:
-  name: default-test-mindspore
+  name: default-test-tensorflow
   labels:
-    framework: mindspore
-    ring-controller.atlas: ascend-910b
-    fault-scheduling: "force"
+    framework: tensorflow
+    fault-scheduling: "grace"
+    ring-controller.atlas: ascend-910
 spec:
-  schedulerName: volcano    # work when enableGangScheduling is true
+  schedulerName: volcano        # work when enableGangScheduling is true
   runPolicy:
-    schedulingPolicy:       # work when enableGangScheduling is true
+    schedulingPolicy:           # work when enableGangScheduling is true
       minAvailable: 1
       queue: default
   successPolicy: AllWorkers
   replicaSpecs:
-    Worker:
+    Chief:
       replicas: 1
       restartPolicy: OnFailure
       template:
         metadata:
           labels:
-            ring-controller.atlas: ascend-910b
+            app: tensorflow
+            ring-controller.atlas: ascend-910
         spec:
-          nodeSelector:                        # modify according to the actual situation
-            host-arch: huawei-x86
-            accelerator-type: module-910b-16
+          nodeSelector:
+            host-arch: huawei-arm
+            accelerator-type: module
           containers:
           - name: ascend # do not modify
-            image: mindspore-test:latest       # training framework image， which can be modified
+            image: tensorflow-test:latest   # training framework image， which can be modified
             imagePullPolicy: IfNotPresent
-            command:                           # training command, which can be modified
+            command:                        # training command, which can be modified
               - /bin/bash
               - -c
-            args: ["cd /job/code/ResNet50_for_MindSpore_2.0_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_MindSpore_2.0_code/ /job/code/ResNet50_for_MindSpore_2.0_code/output train.py  --data_path=/job/data/resnet50/imagenet/train --config=/job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml"]
+            args: [ "cd /job/code/ResNet50_for_TensorFlow_2.6_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_TensorFlow_2.6_code/ /job/output/ tensorflow/resnet_ctl_imagenet_main.py --data_dir=/job/data/resnet50/imagenet_TF/ --distribution_strategy=one_device --use_tf_while_loop=true --epochs_between_evals=1 --skip_eval --enable_checkpoint_and_export" ]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
             resources:
               limits:
-                huawei.com/Ascend910: 1
+                huawei.com/Ascend910: 4
               requests:
-                huawei.com/Ascend910: 1
+                huawei.com/Ascend910: 4
             volumeMounts:
-            - name: ascend-server-config
-              mountPath: /user/serverid/devindex/config
             - name: code
               mountPath: /job/code
             - name: data
@@ -65,14 +53,9 @@ spec:
               mountPath: /usr/local/Ascend/driver
             - name: ascend-add-ons
               mountPath: /usr/local/Ascend/add-ons
-            - name: dshm
-              mountPath: /dev/shm
             - name: localtime
               mountPath: /etc/localtime
           volumes:
-          - name: ascend-server-config
-            configMap:
-              name: server-config-default-test-mindspore                  # Correspond to the ConfigMap name above.
           - name: code
             nfs:
               server: 127.0.0.1
@@ -91,11 +74,7 @@ spec:
           - name: ascend-add-ons
             hostPath:
               path: /usr/local/Ascend/add-ons
-          - name: dshm
-            emptyDir:
-              medium: Memory
           - name: localtime
             hostPath:
               path: /etc/localtime
-
 
