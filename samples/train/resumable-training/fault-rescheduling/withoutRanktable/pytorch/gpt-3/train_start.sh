@@ -13,6 +13,9 @@ cd "$DLS_USER_HOME_DIR" || exit 1
 export PYTHONPATH="$DLS_USER_JOB_DIR:$PYTHONPATH"
 export PYTHONUNBUFFERED=1
 
+# env for breakpoint ckpt
+export RESUME_MODE_ENABLE=1
+
 function check_npu_availability {
     i=0
     while [ $i -lt 10 ]; do
@@ -206,12 +209,9 @@ fi
 if [[ "${device_count}" -ge 1 ]]; then
   server_id=${RANK}
   logger "server id is: ""${server_id}"
-  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --multiprocessing-distributed --device-list=${LOCAL_RANK} --benchmark=0 --device='npu' --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} && tee ${output_url}/log
+  DISTRIBUTED_ARGS="--nproc_per_node $LOCAL_WORLD_SIZE --nnodes $server_count --node_rank $RANK --master_addr $MASTER_ADDR --master_port $MASTER_PORT"
+  ${DLS_PROGRAM_EXECUTOR} -m torch.distributed.launch $DISTRIBUTED_ARGS ${boot_file_path}${boot_file} ${train_param} && tee ${output_url}/log
   check_return_code
-  if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/log
-    check_return_code
-  fi
 fi
 
 chmod 440 ${output_url}

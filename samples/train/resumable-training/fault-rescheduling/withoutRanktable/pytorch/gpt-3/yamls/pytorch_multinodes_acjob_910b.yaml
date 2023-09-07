@@ -16,7 +16,7 @@ metadata:
   labels:
     framework: pytorch
     ring-controller.atlas: ascend-910b
-    fault-scheduling: "force"
+    fault-scheduling: "grace"
     tor-affinity: "null" #该标签为任务是否使用交换机亲和性调度标签，null或者不写该标签则不适用。large-model-schema表示大模型任务，normal-schema 普通任务
 spec:
   schedulerName: volcano   # work when enableGangScheduling is true
@@ -34,6 +34,7 @@ spec:
           labels:
             ring-controller.atlas: ascend-910b
         spec:
+          terminationGracePeriodSeconds: 900
           affinity:
             podAntiAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
@@ -47,6 +48,7 @@ spec:
           nodeSelector:
             host-arch: huawei-arm
             accelerator-type: card-910b-2 # depend on your device model, 910bx8 is module-910b-8 ,910bx16 is module-910b-16
+          hostNetwork: true
           containers:
           - name: ascend # do not modify
             image: pytorch-test:latest         # trainning framework image， which can be modified
@@ -59,15 +61,19 @@ spec:
             command:                           # training command, which can be modified
               - /bin/bash
               - -c
-            args: [ "cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code /job/code/ResNet50_for_PyTorch_1.8_code/output/logs DistributedResnet50/main_apex_d76_npu.py --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --multiprocessing-distributed --benchmark=0 --device='npu' --epoch=90 --batch-size=4096 --resume=/job/output" ]
+            args: [ "cd /job/code/Megatron-LM; chmod +x scripts/train_start.sh; bash scripts/train_start.sh /job/code/Megatron-LM /job/output 6000 --num-layers=8 --hidden-size=12288 --num-attention-heads=96 --micro-batch-size=4 --global-batch-size=96 --seq-length=1024 --max-position-embeddings=1024 --train-iters=500000 --lr-decay-iters=320000 --save=./checkpoint_dist --load=./checkpoint_dist --data-path=/job/data/enwiki/my-t5_text_sentence --tensor-model-parallel-size=8 --use-distributed-optimizer --pipeline-model-parallel-size=8 --vocab-file=/job/code/Megatron-LM/gpt2-vocab.json --merge-file=/job/code/Megatron-LM/gpt2-merges.txt --data-impl=mmap --split=949,50,1 --distributed-backend=nccl --lr=0.375e-5 --lr-decay-style=cosine --min-lr=0.375e-6 --weight-decay=0.1 --clip-grad=1.0 --lr-warmup-fraction=.01 --adam-beta1=0.9 --adam-beta2=0.95 --init-method-std=0.006 --recompute-granularity=full --recompute-method=uniform --no-gradient-accumulation-fusion --log-interval=1 --save-interval=10000 --eval-interval=1000 --eval-iters=10 --fp16;" ]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
+            lifecycle:
+              preStop:
+                exec:
+                  command: [ "/bin/bash", "-c", "cd /job/code/Megatron-LM/scripts; bash pre_stop.sh" ]
             resources:
               limits:
-                huawei.com/Ascend910: 2
+                huawei.com/Ascend910: 4
               requests:
-                huawei.com/Ascend910: 2
+                huawei.com/Ascend910: 4
             volumeMounts:
             - name: ascend-server-config
               mountPath: /user/serverid/devindex/config
@@ -121,6 +127,7 @@ spec:
           labels:
             ring-controller.atlas: ascend-910b
         spec:
+          terminationGracePeriodSeconds: 900
           affinity:
             podAntiAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
@@ -134,6 +141,7 @@ spec:
           nodeSelector:
             host-arch: huawei-arm
             accelerator-type: card-910b-2 # depend on your device model, 910bx8 is module-910b-8 ,910bx16 is module-910b-16
+          hostNetwork: true
           containers:
           - name: ascend # do not modify
             image: pytorch-test:latest                # trainning framework image， which can be modified
@@ -146,15 +154,19 @@ spec:
             command:                                  # training command, which can be modified
               - /bin/bash
               - -c
-            args: ["cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code /job/code/ResNet50_for_PyTorch_1.8_code/output/logs DistributedResnet50/main_apex_d76_npu.py --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --multiprocessing-distributed --benchmark=0 --device='npu' --epoch=90 --batch-size=4096 --resume=/job/output"]
+            args: ["cd /job/code/Megatron-LM; chmod +x scripts/train_start.sh; bash scripts/train_start.sh /job/code/Megatron-LM /job/output 6000 --num-layers=8 --hidden-size=12288 --num-attention-heads=96 --micro-batch-size=4 --global-batch-size=96 --seq-length=1024 --max-position-embeddings=1024 --train-iters=500000 --lr-decay-iters=320000 --save=./checkpoint_dist --load=./checkpoint_dist --data-path=/job/data/enwiki/my-t5_text_sentence --tensor-model-parallel-size=8 --use-distributed-optimizer --pipeline-model-parallel-size=8 --vocab-file=/job/code/Megatron-LM/gpt2-vocab.json --merge-file=/job/code/Megatron-LM/gpt2-merges.txt --data-impl=mmap --split=949,50,1 --distributed-backend=nccl --lr=0.375e-5 --lr-decay-style=cosine --min-lr=0.375e-6 --weight-decay=0.1 --clip-grad=1.0 --lr-warmup-fraction=.01 --adam-beta1=0.9 --adam-beta2=0.95 --init-method-std=0.006 --recompute-granularity=full --recompute-method=uniform --no-gradient-accumulation-fusion --log-interval=1 --save-interval=10000 --eval-interval=1000 --eval-iters=10 --fp16;"]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
+            lifecycle:
+              preStop:
+                exec:
+                  command: [ "/bin/bash", "-c", "cd /job/code/Megatron-LM/scripts; bash pre_stop.sh" ]
             resources:
               limits:
-                huawei.com/Ascend910: 2
+                huawei.com/Ascend910: 4
               requests:
-                huawei.com/Ascend910: 2
+                huawei.com/Ascend910: 4
             volumeMounts:
             - name: ascend-server-config
               mountPath: /user/serverid/devindex/config
