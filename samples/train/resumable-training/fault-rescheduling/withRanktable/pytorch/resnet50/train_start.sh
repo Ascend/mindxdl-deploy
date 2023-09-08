@@ -190,8 +190,9 @@ function get_env_for_pytorch_multi_node_job() {
 }
 
 function check_return_code() {
-    if [[ $? -ne 0 ]]; then
-      logger "running job failed." | tee ${output_url}/log
+    ret_code=$?
+    if [[ $ret_code -ne 0 ]]; then
+      logger "running job failed. exit code: ${ret_code}" | tee ${output_url}/log
       exit 1
     fi
 }
