@@ -124,26 +124,20 @@ chmod 640 ${output_url}
 start_time=$(date +%Y-%m-%d-%H:%M:%S)
 logger "Training start at ${start_time}"
 
-sleep 1
+# 获取环境变量中的device_count字段
+device_count=${CM_WORKER_SIZE}
+if [[ "${device_count}" -eq 0 ]]; then
+  echo "device count is 0, train job failed." | tee -a hccl.log
+  chmod 440 ${output_url}
+  exit 1
+fi
 
-if [[ "${LOCAL_WORLD_SIZE}" == "" ]]; then
-    device_count=1
-    server_count=1
-else 
-    # 获取环境变量中的device_count字段
-    device_count=${LOCAL_WORLD_SIZE}
-    if [[ "${device_count}" -eq 0 ]]; then
-      echo "device count is 0, train job failed." | tee -a hccl.log
-      chmod 440 ${output_url}
-      exit 1
-    fi
-    # 获取环境变量中的server_count字段
-    server_count=`expr ${WORLD_SIZE} / ${LOCAL_WORLD_SIZE}`
-    if [[ "${server_count}" == "" ]]; then
-      echo "server count is 0, train job failed." | tee -a hccl.log
-      chmod 440 ${output_url}
-      exit 1
-    fi
+# 获取环境变量中的server_count字段
+server_count=`expr ${CM_WORKER_SIZE} / ${CM_LOCAL_WORKER}`
+if [[ "${server_count}" == "" ]]; then
+  echo "server count is 0, train job failed." | tee -a hccl.log
+  chmod 440 ${output_url}
+  exit 1
 fi
 
 function check_return_code() {
@@ -157,34 +151,44 @@ function check_return_code() {
 DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
 # set training env
 set_env
-export JOB_ID=123456789
-
-source node_rank.sh
-set_node_rank_env
-
+export PYTHONPATH=$PYTHONPATH:$boot_file_path
+export JOB_ID=10086
 # 单卡训练场景
-if [ "${device_count}" -eq 1 ] && [ "${server_count}" -eq 1 ]; then
+if [[ "${device_count}" -eq 1 ]]; then
   server_id=0
-  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${output_url}/log
-  check_return_code
-  if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${output_url}/log
+  if [ "${device_count}" -eq 1 ]; then
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --model_dir=${output_url}/models/device 2>&1 && tee ${output_url}/log
     check_return_code
+    if [[ $@ =~ need_freeze ]]; then
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --model_dir=${output_url}/models/device 2>&1 && tee ${output_url}/log
+      check_return_code
+    fi
+    chmod 440 ${output_url}
+    exit 0
   fi
-  chmod 440 ${output_url}/log
-  exit 0
 fi
 
 # 分布式场景
 if [[ "${device_count}" -ge 1 ]]; then
-  server_id=${RANK}
+  server_id=${CM_RANK}
   logger "server id is: ""${server_id}"
-  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --multiprocessing-distributed --device-list=${LOCAL_RANK} --benchmark=0 --device='npu' --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} && tee ${output_url}/log
-  check_return_code
-  if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/log
-    check_return_code
-  fi
+  rank_start=`expr ${CM_RANK} \* ${CM_LOCAL_WORKER}`
+  for ((i = $((${CM_LOCAL_WORKER} - 1)); i >= 0; i--)); do
+    export DEVICE_INDEX=`expr ${rank_start} + ${i}`
+    export ASCEND_DEVICE_ID=${i}
+    if [[ "${i}" -eq 0 ]]; then
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --model_dir=${output_url}/models/device_${DEVICE_INDEX}/   2>&1 && tee ${output_url}/device_${DEVICE_INDEX}.log
+      check_return_code
+      if [[ $@ =~ need_freeze ]]; then
+        ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --model_dir=${output_url}/models/device_${DEVICE_INDEX}/   2>&1 && tee ${output_url}/device_${DEVICE_INDEX}.log
+        check_return_code
+      fi
+    else
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --model_dir=${output_url}/models/device_${DEVICE_INDEX}/   &> ${output_url}/device_${DEVICE_INDEX}.log &
+    fi
+    done
 fi
 
 chmod 440 ${output_url}
+
+wait

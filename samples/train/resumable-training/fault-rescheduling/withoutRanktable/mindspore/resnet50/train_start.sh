@@ -152,10 +152,10 @@ if [[ "${MS_ROLE}" == "" ]]; then
   cd ${boot_file_path}/scripts/worker || exit
   run_file_path=${boot_file_path}/scripts/worker/
   export DEVICE_ID=0
-  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --device_target=Ascend --output_dir './output' 2>&1 && tee ${output_url}/worker.log
+  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --device_target=Ascend --output_dir ${output_url} 2>&1 && tee ${output_url}/worker.log
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --device_target=Ascend --output_dir './output' 2>&1 && tee ${output_url}/worker.log
+    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --device_target=Ascend --output_dir ${output_url} 2>&1 && tee ${output_url}/worker.log
     check_return_code
   fi
   chmod 440 ${output_url}
@@ -174,10 +174,10 @@ if [[ "${MS_ROLE}" == "MS_SCHED" ]]; then
   cd ${boot_file_path}/scripts/sched || exit
   run_file_path=${boot_file_path}/scripts/sched/
   export DEVICE_ID=0
-  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_dir=${output_url}/output && tee ${output_url}/sched.log
+  ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_dir=${output_url} && tee ${output_url}/sched.log
   check_return_code
   if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_dir=${output_url}/output && tee ${output_url}/sched.log
+    ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${freeze_cmd} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_dir=${output_url} && tee ${output_url}/sched.log
     check_return_code
   fi
 fi
@@ -199,9 +199,9 @@ if [[ "${MS_ROLE}" == "MS_WORKER" ]]; then
      run_file_path=${boot_file_path}/scripts/worker_$i/
      export MS_NODE_ID=${i}
      if [[ "${i}" -eq "${start_index}" ]]; then
-        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_dir=${output_url}/output && tee ${output_url}/worker_$i.log
+        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_dir=${output_url} && tee ${output_url}/worker_$i.log
      else
-        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_dir=${output_url}/output &> ${output_url}/worker_$i.log &
+        ${DLS_PROGRAM_EXECUTOR} ${run_file_path}${boot_file} ${train_param} --run_distribute=True --device_num=${MS_LOCAL_WORKER} --parameter_server=False --device_target=Ascend --output_dir=${output_url} &> ${output_url}/worker_$i.log &
      fi
      check_return_code
      cd ..
