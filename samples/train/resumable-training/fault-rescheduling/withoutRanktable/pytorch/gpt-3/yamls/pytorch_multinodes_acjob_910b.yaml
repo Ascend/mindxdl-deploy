@@ -1,14 +1,3 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: server-config-default-test-pytorch  # the deployment name is compounded from `server-config-` and job name
-  namespace: default # the namespace must same as job's namespace
-data:
-  serverList: |
-    {
-        "status":"initializing"
-    }
----
 apiVersion: mindxdl.gitee.com/v1
 kind: AscendJob
 metadata:
@@ -75,8 +64,6 @@ spec:
               requests:
                 huawei.com/Ascend910: 4
             volumeMounts:
-            - name: ascend-server-config
-              mountPath: /user/serverid/devindex/config
             - name: code
               mountPath: /job/code
             - name: data
@@ -92,9 +79,6 @@ spec:
             - name: localtime
               mountPath: /etc/localtime
           volumes:
-          - name: ascend-server-config
-            configMap:
-              name: server-config-default-test-pytorch                  # Correspond to the ConfigMap name above.
           - name: code
             nfs:
               server: 127.0.0.1
