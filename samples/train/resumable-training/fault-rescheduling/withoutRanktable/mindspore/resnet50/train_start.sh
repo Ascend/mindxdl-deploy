@@ -137,9 +137,6 @@ DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
 # set training env
 set_env
 
-source node_rank.sh
-set_node_rank_env
-
 
 # 单卡训练场景
 if [[ "${MS_ROLE}" == "" ]]; then
