@@ -2,6 +2,7 @@
 
 ulimit -u unlimited
 ROOT_PATH=$(cd "`dirname $0`" || exit; pwd)
+train_pids=()
 
 # 单机单卡
 if [ $# == 2 ]; then
@@ -65,11 +66,11 @@ if [ $# == 6 ]; then
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
         python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${RANK_SIZE} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH}  &> log &
-
+        train_pids[$i]=$!
     done
 else
     echo "Invalid input parameter, usage: main.sh device_count server_count rank_table_file server_id dataset config_file_path" | tee log
     exit 1
 fi
-python -u ${ROOT_PATH}/reset_process.py
+python -u ${ROOT_PATH}/reset_process.py -p "${train_pids[@]}"
 wait

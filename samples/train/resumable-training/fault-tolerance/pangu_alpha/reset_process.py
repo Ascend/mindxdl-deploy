@@ -4,19 +4,46 @@ import signal
 import time
 import logging
 import re
+import multiprocessing
+import subprocess
+import psutil
+
+from typing import Optional
 from ast import literal_eval
 from apscheduler.executors.pool import ProcessPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from pytz import utc
 
-from mindx_elastic.process_module.process_manager.process_manager import ProcessManager, check_input_file
 from mindx_elastic.validator.file_process import safe_open
 from mindx_elastic.constants import constants
+from mindx_elastic.validator.validators import FileValidator, DirectoryValidator
 
 logger = logging.getLogger('recover_logger')
 logger.setLevel(logging.INFO)
 pattern = re.compile(r'^[a-z0-9]+[a-z0-9\-]*[a-z0-9]+$')
 MAX_STR_LEN = 1024
+
+
+def check_input_file(file_path: Optional[str]) -> bool:
+    """
+    Validate input file
+    """
+    validation = DirectoryValidator(file_path, max_len=constants.MAX_FILE_PATH_LENGTH) \
+        .check_is_not_none() \
+        .check_dir_name() \
+        .path_should_exist(is_file=True, msg="Cannot find the file.") \
+        .should_not_contains_sensitive_words() \
+        .with_blacklist() \
+        .check()
+
+    if not validation.is_valid():
+        logger.error("File is invalid")
+        return False
+
+    if not FileValidator(file_path).check_file_size().check().is_valid():
+        logger.error("File size exceeds limited size.")
+        return False
+    return True
 
 
 def get_file_info(file_path: str) -> dict:
@@ -25,9 +52,125 @@ def get_file_info(file_path: str) -> dict:
         return file_content
 
 
-class ResetWorker:
-    def __init__(self, kill_time=50, mode="common", framework="mindspore"):
+def _run_recover(cmd: list, work_dir: str, env: dict, new_pids: list):
+    """
+    Call subprocess module to recover a process and output the log to newlog
+    """
+    with open(f'{work_dir}/newlog', 'w') as of:
+        proc = subprocess.Popen(cmd, shell=False, stdout=of, stderr=of,
+                                cwd=work_dir, env=env)
+    new_pids.append(proc.pid)
+
+
+class ProcessManager:
+    """
+    Get process information and manage it
+    """
+
+    def __init__(self, pids: list):
         super().__init__()
+        self._restart = False
+        self.pids = pids
+        self._pid_dict = dict()
+        self._env_dict = dict()
+        self._cmd_dict = dict()
+        self._get_train_process_info()
+
+    def _kill_process(self, rank_list: list, kill_signal):
+        """
+        Kill processes according to rank list
+        """
+        for rank in rank_list:
+            if rank not in self._pid_dict.keys():
+                logger.warning(f"get invalid rank: {rank}")
+                continue
+            try:
+                process_dir = os.path.join('/proc', str(self._pid_dict[rank]))
+                if os.path.exists(process_dir):
+                    os.kill(self._pid_dict[rank], kill_signal)
+            except ProcessLookupError:
+                logger.warning(f"{ProcessLookupError} occur when kill the process of {rank}")
+            except Exception as e:
+                logger.error(f"An unexpected error {e} occur when kill the process of {rank}, "
+                             f"please check your setting")
+                raise e
+        logger.info(f"the signal {kill_signal} has been send to {rank_list}")
+
+    def _get_train_process_info(self):
+        """
+        Get target process information and save in dict
+        """
+        if len(self.pids) == 0:
+            logger.error("found no process here")
+            return
+
+        for train_pid in self.pids:
+            train_process = psutil.Process(train_pid)
+            uid, _, _ = train_process.uids()
+            if uid != os.getuid():
+                logger.warning(f"process {train_pid} owner is not valid")
+                continue
+            process_env = train_process.environ()
+            rank_id = process_env['RANK_ID']
+            if not rank_id.isdigit():
+                logger.warning(f"unexpected RANK_ID: {rank_id} in process {train_pid}, please check you env")
+                continue
+            rank = int(rank_id)
+            self._pid_dict[rank] = train_process.pid
+            self._env_dict[rank] = process_env
+            self._cmd_dict[rank] = train_process.cmdline()
+
+    def stop_healthy_process(self, normal_rank_list: list):
+        """
+        Stop healthy process
+        """
+        self._kill_process(normal_rank_list, signal.SIGTERM)
+
+    def kill_fault_process(self, abnormal_rank_list: list):
+        """
+        Kill fault process
+        """
+        self._kill_process(abnormal_rank_list, signal.SIGKILL)
+
+    def restore_train_process(self):
+        """
+        Recover all target processes in this node
+        """
+        new_pid_list = multiprocessing.Manager().list()
+        if not self.all_stopped() or self._restart:
+            return new_pid_list
+
+        process = []
+        for rank in self._cmd_dict:
+            command = self._cmd_dict[rank]
+            pwd_path = self._env_dict[rank]['PWD']
+            env_info = self._env_dict[rank]
+            p = multiprocessing.Process(target=_run_recover, args=(command, pwd_path, env_info, new_pid_list))
+            process.append(p)
+            p.start()
+
+        for p in process:
+            p.join()
+        self._restart = True
+        logger.info(f"new pids are:{new_pid_list}")
+        return new_pid_list
+
+    def all_stopped(self):
+        """
+        Return true if all target process stopped
+        """
+        for pid in self.pids:
+            process_dir = os.path.join('/proc', str(pid))
+            if os.path.exists(process_dir):
+                return False
+        return True
+
+
+class ResetWorker:
+    def __init__(self, kill_time=50, mode="common", framework="mindspore", pids=None):
+        super().__init__()
+        if pids is None:
+            pids = []
         self.begin_time = 0
         self.now_time = 0
         self.kill_time = kill_time
@@ -41,6 +184,7 @@ class ResetWorker:
         self.rank_table_path = "/user/serverid/devindex/config/hccl.json"
         self.fault_rank_list = []
         self.recover_rank_list = []
+        self.init_pids = pids
         self._local_rank = self._init_local_ranks(self.rank_table_path)
 
         self.executors = {
@@ -55,12 +199,11 @@ class ResetWorker:
         self._sched = BackgroundScheduler(executors=self.executors,
                                           job_defaults=self.job_defaults,
                                           timezone=utc)
-        self._process_manager = self._init_process_manager()
+        self._process_manager = self._init_process_manager(self.init_pids)
 
     @staticmethod
-    def _init_process_manager():
-        time.sleep(3)
-        return ProcessManager()
+    def _init_process_manager(pids):
+        return ProcessManager(pids)
 
     @staticmethod
     def _init_local_ranks(rank_table_path: str) -> list:
@@ -170,13 +313,14 @@ class ResetWorker:
             self.exit_recover_process()
 
     def _restore_train_start(self):
+        new_pids = []
         try:
-            self._process_manager.restore_train_process()
+            new_pids = self._process_manager.restore_train_process()
         except Exception as e:
             logger.error(f"an unexpected error {e} occur when recover process")
             self.exit_recover_process()
 
-        self._reset_all_status()
+        self._reset_all_status(new_pids)
 
     def _is_cur_node(self) -> bool:
         for rank in self.fault_rank_list:
@@ -198,12 +342,16 @@ class ResetWorker:
     def _is_no_fault_happen(self, ):
         return len(self.fault_rank_list) == 0
 
-    def _reset_all_status(self):
+    def _reset_all_status(self, new_pids):
+        if len(new_pids) != len(self.init_pids):
+            logger.error("recover error")
+            self.exit_recover_process()
+
         self.killed_abnormal = False
         self.killed_normal = False
         self.stopped_normal = False
         self.resart_flag = False
-        self._process_manager = ProcessManager()
+        self._process_manager = ProcessManager(new_pids)
         self.fault_rank_list = []
         self.recover_rank_list = []
 
@@ -289,6 +437,8 @@ if __name__ == "__main__":
                                                                     '(default=common)', default='common')
     parser.add_argument('-f', '--frame', dest='frame', type=str, help='Training framework (default=ms,mindspore), '
                                                                       'just support mindspore now', default='ms')
+    parser.add_argument('-p', '--pids', dest='pids', type=int, nargs='+', help='the pids of training process which '
+                                                                               'monitored by reset_process', default=-1)
 
     args = parser.parse_args()
     logger.info("reset process begin!")
@@ -310,8 +460,9 @@ if __name__ == "__main__":
     formatter = logging.Formatter(LOG_FORMAT)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
+    logger.info(f"get pid {args.pids}")
 
-    reset_worker = ResetWorker(kill_time=args.time, mode=args.mode, framework=args.frame)
+    reset_worker = ResetWorker(kill_time=args.time, mode=args.mode, framework=args.frame, pids=args.pids)
     reset_worker.start()
 
     while True:
