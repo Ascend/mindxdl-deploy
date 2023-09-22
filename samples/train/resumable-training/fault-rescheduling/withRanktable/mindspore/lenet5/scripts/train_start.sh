@@ -84,6 +84,11 @@ if [[ "$server_count" == "1" ]]; then
     if [ ${device_count} -gt 1 ]; then
         bash main.sh ${device_count} ${RANK_TABLE_FILE} ${server_id}
     fi
+    ET=$?
+    if [[ ${ET} -ne 0 ]]; then
+        echo "running job failed." | tee -a train.log
+        exit ${ET}
+    fi
 
 # 分布式训练场景
 else
@@ -94,5 +99,10 @@ else
     fi
     echo "server id is: "${server_id}
     bash main.sh ${device_count} ${RANK_TABLE_FILE} ${server_id}
+    ET=$?
+    if [[ ${ET} -ne 0 ]]; then
+        echo "running job failed." | tee -a train.log
+        exit ${ET}
+    fi
 fi
 

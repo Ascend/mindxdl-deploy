@@ -43,7 +43,13 @@ if [ $# == 5 ]; then
         env > env.log
 
         if [ $i -eq 0 ]; then
-            python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp16 --mode=2.6B | tee log
+            python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp16 --mode=2.6B |& tee log
+            ST=${PIPESTATUS[0]}
+            if [[ ${ST} -ne 0 ]]; then
+                echo "running job failed." | tee -a log
+                chmod 440 log
+                exit ${ST}
+            fi
         else
             python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp16 --mode=2.6B &> log &
         fi

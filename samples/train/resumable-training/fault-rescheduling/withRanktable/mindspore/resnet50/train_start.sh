@@ -132,16 +132,18 @@ if [[ "$server_count" == "1" ]]; then
     server_id=0
     if [ ${device_count} -eq 1 ]; then
         bash main.sh ${dataset_path} ${config_yaml_path}
-        if [[ $? -eq 1 ]]; then
-            echo "running job failed." | tee log
-            exit 1
+        ET=$?
+        if [[ ${ET} -ne 0 ]]; then
+            echo "running job failed." | tee -a log
+            exit ${ET}
         fi
     fi
     if [ ${device_count} -gt 1 ]; then
         bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
-        if [[ $? -eq 1 ]]; then
-            echo "running job failed." | tee log
-            exit 1
+        ET=$?
+        if [[ ${ET} -ne 0 ]]; then
+            echo "running job failed." | tee -a log
+            exit ${ET}
         fi
     fi
 
@@ -154,8 +156,9 @@ else
     fi
     echo "server id is: "${server_id}
     bash main.sh ${device_count} ${server_count} ${RANK_TABLE_FILE} ${server_id} ${dataset_path} ${config_yaml_path}
-    if [[ $? -eq 1 ]]; then
-        echo "running job failed." | tee log
-        exit 1
+    ET=$?
+    if [[ ${ET} -ne 0 ]]; then
+        echo "running job failed." | tee -a log
+        exit ${ET}
     fi
 fi

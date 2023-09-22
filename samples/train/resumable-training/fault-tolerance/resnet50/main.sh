@@ -27,13 +27,14 @@ if [ $# == 2 ]; then
     env > env.log
 
     # 保持前台输出
-    python ${ROOT_PATH}/../train.py --data_path=${DATA_PATH} --config_path=${CONFIG_PATH}
-    if [ $? -eq 0 ]; then
-      echo "run training job complete." | tee log
+    python ${ROOT_PATH}/../train.py --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} |& tee log
+    ST=${PIPESTATUS[0]}
+    if [[ ${ST} -eq 0 ]]; then
+      echo "run training job complete." | tee -a log
       exit 0
     else
-      echo "run training job failed." | tee log
-      exit 1
+      echo "run training job failed." | tee -a log
+      exit ${ST}
     fi
 fi
 
@@ -65,11 +66,11 @@ if [ $# == 6 ]; then
         cd ${ROOT_PATH}/train_parallel${rankid} || exit
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
-        python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${RANK_SIZE} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH}  &> log &
+        python ${ROOT_PATH}/../train.py --run_distribute=True --device_num=${RANK_SIZE} --data_path=${DATA_PATH} --config_path=${CONFIG_PATH} &> log &
         train_pids[$i]=$!
     done
 else
-    echo "Invalid input parameter, usage: main.sh device_count server_count rank_table_file server_id dataset config_file_path" | tee log
+    echo "Invalid input parameter, usage: main.sh device_count server_count rank_table_file server_id dataset config_file_path" | tee -a log
     exit 1
 fi
 python -u ${ROOT_PATH}/reset_process.py -p "${train_pids[@]}"
