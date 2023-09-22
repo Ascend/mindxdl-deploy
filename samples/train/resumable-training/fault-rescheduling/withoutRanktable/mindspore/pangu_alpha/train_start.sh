@@ -65,9 +65,10 @@ if [[ "$server_count" == "1" ]]; then
     fi
     if [ ${device_count} -eq 8 ]; then
         bash main.sh ${device_count} ${device_each_server} ${server_id} ${dataset}
-        if [[ $? -eq 1 ]]; then
-            echo "running job failed." | tee log
-            exit 1
+        ET=$?
+        if [[ ${ET} -ne 0 ]]; then
+            echo "running job failed." | tee -a log
+            exit ${ET}
         fi
     fi
 
@@ -75,8 +76,9 @@ if [[ "$server_count" == "1" ]]; then
 else
     echo "server id is: "${server_id}
     bash main.sh ${device_count} ${device_each_server} ${server_id} ${dataset}
-    if [[ $? -eq 1 ]]; then
-        echo "running job failed." | tee log
-        exit 1
+    ET=$?
+    if [[ ${ET} -ne 0 ]]; then
+        echo "running job failed." | tee -a log
+        exit ${ET}
     fi
 fi

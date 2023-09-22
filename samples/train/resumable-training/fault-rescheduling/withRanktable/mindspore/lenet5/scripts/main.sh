@@ -17,7 +17,13 @@ if [ $# -eq 0 ]; then
     echo "start training for device $DEVICE_ID"
     env > env.log
     # 保持前台输出
-    python train.py | tee train.log
+    python train.py |& tee train.log
+    ST=${PIPESTATUS[0]}
+    if [[ ${ST} -ne 0 ]]; then
+        echo "running job failed." | tee -a train.log
+        chmod 440 train.log
+        exit ${ST}
+    fi
 
     echo "training completed"
     cd ..
@@ -49,7 +55,13 @@ else
         env > env.log
 
         if [ $i -eq 0 ];then
-            python train.py | tee train.log
+            python train.py |& tee train.log
+            ST=${PIPESTATUS[0]}
+            if [[ ${ST} -ne 0 ]]; then
+                echo "running job failed." | tee -a train.log
+                chmod 440 train.log
+                exit ${ST}
+            fi
         else
             python train.py > train.log 2>&1 &
         fi
