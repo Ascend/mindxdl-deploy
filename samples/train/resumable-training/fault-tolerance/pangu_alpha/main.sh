@@ -8,6 +8,7 @@ export TE_PARALLEL_COMPILER=10
 export ENABLE_TUNE_BANK=True
 export MS_COMM_COMPILER_OPT=5000
 export MS_COMPILER_CACHE_PATH=/job/code
+train_pids=()
 
 # 单机多卡和分布式
 if [ $# == 5 ]; then
@@ -35,11 +36,11 @@ if [ $# == 5 ]; then
         env > env.log
 
         python ${ROOT_PATH}/../train.py --distribute=true --device_num=${device_each_server} --data_url=${data_path} --run_type=train --param_init_type=fp16 --mode=2.6B &> log &
-
+        train_pids[$i]=$!
     done
 else
     echo "Invalid input parameter, usage: main.sh device_count server_count RANK_TABLE_FILE server_id dataset" | tee -a log
     exit 1
 fi
-python -u ${ROOT_PATH}/reset_process.py
+python -u ${ROOT_PATH}/reset_process.py -p "${train_pids[@]}"
 wait
