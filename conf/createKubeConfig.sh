@@ -1,5 +1,5 @@
 #! /bin/bash
-#  Copyright (C)  2021. Huawei Technologies Co., Ltd. All rights reserved.
+#  Copyright (C)  2021-2023. Huawei Technologies Co., Ltd. All rights reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -52,14 +52,6 @@ function createKubeConfig() {
 }
 
 function createRoleBinding() {
-  #hccl-controller
-  kubectl delete clusterrolebinding hccl-controller-clusterrolebinding || true
-  kubectl create clusterrolebinding hccl-controller-clusterrolebinding --clusterrole=hccl-controller-role \
-  --user=hccl-controller
-  #device-plugin
-  kubectl delete clusterrolebinding device-plugin-clusterrolebinding || true
-  kubectl create clusterrolebinding device-plugin-clusterrolebinding --clusterrole=device-plugin-role \
-  --user=device-plugin
   #noded
   kubectl delete clusterrolebinding noded-clusterrolebinding || true
   kubectl create clusterrolebinding noded-clusterrolebinding --clusterrole=noded-role \
@@ -71,12 +63,6 @@ function createRoleBinding() {
 }
 
 function createRole() {
-  #hccl-controller
-  kubectl delete clusterrole hccl-controller-role || true
-  creatHCRole
-  #device-plugin
-  kubectl delete clusterrole device-plugin-role || true
-  creatDPRole
   #noded
   kubectl delete clusterrole noded-role || true
   kubectl create clusterrole noded-role --verb=patch --resource=nodes/status
@@ -97,9 +83,7 @@ function  clean() {
     rm -rf *.key
     rm -rf *.crt
     rm -rf *.csr
-
 }
-
 
 function creatRCRole() {
     cat <<EOF | kubectl apply -f -
@@ -123,57 +107,8 @@ rules:
 EOF
 }
 
-
-function creatHCRole() {
-    cat <<EOF | kubectl apply -f -
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: hccl-controller-role
-rules:
-  - apiGroups: ["batch.volcano.sh"]
-    resources: ["jobs"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "update","watch"]
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["get","list","watch"]
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "update"]
-EOF
-}
-
-
-function creatDPRole() {
-    cat <<EOF | kubectl apply -f -
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: device-plugin-role
-rules:
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "update",]
-  - apiGroups: [""]
-    resources: ["nodes"]
-    verbs: ["get", "patch"]
-  - apiGroups: [""]
-    resources: ["nodes/status"]
-    verbs: ["get","patch"]
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "create", "update"]
-EOF
-}
-
-
 echo "start to create kubeconfig files for MindXDL"
 init
-createKubeConfig $1 hccl-controller
-createKubeConfig $1 device-plugin
 createKubeConfig $1 noded
 createKubeConfig $1 resilience-controller
 clean
