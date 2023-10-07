@@ -109,8 +109,11 @@ metadata:
   name: resilience-controller-role
 rules:
   - apiGroups: [""]
-    resources: ["nodes", "pods"]
-    verbs: ["get", "list", "watch"]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["list"]
   - apiGroups: ["batch.volcano.sh"]
     resources: ["jobs"]
     verbs: ["get", "list", "create", "watch", "delete"]
@@ -130,7 +133,7 @@ metadata:
 rules:
   - apiGroups: ["batch.volcano.sh"]
     resources: ["jobs"]
-    verbs: ["get", "list", "watch",]
+    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "list", "update","watch"]
@@ -139,7 +142,7 @@ rules:
     verbs: ["get","list","watch"]
   - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["get", "list", "update","watch"]
+    verbs: ["get", "update"]
 EOF
 }
 
