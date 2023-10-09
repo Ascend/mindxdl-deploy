@@ -232,7 +232,7 @@ if [[ "${server_count}" -ge 1 ]]; then
       export DEVICE_INDEX=${RANK_ID}
       logger "start training for rank ${RANK_ID}, device ${DEVICE_ID}"
       # 设置绑定范围，如:0-11
-      core_range="$((i*${core_num}/8))-$(((i+1)*${core_num}/8-1))"
+      core_range="$((i*${core_num}/${device_each_server}))-$(((i+1)*${core_num}/${device_each_server}-1))"
       if [ "${i}" -eq 0 ]; then
           taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --model_dir=${output_url}/models/device_${DEVICE_INDEX}/ && tee ${output_url}/device_${RANK_ID}.log
           check_return_code
