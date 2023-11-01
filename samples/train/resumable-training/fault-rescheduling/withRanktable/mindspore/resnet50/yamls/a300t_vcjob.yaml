@@ -54,6 +54,10 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
+          - name: ASCEND_VISIBLE_DEVICES                       # used by ascend-docker-runtime
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.annotations['huawei.com/Ascend910']               # The value must be the same as resources.requests
           command:
           - "/bin/bash"
           - "-c"

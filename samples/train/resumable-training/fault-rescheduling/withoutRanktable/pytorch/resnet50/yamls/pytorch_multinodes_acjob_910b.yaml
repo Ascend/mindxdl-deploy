@@ -47,6 +47,10 @@ spec:
                 valueFrom:
                   fieldRef:
                     fieldPath: status.hostIP
+              - name: ASCEND_VISIBLE_DEVICES                       # used by ascend-docker-runtime
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.annotations['huawei.com/Ascend910']               # The value must be the same as resources.requests
             command:                           # training command, which can be modified
               - /bin/bash
               - -c
@@ -135,6 +139,10 @@ spec:
                 valueFrom:
                   fieldRef:
                     fieldPath: status.hostIP
+              - name: ASCEND_VISIBLE_DEVICES                       # used by ascend-docker-runtime
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.annotations['huawei.com/Ascend910']               # The value must be the same as resources.requests
             command:                                  # training command, which can be modified
               - /bin/bash
               - -c
