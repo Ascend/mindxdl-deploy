@@ -52,11 +52,15 @@ spec:
                 fieldPath: status.hostIP
           - name: framework
             value: "PyTorch"
+          - name: ASCEND_VISIBLE_DEVICES                       # used by ascend-docker-runtime
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.annotations['huawei.com/Ascend910']               # The value must be the same as resources.requests
           command:
           - "/bin/bash"
           - "-c"
           # In the next line, the '-npu' parameter indicates that chip 0 is used. Please modify it with actual conditions
-          - "cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code/ /job/output/ --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --print-freq=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --epoch=90 --batch-size=512 --resume=true;"
+          - "cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code/ /job/output/ --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --print-freq=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --epochs=90 --batch-size=512 --resume=true;"
           #args: [ "while true; do sleep 30000; done;"  ]     # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                               # The command is 'kubectl exec -it -n {namespace} {podname} bash'
           resources:

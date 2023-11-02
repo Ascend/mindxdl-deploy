@@ -96,6 +96,11 @@ spec:
           - name: ascend # do not modify
             image: mindspore-test:latest   # training framework image， which can be modified
             imagePullPolicy: IfNotPresent
+            env:
+            - name: ASCEND_VISIBLE_DEVICES                       # used by ascend-docker-runtime
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['huawei.com/Ascend910']               # The value must be the same as resources.requests
             command:                       # training command, which can be modified
               - /bin/bash
               - -c

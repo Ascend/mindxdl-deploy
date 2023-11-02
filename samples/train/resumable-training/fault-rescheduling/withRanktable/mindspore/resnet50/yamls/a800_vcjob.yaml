@@ -66,6 +66,10 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
+          - name: ASCEND_VISIBLE_DEVICES                       # used by ascend-docker-runtime
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.annotations['huawei.com/Ascend910']               # The value must be the same as resources.requests
           command: ["/bin/bash", "-c", "cd /job/code/resnet/scripts; chmod +x train_start.sh; ./train_start.sh;"] # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
           #args: [ "while true; do sleep 30000; done;"  ]                            # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                                                      # The command is 'kubectl exec -it -n {namespace} {podname} bash'
