@@ -52,6 +52,12 @@ spec:
           - image: infer_image:latest             # Inference image, which can be modified.
             imagePullPolicy: IfNotPresent
             name: infer
+            env:
+            # ASCEND_VISIBLE_DEVICES env variable is used by ascend-docker-runtime when in the whole card scheduling scene with volcano scheduler. please delete it when in the static or dynamic vNPU scheduling scene or without volcano.
+            - name: ASCEND_VISIBLE_DEVICES
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['huawei.com/Ascend910']               # The value must be the same as resources.requests.
             command: ["/bin/bash", "-c", "./infer.sh"]
             resources:
               requests:

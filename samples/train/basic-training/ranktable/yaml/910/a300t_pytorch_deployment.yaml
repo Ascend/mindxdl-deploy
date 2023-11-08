@@ -51,7 +51,8 @@ spec:
                 fieldPath: status.hostIP
           - name: framework
             value: "PyTorch"
-          - name: ASCEND_VISIBLE_DEVICES                       # used by ascend-docker-runtime
+          # ASCEND_VISIBLE_DEVICES env variable is used by ascend-docker-runtime when in the whole card scheduling scene with volcano scheduler. please delete it when in the static vNPU scheduling scene or without volcano.
+          - name: ASCEND_VISIBLE_DEVICES
             valueFrom:
               fieldRef:
                 fieldPath: metadata.annotations['huawei.com/Ascend910']               # The value must be the same as resources.requests

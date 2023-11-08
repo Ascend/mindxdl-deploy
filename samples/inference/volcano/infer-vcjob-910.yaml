@@ -28,6 +28,12 @@ spec:
             imagePullPolicy: IfNotPresent
             name: infer
             command: ["/bin/bash", "-c", "./infer.sh"]
+            env:
+            # ASCEND_VISIBLE_DEVICES env variable is used by ascend-docker-runtime when in the whole card scheduling scene with volcano scheduler. please delete it when in the static or dynamic vNPU scheduling scene or without volcano.
+            - name: ASCEND_VISIBLE_DEVICES
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['huawei.com/Ascend910']               # The value must be the same as resources.requests.
             resources:
               requests:
                 huawei.com/Ascend910: 1          # Number of required NPUs. The maximum value is 2. You can add lines below to configure resources such as memory and CPU.

@@ -25,6 +25,12 @@ spec:
       - image: ubuntu-infer:v1                  # Inference image name
         imagePullPolicy: IfNotPresent
         name: resnet50infer
+        env:
+        # ASCEND_VISIBLE_DEVICES env variable is used by ascend-docker-runtime when in the whole card scheduling scene with volcano scheduler. please delete it when in the static or dynamic vNPU scheduling scene or without volcano.
+        - name: ASCEND_VISIBLE_DEVICES
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.annotations['huawei.com/Ascend310P']               # The value must be the same as resources.requests
         resources:
           requests:
             huawei.com/Ascend310P: 1             # Number of the Ascend 310P Processors.
