@@ -54,22 +54,6 @@ def get_file_info(file_path: str) -> dict:
         return file_content
 
 
-# def _run_recover(cmd: list, work_dir: str, env: dict, new_pids: list, proc_list: list):
-#     """
-#     Call subprocess module to recover a process and output the log to newlog
-#     """
-#     with open(f'{work_dir}/newlog', 'w') as of:
-#         proc = subprocess.Popen(cmd, shell=False, stdout=of, stderr=of,
-#                                 cwd=work_dir, env=env)
-#     new_pids.append(proc.pid)
-#     proc_list.append(proc)
-#     # proc.communicate()
-#     # proc.wait()
-#     print("11111111111")
-#     # if proc.returncode == 0:
-#     #     os.kill(os.getppid(), signal.SIGUSR2)
-
-
 class BaseProcessManager(ABC):
     def __init__(self, pids: list):
         super().__init__()
