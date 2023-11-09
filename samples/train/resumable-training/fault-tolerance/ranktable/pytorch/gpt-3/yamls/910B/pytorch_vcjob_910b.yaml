@@ -11,6 +11,30 @@ data:
         "status":"initializing"
     }
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fault-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
+  namespace: vcjob                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
+data:
+  fault-npus: |
+    {
+        "status":"initializing"
+    }
+  checkCode: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reset-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
+  namespace: vcjob                      # Name Space must be set to "vcjob"
+data:
+  reset.json: |
+    {
+        "status":"initializing"
+    }
+  checkCode: ""
+---
 apiVersion: batch.volcano.sh/v1alpha1   # The value cannot be changed. The volcano API must be used.
 kind: Job                               # Only the job type is supported at present.
 metadata:
@@ -106,6 +130,10 @@ spec:
             mountPath: /dev/shm
           - name: localtime
             mountPath: /etc/localtime
+          - name: fault-config
+            mountPath: /user/restore/fault/config
+          - name: reset-config
+            mountPath: /user/restore/reset/config
         nodeSelector:
           host-arch: huawei-arm                       # Configure the label based on the actual job.
           accelerator-type: module-910b-8
@@ -113,6 +141,12 @@ spec:
         - name: ascend-910-config
           configMap:
             name: rings-config-mindx-dls-test         # Correspond to the ConfigMap name above.
+        - name: fault-config
+          configMap:
+            name: fault-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
+        - name: reset-config
+          configMap:
+            name: reset-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
         - name: code
           nfs:
             server: 127.0.0.1                         # IP address of the NFS server. In this example, the shared path is /data/atlas_dls/.

@@ -205,7 +205,7 @@ if [[ "${server_count}" -ge 1 ]]; then
 fi
 
 tail -f ${output_url}/log &
-python -u reset_process.py -p "${train_pid}" -r &
+python -u reset_process.py -p "${train_pid}" &
 reset_pid=$!
 wait ${train_pid}
 exit_code=$?

@@ -53,7 +53,6 @@ def get_file_info(file_path: str) -> dict:
         file_content = literal_eval(fault_config_out.read(constants.MAX_SIZE))
         return file_content
 
-
 class BaseProcessManager(ABC):
     def __init__(self, pids: list):
         super().__init__()

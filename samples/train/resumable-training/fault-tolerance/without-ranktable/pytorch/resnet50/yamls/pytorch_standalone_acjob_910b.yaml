@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fault-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
+  namespace: vcjob                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
+data:
+  fault-npus: |
+    {
+        "status":"initializing"
+    }
+  checkCode: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reset-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
+  namespace: vcjob                      # Name Space must be set to "vcjob"
+data:
+  reset.json: |
+    {
+        "status":"initializing"
+    }
+  checkCode: ""
+---
+apiVersion: mindxdl.gitee.com/v1
+kind: AscendJob
+metadata:
+  name: default-test-pytorch
+  labels:
+    framework: pytorch
+    ring-controller.atlas: ascend-910b
+    fault-scheduling: "grace"
+    tor-affinity: "null" #该标签为任务是否使用交换机亲和性调度标签，null或者不写该标签则不适用。large-model-schema表示大模型任务，normal-schema 普通任务
+spec:
+  schedulerName: volcano  # work when enableGangScheduling is true
+  runPolicy:
+    schedulingPolicy:    # work when enableGangScheduling is true
+      minAvailable: 1
+      queue: default
+  successPolicy: AllWorkers
+  replicaSpecs:
+    Master:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        metadata:
+          labels:
+            ring-controller.atlas: ascend-910b
+        spec:
+          terminationGracePeriodSeconds: 900
+          nodeSelector:
+            host-arch: huawei-arm
+            accelerator-type: card-910b-2   # depend on your device model, 910bx8 is module-910b-8 ,910bx16 is module-910b-16
+          hostNetwork: true
+          containers:
+          - name: ascend # do not modify
+            image: pytorch-test:latest      # training framework image， which can be modified
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: XDL_IP                                       # IP address of the physical node, which is used to identify the node where the pod is running
+                valueFrom:
+                  fieldRef:
+                    fieldPath: status.hostIP
+              # ASCEND_VISIBLE_DEVICES env variable is used by ascend-docker-runtime when in the whole card scheduling scene with volcano scheduler. please delete it when in the static vNPU scheduling scene or without volcano.
+              - name: ASCEND_VISIBLE_DEVICES
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.annotations['huawei.com/Ascend910']               # The value must be the same as resources.requests
+            command:                        # training command, which can be modified
+              - /bin/bash
+              - -c
+            args: ["cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code /job/code/ResNet50_for_PyTorch_1.8_code/output/logs pytorch_resnet50_apex.py --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1   --epochs=90 --batch-size=512 --resume=/job/output"]
+            ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
+              - containerPort: 2222         # determined by user
+                name: ascendjob-port        # do not modify
+            lifecycle:
+              preStop:
+                exec:
+                  command: [ "/bin/bash", "-c", "cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts; bash pre_stop.sh" ]
+            resources:
+              limits:
+                huawei.com/Ascend910: 1
+              requests:
+                huawei.com/Ascend910: 1
+            volumeMounts:
+            - name: code
+              mountPath: /job/code
+            - name: data
+              mountPath: /job/data
+            - name: output
+              mountPath: /job/output
+            - name: ascend-driver
+              mountPath: /usr/local/Ascend/driver
+            - name: ascend-add-ons
+              mountPath: /usr/local/Ascend/add-ons
+            - name: dshm
+              mountPath: /dev/shm
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: fault-config
+              mountPath: /user/restore/fault/config
+            - name: reset-config
+              mountPath: /user/restore/reset/config
+          volumes:
+          - name: fault-config
+            configMap:
+              name: fault-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
+          - name: reset-config
+            configMap:
+              name: reset-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
+          - name: code
+            nfs:
+              server: 127.0.0.1
+              path: "/data/atlas_dls/public/code/"
+          - name: data
+            nfs:
+              server: 127.0.0.1
+              path: "/data/atlas_dls/public/dataset/"
+          - name: output
+            nfs:
+              server: 127.0.0.1
+              path: "/data/atlas_dls/output/"
+          - name: ascend-driver
+            hostPath:
+              path: /usr/local/Ascend/driver
+          - name: ascend-add-ons
+            hostPath:
+              path: /usr/local/Ascend/add-ons
+          - name: dshm
+            emptyDir:
+              medium: Memory
+          - name: localtime
+            hostPath:
+              path: /etc/localtime
+
+

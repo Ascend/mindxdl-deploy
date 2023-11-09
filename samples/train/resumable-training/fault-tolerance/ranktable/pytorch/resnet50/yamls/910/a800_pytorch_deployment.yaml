@@ -117,10 +117,20 @@ spec:
             mountPath: /dev/shm
           - name: localtime
             mountPath: /etc/localtime
+          - name: fault-config
+            mountPath: /user/restore/fault/config
+          - name: reset-config
+            mountPath: /user/restore/reset/config
       volumes:
       - name: ascend-910-config
         configMap:
           name: rings-config-mindx-dls-test                           # Correspond to the ConfigMap name above.
+      - name: fault-config
+        configMap:
+          name: fault-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
+      - name: reset-config
+        configMap:
+          name: reset-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
       - name: code
         nfs:
           server: 127.0.0.1                                           # IP address of the NFS server. In this example, the shared path is /data/atlas_dls/.
