@@ -13,8 +13,8 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: reset-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
-  namespace: vcjob                      # Name Space must be set to "vcjob"
+  name: reset-config-default-test-mindspore      # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
+  namespace: default                      # Name Space must be set to "default"
 data:
   reset.json: |
     {
@@ -178,7 +178,7 @@ spec:
               name: fault-config-default-test-mindspore                  # Correspond to the ConfigMap name above.
           - name: reset-config
             configMap:
-              name: reset-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
+              name: reset-config-default-test-mindspore                   # Correspond to the ConfigMap name above.
           - name: code
             nfs:
               server: 127.0.0.1
