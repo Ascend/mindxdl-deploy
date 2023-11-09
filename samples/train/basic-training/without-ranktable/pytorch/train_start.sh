@@ -158,17 +158,15 @@ DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
 # set training env
 set_env
 export JOB_ID=123456789
+export RANK_SIZE=${device_count}
+export RANK=0
 
 
 # 单卡训练场景
 if [ "${device_count}" -eq 1 ] && [ "${server_count}" -eq 1 ]; then
-  server_id=0
-  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${output_url}/log
+  device_id=0
+  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} --gpu=${device_id} ${train_param} 2>&1 && tee ${output_url}/log
   check_return_code
-  if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${output_url}/log
-    check_return_code
-  fi
   chmod 440 ${output_url}/log
   exit ${ret_code}
 fi
@@ -177,12 +175,17 @@ fi
 if [[ "${device_count}" -ge 1 ]]; then
   server_id=${RANK}
   logger "server id is: ""${server_id}"
-  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --multiprocessing-distributed --device-list=${LOCAL_RANK} --benchmark=0 --device='npu' --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} && tee ${output_url}/log
-  check_return_code
-  if [[ $@ =~ need_freeze ]]; then
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/log
-    check_return_code
-  fi
+  rank_start=`expr ${RANK} \* ${LOCAL_WORLD_SIZE}`
+  for ((i = $((${LOCAL_WORLD_SIZE} - 1)); i >= 0; i--)); do
+    export ASCEND_DEVICE_ID=${i}
+    if [[ "${i}" -eq 0 ]]; then
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --gpu=${ASCEND_DEVICE_ID} --multiprocessing-distributed --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} && tee ${output_url}/device_${ASCEND_DEVICE_ID}.log
+      check_return_code
+    else
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --gpu=${ASCEND_DEVICE_ID} --multiprocessing-distributed --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK}  &> ${output_url}/device_${ASCEND_DEVICE_ID}.log &
+      check_return_code
+    fi
+  done
 fi
 
 chmod 440 ${output_url}

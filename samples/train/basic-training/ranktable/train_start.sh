@@ -173,6 +173,7 @@ function get_env_for_pytorch_multi_node_job() {
   export MASTER_ADDR=${first_server_ip}
   export WORLD_SIZE=${server_count}
   export RANK=${server_id}
+  export RANK_SIZE=${device_count}
 }
 
 function check_return_code() {
@@ -189,13 +190,14 @@ set_env
 
 # 单节点训练场景
 if [[ "${server_count}" -eq 1 ]]; then
-  server_id=0
+  device_id=0
   if [ "${device_count}" -eq 1 ]; then
     get_env_for_1p_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${output_url}/log
-    check_return_code
-    if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${output_url}/log
+    if [ "${framework}" == "PyTorch" ]; then
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} --gpu=${device_id} ${train_param} 2>&1 && tee ${output_url}/log
+      check_return_code
+    else
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} 2>&1 && tee ${output_url}/log
       check_return_code
     fi
     chmod 440 ${output_url}
@@ -215,13 +217,23 @@ if [[ "${server_count}" -ge 1 ]]; then
   logger "server id is: ""${server_id}"
   if [ "${framework}" == "PyTorch" ]; then
     get_env_for_pytorch_multi_node_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --addr=${MASTER_ADDR} --device-list=${device_list} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/log
-
-    check_return_code
-    if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/log
-      check_return_code
-    fi
+    # CPU core number
+    core_num=`cat /proc/cpuinfo | grep "processor" | wc -l`
+    device_each_server=$((device_count / server_count))
+    rank_start=$((device_each_server * server_id))
+    for ((i = $((device_each_server - 1)); i >= 0; i--)); do
+      export RANK_ID=${i}
+      logger "start training for rank ${RANK_ID}, device ${DEVICE_ID}"
+      # set bing range, like:0-11
+      core_range="$((i*${core_num}/${device_each_server}))-$(((i+1)*${core_num}/${device_each_server}-1))"
+      if [ "${i}" -eq 0 ]; then
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --gpu=${i} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/device_${RANK_ID}.log
+          check_return_code
+      else
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --gpu=${i} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} &>> ${output_url}/device_${RANK_ID}.log &
+          check_return_code
+      fi
+    done
   elif [ "${framework}" == "Tensorflow" ]; then
     # CPU核心数
     core_num=`cat /proc/cpuinfo | grep "processor" | wc -l`
