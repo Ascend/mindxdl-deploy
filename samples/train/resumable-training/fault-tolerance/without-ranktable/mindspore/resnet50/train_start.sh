@@ -202,8 +202,8 @@ if [[ "${MS_ROLE}" == "MS_WORKER" ]]; then
   done
 fi
 chmod 440 ${output_url}
-tail -f ${output_url}/worker_$i.log &
-python -u ${ROOT_PATH}/reset_process.py -p "${train_pids[@]}" &
+tail -f ${output_url}/worker_${start_index}.log &
+python -u reset_process.py -p "${train_pids[@]}" &
 reset_pid=$!
 wait ${train_pids[0]}
 exit_code=$?
