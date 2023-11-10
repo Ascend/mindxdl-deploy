@@ -74,7 +74,7 @@ else
     exit 1
 fi
 tail -f ${ROOT_PATH}/train_parallel${rankid}/log &
-python -u ${ROOT_PATH}/reset_process.py -p "${train_pids[@]}" -r &
+python -u reset_process.py -p "${train_pids[@]}" -r &
 reset_pid=$!
 wait ${train_pids[0]}
 exit_code=$?
