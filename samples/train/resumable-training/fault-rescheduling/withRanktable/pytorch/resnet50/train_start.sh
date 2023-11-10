@@ -37,7 +37,8 @@ else
     mkdir -p  ${output_real_path}
     output_url="${output_real_path}"
 fi
-shift 2
+boot_file="$3"
+shift 3
 
 function check_npu_availability {
     i=0
@@ -87,6 +88,17 @@ function param_check() {
 
   if [ -L ${output_url} ]; then
     echo "output url is a link!"
+    exit 1
+  fi
+
+  if [ -z "${boot_file}" ]; then
+    echo "please input boot file"
+    show_help
+    exit 1
+  fi
+
+  if [ -L ${boot_file} ]; then
+    echo "boot file is a link!"
     exit 1
   fi
 
@@ -151,13 +163,6 @@ done
 
 echo "device_list: ${device_list}"
 
-boot_file=""
-if [ "${device_list_len}" == "1" ] && [ "${server_count}" == "1" ]; then
-   boot_file="pytorch_resnet50_apex.py"
-else 
-   boot_file="DistributedResnet50/main_apex_d76_npu.py"
-fi
-
 function get_env_for_1p_job() {
   export DEVICE_NUM=1
   export DEVICE_ID=0
@@ -187,6 +192,7 @@ function get_env_for_pytorch_multi_node_job() {
   export MASTER_ADDR=${first_server_ip}
   export WORLD_SIZE=${server_count}
   export RANK=${server_id}
+  export RANK_SIZE=${device_count}
 }
 
 function check_return_code() {
@@ -209,10 +215,11 @@ if [[ "${server_count}" -eq 1 ]]; then
   server_id=0
   if [ "${device_count}" -eq 1 ]; then
     get_env_for_1p_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --rank=${RANK} 2>&1 && tee ${output_url}/log
-    check_return_code
-    if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} 2>&1 && tee ${output_url}/log
+    if [ "${framework}" == "PyTorch" ]; then
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} --gpu=${ASCEND_DEVICE_ID} --rank=${RANK} ${train_param} 2>&1 && tee ${output_url}/log
+      check_return_code
+    else
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --rank=${RANK} 2>&1 && tee ${output_url}/log
       check_return_code
     fi
     chmod 440 ${output_url}
@@ -232,13 +239,23 @@ if [[ "${server_count}" -ge 1 ]]; then
   logger "server id is: ""${server_id}"
   if [ "${framework}" == "PyTorch" ]; then
     get_env_for_pytorch_multi_node_job
-    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --device-list=${device_list} --multiprocessing-distributed --benchmark=0 --device='npu'  --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/log
-
-    check_return_code
-    if [[ $@ =~ need_freeze ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${freeze_cmd} --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/log
-      check_return_code
-    fi
+    # CPU core number
+    core_num=`cat /proc/cpuinfo | grep "processor" | wc -l`
+    device_each_server=$((device_count / server_count))
+    rank_start=$((device_each_server * server_id))
+    for ((i = $((device_each_server - 1)); i >= 0; i--)); do
+      export DEVICE_ID=${i}
+      logger "start training for device ${DEVICE_ID}"
+      # set bing range, like:0-11
+      core_range="$((i*${core_num}/${device_each_server}))-$(((i+1)*${core_num}/${device_each_server}-1))"
+      if [ "${i}" -eq 0 ]; then
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --gpu=${DEVICE_ID} --multiprocessing-distributed --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} && tee ${output_url}/device_${RANK_ID}.log
+          check_return_code
+      else
+          taskset -c ${core_range} ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --gpu=${DEVICE_ID} --multiprocessing-distributed --addr=${MASTER_ADDR} --world-size=${WORLD_SIZE} --rank=${RANK} &>> ${output_url}/device_${RANK_ID}.log &
+          check_return_code
+      fi
+    done
   else
     logger "framework error"
   fi
