@@ -528,7 +528,9 @@ if __name__ == "__main__":
     if not pattern.match(host_name):
         logger.error('HOSTNAME is invalid')
         exit(1)
-    file_handler = logging.FileHandler(f'/job/code/scripts/recover-{host_name}.log')
+    file_name = f"recover-{host_name}.log"
+    file_handler = logging.FileHandler(os.path.join(os.getcwd(), file_name))
+    print("log of reset process will be saved in:", file_handler.baseFilename)
 
     LOG_FORMAT = '%(asctime)s - %(pathname)s[line:%(lineno)d] - [%(levelname)s]: %(message)s'
     formatter = logging.Formatter(LOG_FORMAT)

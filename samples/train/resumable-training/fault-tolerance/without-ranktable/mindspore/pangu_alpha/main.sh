@@ -62,8 +62,8 @@ if [[ "${MS_ROLE}" == "MS_WORKER" ]]; then
       exit 1
   fi
 fi
-tail -f ${ROOT_PATH}/../device$rankid/log &
-python -u reset_process.py -p "${train_pids[@]}" &
+tail -f "${ROOT_PATH}"/../device$rankid/log &
+python -u "${ROOT_PATH}"/reset_process.py -p "${train_pids[@]}" &
 reset_pid=$!
 wait ${train_pids[0]}
 exit_code=$?

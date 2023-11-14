@@ -42,8 +42,8 @@ else
     echo "Invalid input parameter, usage: main.sh device_count server_count RANK_TABLE_FILE server_id dataset" | tee -a log
     exit 1
 fi
-tail -f ${ROOT_PATH}/../device$rankid/log &
-python -u ${ROOT_PATH}/reset_process.py -p "${train_pids[@]}" -r &
+tail -f "${ROOT_PATH}"/../device$rankid/log &
+python -u "${ROOT_PATH}"/reset_process.py -p "${train_pids[@]}" -r &
 reset_pid=$!
 wait ${train_pids[0]}
 exit_code=$?

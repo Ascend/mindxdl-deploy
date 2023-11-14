@@ -200,9 +200,9 @@ if [[ "${device_count}" -ge 1 ]]; then
   train_pid=$!
 fi
 
-chmod 440 ${output_url}
-tail -f ${output_url}/log &
-python -u reset_process.py -p "${train_pid}" &
+chmod 440 "${output_url}"
+tail -f "${output_url}"/log &
+python -u "${DLS_USER_HOME_DIR}"/reset_process.py -p "${train_pid}" &
 reset_pid=$!
 wait ${train_pid}
 exit_code=$?
