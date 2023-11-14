@@ -189,21 +189,29 @@ set_env
 check_npu_availability
 
 export JOB_ID=123456789
+export RANK_SIZE=${device_count}
+export RANK=0
 
 train_pid=0
 # 分布式场景
 if [[ "${device_count}" -ge 1 ]]; then
   server_id=${RANK}
   logger "server id is: ""${server_id}"
-  ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --multiprocessing-distributed --device-list=${LOCAL_RANK} --benchmark=0 --device='npu' --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} &> ${output_url}/log &
-  train_pid=$!
+  rank_start=`expr ${RANK} \* ${LOCAL_WORLD_SIZE}`
+  for ((i = $((${LOCAL_WORLD_SIZE} - 1)); i >= 0; i--)); do
+    export DEVICE_INDEX=`expr ${rank_start} + ${i}`
+    export ASCEND_DEVICE_ID=${i}
+    ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --gpu=${ASCEND_DEVICE_ID} --multiprocessing-distributed --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} &> ${output_url}/device_${DEVICE_INDEX}.log &
+    train_pids[$i]=$!
+  done
+
 fi
 
-chmod 440 "${output_url}"
-tail -f "${output_url}"/log &
-python -u "${DLS_USER_HOME_DIR}"/reset_process.py -p "${train_pid}"  &
+chmod 440 ${output_url}
+tail -f ${output_url}/device_${DEVICE_INDEX}.log &
+python -u "${DLS_USER_HOME_DIR}"/reset_process.py -p "${train_pids[@]}"  &
 reset_pid=$!
-wait ${train_pid}
+wait ${train_pids[0]}
 exit_code=$?
 if [ ${exit_code} -eq 0 ]; then
   kill -15 ${reset_pid}

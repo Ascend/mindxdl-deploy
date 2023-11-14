@@ -69,14 +69,14 @@ spec:
             command:                        # training command, which can be modified
               - /bin/bash
               - -c
-            args: ["cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_PyTorch_1.8_code /job/code/ResNet50_for_PyTorch_1.8_code/output/logs pytorch_resnet50_apex.py --data=/job/data/resnet50/imagenet --seed=49 --worker=128 --learning-rate=1.6 --warmup=8 --label-smoothing=0.1 --mom=0.9 --weight-decay=1.0e-04 --static-loss-scale=128 --print-freq=1   --epochs=90 --batch-size=512 --resume=/job/output"]
+            args: ["cd /job/code/ResNet50_ID4149_for_PyTorch/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_ID4149_for_PyTorch /job/output main.py --data=/job/data/resnet50/imagenet --amp --seed=49 -j=128 --lr=1.6 --epochs=90 --batch-size=512 --resume=/job/output"]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
             lifecycle:
               preStop:
                 exec:
-                  command: [ "/bin/bash", "-c", "cd /job/code/ResNet50_for_PyTorch_1.8_code/scripts; bash pre_stop.sh" ]
+                  command: [ "/bin/bash", "-c", "cd /job/code/ResNet50_ID4149_for_PyTorch/scripts; bash pre_stop.sh" ]
             resources:
               limits:
                 huawei.com/Ascend910: 1
