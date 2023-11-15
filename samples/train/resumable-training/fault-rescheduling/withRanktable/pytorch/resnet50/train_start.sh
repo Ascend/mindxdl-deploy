@@ -177,6 +177,7 @@ function get_env_for_1p_job() {
 
 function get_env_for_pytorch_multi_node_job() {
   export JOB_ID=123456789
+  rankid=$((rank_start + i))
   export RANK_TABLE_FILE=/user/serverid/devindex/config/hccl.json
   #将Host日志输出到串口,0-关闭/1-开启
   export ASCEND_SLOG_PRINT_TO_STDOUT=0
@@ -192,6 +193,7 @@ function get_env_for_pytorch_multi_node_job() {
   export MASTER_ADDR=${first_server_ip}
   export WORLD_SIZE=${server_count}
   export RANK=${server_id}
+  export RANK_ID=${rankid}
   export RANK_SIZE=${device_count}
 }
 
@@ -238,12 +240,13 @@ if [[ "${server_count}" -ge 1 ]]; then
 
   logger "server id is: ""${server_id}"
   if [ "${framework}" == "PyTorch" ]; then
-    get_env_for_pytorch_multi_node_job
+
     # CPU core number
     core_num=`cat /proc/cpuinfo | grep "processor" | wc -l`
     device_each_server=$((device_count / server_count))
     rank_start=$((device_each_server * server_id))
     for ((i = $((device_each_server - 1)); i >= 0; i--)); do
+      get_env_for_pytorch_multi_node_job
       export DEVICE_ID=${i}
       logger "start training for device ${DEVICE_ID}"
       # set bing range, like:0-11

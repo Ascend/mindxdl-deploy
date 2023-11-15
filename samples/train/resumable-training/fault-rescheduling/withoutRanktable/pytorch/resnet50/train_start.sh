@@ -206,12 +206,13 @@ if [[ "${device_count}" -ge 1 ]]; then
   logger "server id is: ""${server_id}"
   rank_start=`expr ${RANK} \* ${LOCAL_WORLD_SIZE}`
   for ((i = $((${LOCAL_WORLD_SIZE} - 1)); i >= 0; i--)); do
+    export DEVICE_INDEX=`expr ${rank_start} + ${i}`
     export ASCEND_DEVICE_ID=${i}
     if [[ "${i}" -eq 0 ]]; then
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --gpu=${ASCEND_DEVICE_ID} --multiprocessing-distributed --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} && tee ${output_url}/device_${ASCEND_DEVICE_ID}.log
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --gpu=${ASCEND_DEVICE_ID} --multiprocessing-distributed --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} 2>&1 && tee ${output_url}/device_${DEVICE_INDEX}.log
       check_return_code
     else
-      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --gpu=${ASCEND_DEVICE_ID} --multiprocessing-distributed --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK}  &> ${output_url}/device_${ASCEND_DEVICE_ID}.log &
+      ${DLS_PROGRAM_EXECUTOR} ${boot_file_path}${boot_file} ${train_param} --gpu=${ASCEND_DEVICE_ID} --multiprocessing-distributed --addr=${MASTER_ADDR} --world-size=${server_count} --rank=${RANK} &> ${output_url}/device_${DEVICE_INDEX}.log &
       check_return_code
     fi
   done
