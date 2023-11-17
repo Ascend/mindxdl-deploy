@@ -50,7 +50,11 @@ def check_input_file(file_path: Optional[str]) -> bool:
 
 def get_file_info(file_path: str) -> dict:
     with safe_open(file_path, mode="r", encoding='utf-8') as fault_config_out:
-        file_content = literal_eval(fault_config_out.read(constants.MAX_SIZE))
+        try:
+            file_content = literal_eval(fault_config_out.read(constants.MAX_SIZE))
+        except Exception as e:
+            logger.error(f"an unexpected exception {e} happen when get {file_path}")
+            file_content = dict()
         return file_content
 
 

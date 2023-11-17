@@ -204,7 +204,9 @@ if [[ "${server_count}" -ge 1 ]]; then
   fi
 fi
 
-tail -f ${output_url}/device_${RANK_ID}.log &
+chmod 440 "${output_url}"
+tail -f "${output_url}"/device_${RANK_ID}.log &
+old_log_pid=$!
 python -u "${DLS_USER_HOME_DIR}"/reset_process.py -p "${train_pids[@]}" &
 reset_pid=$!
 wait ${train_pids[0]}
@@ -214,9 +216,10 @@ if [ ${exit_code} -eq 0 ]; then
   echo "training finished."
   exit ${exit_code}
 else
+  if [ -d "${DLS_USER_HOME_DIR}"/ ]; then
+    touch "${DLS_USER_HOME_DIR}"/newlog
+    tail -f "${DLS_USER_HOME_DIR}"/newlog &
+  fi
+  kill -9 ${old_log_pid}
   wait ${reset_pid}
-  exit_code=$?
 fi
-
-chmod 440 "${output_url}"
-exit ${exit_code}
