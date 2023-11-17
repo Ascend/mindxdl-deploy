@@ -52,10 +52,6 @@ function createKubeConfig() {
 }
 
 function createRoleBinding() {
-  #noded
-  kubectl delete clusterrolebinding noded-clusterrolebinding || true
-  kubectl create clusterrolebinding noded-clusterrolebinding --clusterrole=noded-role \
-  --user=noded
   #resilience-controller
   kubectl delete clusterrolebinding resilience-controller-clusterrolebinding || true
   kubectl create clusterrolebinding resilience-controller-clusterrolebinding --clusterrole=resilience-controller-role \
@@ -63,9 +59,6 @@ function createRoleBinding() {
 }
 
 function createRole() {
-  #noded
-  kubectl delete clusterrole noded-role || true
-  kubectl create clusterrole noded-role --verb=patch --resource=nodes/status
   #resilience-controller
   kubectl delete clusterrole resilience-controller-role || true
   creatRCRole
@@ -109,7 +102,6 @@ EOF
 
 echo "start to create kubeconfig files for MindXDL"
 init
-createKubeConfig $1 noded
 createKubeConfig $1 resilience-controller
 clean
 echo "kubeconfig files create successfully"
