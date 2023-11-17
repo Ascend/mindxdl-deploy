@@ -63,6 +63,7 @@ if [[ "${MS_ROLE}" == "MS_WORKER" ]]; then
   fi
 fi
 tail -f "${ROOT_PATH}"/../device$rankid/log &
+old_log_pid=$!
 python -u "${ROOT_PATH}"/reset_process.py -p "${train_pids[@]}" &
 reset_pid=$!
 wait ${train_pids[0]}
@@ -70,7 +71,12 @@ exit_code=$?
 if [ ${exit_code} -eq 0 ]; then
   kill -15 ${reset_pid}
   echo "training finished."
-  exit_code=$?
+  exit ${exit_code}
 else
+  if [ -d "${ROOT_PATH}"/../device$rankid/ ]; then
+    touch "${DLS_USER_HOME_DIR}"/newlog
+    tail -f "${DLS_USER_HOME_DIR}"/newlog &
+  fi
+  kill -9 ${old_log_pid}
   wait ${reset_pid}
 fi

@@ -201,8 +201,9 @@ if [[ "${MS_ROLE}" == "MS_WORKER" ]]; then
      cd ..
   done
 fi
-chmod 440 ${output_url}
-tail -f "${output_url}"/worker_${start_index}.log &
+chmod 440 "${output_url}"
+tail -f "${output_url}/worker_${start_index}.log" &
+old_log_pid=$!
 python -u "${DLS_USER_HOME_DIR}"/reset_process.py -p "${train_pids[@]}" &
 reset_pid=$!
 wait ${train_pids[0]}
@@ -210,7 +211,12 @@ exit_code=$?
 if [ ${exit_code} -eq 0 ]; then
   kill -15 ${reset_pid}
   echo "training finished."
-  exit_code=$?
+  exit ${exit_code}
 else
+  if [ -d "${boot_file_path}/scripts/worker_${start_index}/" ]; then
+    touch "${boot_file_path}/scripts/worker_${start_index}/"newlog
+    tail -f "${boot_file_path}/scripts/worker_${start_index}/"newlog &
+  fi
+  kill -9 ${old_log_pid}
   wait ${reset_pid}
 fi

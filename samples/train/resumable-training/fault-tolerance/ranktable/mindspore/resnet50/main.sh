@@ -74,6 +74,7 @@ else
     exit 1
 fi
 tail -f "${ROOT_PATH}"/train_parallel${rankid}/log &
+old_log_pid=$!
 python -u "${ROOT_PATH}"/reset_process.py -p "${train_pids[@]}" -r &
 reset_pid=$!
 wait ${train_pids[0]}
@@ -81,7 +82,12 @@ exit_code=$?
 if [ ${exit_code} -eq 0 ]; then
   kill -15 ${reset_pid}
   echo "training finished."
-  exit_code=$?
+  exit ${exit_code}
 else
+  if [ -d "${ROOT_PATH}"/train_parallel${rankid} ]; then
+    touch "${ROOT_PATH}"/train_parallel${rankid}/newlog
+    tail -f "${ROOT_PATH}"/train_parallel${rankid}/newlog &
+  fi
+  kill -9 ${old_log_pid}
   wait ${reset_pid}
 fi
