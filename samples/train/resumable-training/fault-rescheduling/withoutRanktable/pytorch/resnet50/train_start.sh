@@ -189,7 +189,6 @@ check_npu_availability
 
 export JOB_ID=123456789
 export RANK_SIZE=${device_count}
-export RANK=0
 
 # 单卡训练场景
 if [ "${device_count}" -eq 1 ] && [ "${server_count}" -eq 1 ]; then
