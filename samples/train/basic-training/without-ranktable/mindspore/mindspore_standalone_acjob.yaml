@@ -33,7 +33,7 @@ spec:
             command:                           # training command, which can be modified
               - /bin/bash
               - -c
-            args: ["cd /job/code/ResNet50_for_MindSpore_2.0_code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_for_MindSpore_2.0_code/ /job/code/ResNet50_for_MindSpore_2.0_code/output train.py  --data_path=/job/data/resnet50/imagenet/train --config=/job/code/ResNet50_for_MindSpore_2.0_code/config/resnet50_imagenet2012_config.yaml"]
+            args: ["cd /job/code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ /job/code/output train.py  --data_path=/job/data/resnet50/imagenet/train --config=/job/code/config/resnet50_imagenet2012_config.yaml"]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
@@ -61,7 +61,7 @@ spec:
           - name: code
             nfs:
               server: 127.0.0.1
-              path: "/data/atlas_dls/public/code/"
+              path: "/data/atlas_dls/public/code/ResNet50_for_MindSpore_2.0_code/"
           - name: data
             nfs:
               server: 127.0.0.1

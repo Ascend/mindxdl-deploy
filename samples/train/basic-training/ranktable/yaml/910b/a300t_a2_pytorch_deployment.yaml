@@ -70,7 +70,7 @@ spec:
           - "/bin/bash"
           - "-c"
           # In the next line, the '-npu' parameter indicates that chip 0 is used. Please modify it with actual conditions
-          - "cd /job/code/ResNet50_ID4149_for_PyTorch/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_ID4149_for_PyTorch/ /job/output/ main.py --data=/job/data/resnet50/imagenet --amp --arch=resnet50 --seed=49 -j=128 --world-size=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --epochs=90 --batch-size=512;"
+          - "cd /job/code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ /job/output/ main.py --data=/job/data/resnet50/imagenet --amp --arch=resnet50 --seed=49 -j=128 --world-size=1 --dist-url='tcp://127.0.0.1:50000' --dist-backend='hccl' --epochs=90 --batch-size=512;"
             #args: [ "while true; do sleep 30000; done;"  ]     # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                               # The command is 'kubectl exec -it -n {namespace} {podname} bash'
           resources:
@@ -82,7 +82,7 @@ spec:
           - name: ascend-910-config
             mountPath: /user/serverid/devindex/config
           - name: code
-            mountPath: /job/code/
+            mountPath: /job/code
           - name: data
             mountPath: /job/data
           - name: output
@@ -102,11 +102,11 @@ spec:
       - name: code
         nfs:
           server: 127.0.0.1                                           # IP address of the NFS server. In this example, the shared path is /data/atlas_dls/.
-          path: "/data/atlas_dls/public/code/"                               # Configure the path of the training script. Modify the path based on the actual script name and path.
+          path: "/data/atlas_dls/public/code/ResNet50_ID4149_for_PyTorch/"                               # Configure the path of the training script. Modify the path based on the actual script name and path.
       - name: data
         nfs:
           server: 127.0.0.1                                           # IP address of the NFS server
-          path: "/data/atlas_dls/public/dataset"                      # Configure the path of the training set.
+          path: "/data/atlas_dls/public/dataset/"                      # Configure the path of the training set.
       - name: output
         nfs:
           server: 127.0.0.1                                           # IP address of the NFS server
