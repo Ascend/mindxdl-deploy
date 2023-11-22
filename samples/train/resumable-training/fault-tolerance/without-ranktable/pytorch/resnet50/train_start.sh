@@ -190,7 +190,7 @@ check_npu_availability
 
 export JOB_ID=123456789
 export RANK_SIZE=${device_count}
-export RANK=0
+
 
 # 分布式场景
 if [[ "${device_count}" -ge 1 ]]; then

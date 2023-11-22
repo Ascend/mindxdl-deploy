@@ -159,7 +159,6 @@ DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
 set_env
 export JOB_ID=123456789
 export RANK_SIZE=${device_count}
-export RANK=0
 
 
 # 单卡训练场景

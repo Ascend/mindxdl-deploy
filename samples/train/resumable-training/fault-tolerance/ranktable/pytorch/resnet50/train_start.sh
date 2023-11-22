@@ -164,7 +164,7 @@ function get_env_for_pytorch_multi_node_job() {
   export WORLD_SIZE=${server_count}
   export RANK=${server_id}
   export RANK_ID=${rankid}
-  export RANK_SIZE=${device_count}
+  export RANK_SIZE=$((device_count / server_count))
 }
 
 DLS_PROGRAM_EXECUTOR="$(dls_get_executor "$boot_file")"
