@@ -74,7 +74,7 @@ spec:
           - "/bin/bash"
           - "-c"
           # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
-          - "cd /job/code/ResNet50_for_TensorFlow_2.6_code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ResNet50_for_TensorFlow_2.6_code/ /job/output/ tensorflow/resnet_ctl_imagenet_main.py --data_dir=/job/data/imagenet_TF --distribution_strategy=one_device --use_tf_while_loop=true --epochs_between_evals=1 --skip_eval --enable_checkpoint_and_export;"
+          - "cd /job/code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ /job/output/ tensorflow/resnet_ctl_imagenet_main.py --data_dir=/job/data/imagenet_TF --distribution_strategy=one_device --use_tf_while_loop=true --epochs_between_evals=1 --skip_eval --enable_checkpoint_and_export;"
             #args: [ "while true; do sleep 30000; done;"  ]     # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                               # The command is 'kubectl exec -it -n {namespace} {podname} bash'
           resources:
@@ -86,7 +86,7 @@ spec:
           - name: ascend-910-config
             mountPath: /user/serverid/devindex/config
           - name: code
-            mountPath: /job/code/                     # Path of the training script in the container.
+            mountPath: /job/code                     # Path of the training script in the container.
           - name: data
             mountPath: /job/data                      # Path of the training dataset in the container.
           - name: output
@@ -109,11 +109,11 @@ spec:
         - name: code
           nfs:
             server: 127.0.0.1                         # IP address of the NFS server. In this example, the shared path is /data/atlas_dls/.
-            path: "/data/atlas_dls/public/code/"             # Configure the training script path.
+            path: "/data/atlas_dls/public/code/ResNet50_for_TensorFlow_2.6_code/"             # Configure the training script path.
         - name: data
           nfs:
             server: 127.0.0.1
-            path: "/data/atlas_dls/public/dataset"    # Configure the path of the training set.
+            path: "/data/atlas_dls/public/dataset/"    # Configure the path of the training set.
         - name: output
           nfs:
             server: 127.0.0.1

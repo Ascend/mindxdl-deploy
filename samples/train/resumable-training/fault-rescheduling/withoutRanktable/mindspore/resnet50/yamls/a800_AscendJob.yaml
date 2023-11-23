@@ -45,7 +45,7 @@ spec:
             command:                           # training command, which can be modified
               - /bin/bash
               - -c
-            args: ["cd /job/code/resnet/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/resnet /job/code/resnet/output train.py  --data_path=/job/data/resnet50/imagenet/train --config=/job/code/resnet/config/resnet50_imagenet2012_config.yaml"]
+            args: ["cd /job/code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code /job/code/output train.py  --data_path=/job/data/resnet50/imagenet/train --config=/job/code/config/resnet50_imagenet2012_config.yaml"]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
@@ -68,7 +68,7 @@ spec:
           - name: code
             nfs:
               server: 127.0.0.1
-              path: "/data/atlas_dls/code/"
+              path: "/data/atlas_dls/code/resnet/"
           - name: data
             nfs:
               server: 127.0.0.1
@@ -128,11 +128,11 @@ spec:
             command:                       # training command, which can be modified
               - /bin/bash
               - -c
-            args: ["cd /job/code/resnet/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/resnet/ /job/code/resnet/output train.py  --data_path=/job/data/resnet50/imagenet/train --config=/job/code/resnet/config/resnet50_imagenet2012_config.yaml"]
+            args: ["cd /job/code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ /job/code/output train.py  --data_path=/job/data/resnet50/imagenet/train --config=/job/code/config/resnet50_imagenet2012_config.yaml"]
             lifecycle:
               preStop:
                 exec:
-                  command: [ "/bin/bash", "-c", "cd /job/code/resnet/scripts; bash pre_stop.sh" ]
+                  command: [ "/bin/bash", "-c", "cd /job/code/scripts; bash pre_stop.sh" ]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
@@ -165,7 +165,7 @@ spec:
           - name: code
             nfs:
               server: 127.0.0.1
-              path: "/data/atlas_dls/code/"
+              path: "/data/atlas_dls/code/resnet/"
           - name: data
             nfs:
               server: 127.0.0.1

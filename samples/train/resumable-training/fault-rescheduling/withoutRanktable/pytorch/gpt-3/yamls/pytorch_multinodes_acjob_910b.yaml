@@ -55,14 +55,14 @@ spec:
             command:                           # training command, which can be modified
               - /bin/bash
               - -c
-            args: [ "cd /job/code/GPT-3_for_PyTorch_1.11_code; chmod +x scripts/train_start.sh; bash scripts/train_start.sh /job/code/GPT-3_for_PyTorch_1.11_code /job/output 6000 --num-layers=8 --hidden-size=12288 --num-attention-heads=96 --micro-batch-size=4 --global-batch-size=96 --seq-length=1024 --max-position-embeddings=1024 --train-iters=500000 --lr-decay-iters=320000 --save=./checkpoint_dist --load=./checkpoint_dist --data-path=/job/data/enwiki/my-t5_text_sentence --tensor-model-parallel-size=8 --use-distributed-optimizer --pipeline-model-parallel-size=8 --vocab-file=/job/code/GPT-3_for_PyTorch_1.11_code/gpt2-vocab.json --merge-file=/job/code/GPT-3_for_PyTorch_1.11_code/gpt2-merges.txt --data-impl=mmap --split=949,50,1 --distributed-backend=nccl --lr=0.375e-5 --lr-decay-style=cosine --min-lr=0.375e-6 --weight-decay=0.1 --clip-grad=1.0 --lr-warmup-fraction=.01 --adam-beta1=0.9 --adam-beta2=0.95 --init-method-std=0.006 --recompute-granularity=full --recompute-method=uniform --no-gradient-accumulation-fusion --log-interval=1 --save-interval=10000 --eval-interval=1000 --eval-iters=10 --fp16;" ]
+            args: [ "cd /job/code; chmod +x scripts/train_start.sh; bash scripts/train_start.sh /job/code /job/output 6000 --num-layers=8 --hidden-size=12288 --num-attention-heads=96 --micro-batch-size=4 --global-batch-size=96 --seq-length=1024 --max-position-embeddings=1024 --train-iters=500000 --lr-decay-iters=320000 --save=./checkpoint_dist --load=./checkpoint_dist --data-path=/job/data/enwiki/my-t5_text_sentence --tensor-model-parallel-size=8 --use-distributed-optimizer --pipeline-model-parallel-size=8 --vocab-file=/job/code/gpt2-vocab.json --merge-file=/job/code/gpt2-merges.txt --data-impl=mmap --split=949,50,1 --distributed-backend=nccl --lr=0.375e-5 --lr-decay-style=cosine --min-lr=0.375e-6 --weight-decay=0.1 --clip-grad=1.0 --lr-warmup-fraction=.01 --adam-beta1=0.9 --adam-beta2=0.95 --init-method-std=0.006 --recompute-granularity=full --recompute-method=uniform --no-gradient-accumulation-fusion --log-interval=1 --save-interval=10000 --eval-interval=1000 --eval-iters=10 --fp16;" ]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
             lifecycle:
               preStop:
                 exec:
-                  command: [ "/bin/bash", "-c", "cd /job/code/GPT-3_for_PyTorch_1.11_code/scripts; bash pre_stop.sh" ]
+                  command: [ "/bin/bash", "-c", "cd /job/code/scripts; bash pre_stop.sh" ]
             resources:
               limits:
                 huawei.com/Ascend910: 4
@@ -87,7 +87,7 @@ spec:
           - name: code
             nfs:
               server: 127.0.0.1
-              path: "/data/atlas_dls/public/code/"
+              path: "/data/atlas_dls/public/code/GPT-3_for_PyTorch_1.11_code/"
           - name: data
             nfs:
               server: 127.0.0.1
@@ -148,14 +148,14 @@ spec:
             command:                                  # training command, which can be modified
               - /bin/bash
               - -c
-            args: ["cd /job/code/GPT-3_for_PyTorch_1.11_code; chmod +x scripts/train_start.sh; bash scripts/train_start.sh /job/code/GPT-3_for_PyTorch_1.11_code /job/output 6000 --num-layers=8 --hidden-size=12288 --num-attention-heads=96 --micro-batch-size=4 --global-batch-size=96 --seq-length=1024 --max-position-embeddings=1024 --train-iters=500000 --lr-decay-iters=320000 --save=./checkpoint_dist --load=./checkpoint_dist --data-path=/job/data/enwiki/my-t5_text_sentence --tensor-model-parallel-size=8 --use-distributed-optimizer --pipeline-model-parallel-size=8 --vocab-file=/job/code/GPT-3_for_PyTorch_1.11_code/gpt2-vocab.json --merge-file=/job/code/GPT-3_for_PyTorch_1.11_code/gpt2-merges.txt --data-impl=mmap --split=949,50,1 --distributed-backend=nccl --lr=0.375e-5 --lr-decay-style=cosine --min-lr=0.375e-6 --weight-decay=0.1 --clip-grad=1.0 --lr-warmup-fraction=.01 --adam-beta1=0.9 --adam-beta2=0.95 --init-method-std=0.006 --recompute-granularity=full --recompute-method=uniform --no-gradient-accumulation-fusion --log-interval=1 --save-interval=10000 --eval-interval=1000 --eval-iters=10 --fp16;"]
+            args: ["cd /job/code; chmod +x scripts/train_start.sh; bash scripts/train_start.sh /job/code /job/output 6000 --num-layers=8 --hidden-size=12288 --num-attention-heads=96 --micro-batch-size=4 --global-batch-size=96 --seq-length=1024 --max-position-embeddings=1024 --train-iters=500000 --lr-decay-iters=320000 --save=./checkpoint_dist --load=./checkpoint_dist --data-path=/job/data/enwiki/my-t5_text_sentence --tensor-model-parallel-size=8 --use-distributed-optimizer --pipeline-model-parallel-size=8 --vocab-file=/job/code/gpt2-vocab.json --merge-file=/job/code/gpt2-merges.txt --data-impl=mmap --split=949,50,1 --distributed-backend=nccl --lr=0.375e-5 --lr-decay-style=cosine --min-lr=0.375e-6 --weight-decay=0.1 --clip-grad=1.0 --lr-warmup-fraction=.01 --adam-beta1=0.9 --adam-beta2=0.95 --init-method-std=0.006 --recompute-granularity=full --recompute-method=uniform --no-gradient-accumulation-fusion --log-interval=1 --save-interval=10000 --eval-interval=1000 --eval-iters=10 --fp16;"]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
             lifecycle:
               preStop:
                 exec:
-                  command: [ "/bin/bash", "-c", "cd /job/code/GPT-3_for_PyTorch_1.11_code/scripts; bash pre_stop.sh" ]
+                  command: [ "/bin/bash", "-c", "cd /job/code/scripts; bash pre_stop.sh" ]
             resources:
               limits:
                 huawei.com/Ascend910: 4
@@ -185,7 +185,7 @@ spec:
           - name: code
             nfs:
               server: 127.0.0.1
-              path: "/data/atlas_dls/public/code/"
+              path: "/data/atlas_dls/public/code/GPT-3_for_PyTorch_1.11_code/"
           - name: data
             nfs:
               server: 127.0.0.1

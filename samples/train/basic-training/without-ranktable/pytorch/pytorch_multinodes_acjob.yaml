@@ -48,7 +48,7 @@ spec:
             command:                           # training command, which can be modified
               - /bin/bash
               - -c
-            args: [ "cd /job/code/ResNet50_ID4149_for_PyTorch/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_ID4149_for_PyTorch /job/output main.py --data=/job/data/resnet50/imagenet --amp --arch=resnet50 --seed=49 -j=128 --world-size=1 --lr=1.6 --dist-backend='hccl' --multiprocessing-distributed --epochs=90 --batch-size=4096" ]
+            args: [ "cd /job/code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code /job/output main.py --data=/job/data/resnet50/imagenet --amp --arch=resnet50 --seed=49 -j=128 --world-size=1 --lr=1.6 --dist-backend='hccl' --multiprocessing-distributed --epochs=90 --batch-size=4096" ]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
@@ -76,7 +76,7 @@ spec:
           - name: code
             nfs:
               server: 127.0.0.1
-              path: "/data/atlas_dls/public/code/"
+              path: "/data/atlas_dls/public/code/ResNet50_ID4149_for_PyTorch/"
           - name: data
             nfs:
               server: 127.0.0.1
@@ -132,7 +132,7 @@ spec:
             command:                                  # training command, which can be modified
               - /bin/bash
               - -c
-            args: ["cd /job/code/ResNet50_ID4149_for_PyTorch/scripts; chmod +x train_start.sh; bash train_start.sh /job/code/ResNet50_ID4149_for_PyTorch /job/output main.py --data=/job/data/resnet50/imagenet --amp --arch=resnet50 --seed=49 -j=128 --world-size=1 --lr=1.6 --dist-backend='hccl' --multiprocessing-distributed --epochs=90 --batch-size=4096"]
+            args: ["cd /job/code/scripts; chmod +x train_start.sh; bash train_start.sh /job/code /job/output main.py --data=/job/data/resnet50/imagenet --amp --arch=resnet50 --seed=49 -j=128 --world-size=1 --lr=1.6 --dist-backend='hccl' --multiprocessing-distributed --epochs=90 --batch-size=4096"]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
@@ -160,7 +160,7 @@ spec:
           - name: code
             nfs:
               server: 127.0.0.1
-              path: "/data/atlas_dls/public/code/"
+              path: "/data/atlas_dls/public/code/ResNet50_ID4149_for_PyTorch/"
           - name: data
             nfs:
               server: 127.0.0.1

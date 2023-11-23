@@ -56,7 +56,7 @@ spec:
             command:                           # training command, which can be modified
               - /bin/bash
               - -c
-            args: ["/bin/bash", "-c", "cd /job/code/pangu_alpha/scripts; bash train_start.sh;"]
+            args: ["/bin/bash", "-c", "cd /job/code/scripts; bash train_start.sh;"]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
@@ -77,11 +77,11 @@ spec:
           - name: code
             nfs:
               server: 127.0.0.1
-              path: "/data/atlas_dls/code"
+              path: "/data/atlas_dls/code/pangu_alpha/"
           - name: data
             nfs:
               server: 127.0.0.1
-              path: "/data/atlas_dls/public/dataset/dataset_MS"
+              path: "/data/atlas_dls/public/dataset/dataset_MS/"
           - name: ascend-driver
             hostPath:
               path: /usr/local/Ascend/driver
@@ -133,11 +133,11 @@ spec:
             command:                       # training command, which can be modified
               - /bin/bash
               - -c
-            args: ["/bin/bash", "-c", "cd /job/code/pangu_alpha/scripts; bash train_start.sh;"]
+            args: ["/bin/bash", "-c", "cd /job/code/scripts; bash train_start.sh;"]
             lifecycle:
               preStop:
                 exec:
-                  command: [ "/bin/bash", "-c", "cd /job/code/pangu_alpha/scripts; bash pre_stop.sh" ]
+                  command: [ "/bin/bash", "-c", "cd /job/code/scripts; bash pre_stop.sh" ]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
@@ -173,11 +173,11 @@ spec:
           - name: code
             nfs:
               server: 127.0.0.1
-              path: "/data/atlas_dls/code"
+              path: "/data/atlas_dls/code/pangu_alpha/"
           - name: data
             nfs:
               server: 127.0.0.1
-              path: "/data/atlas_dls/public/dataset/dataset_MS"
+              path: "/data/atlas_dls/public/dataset/dataset_MS/"
           - name: ascend-driver
             hostPath:
               path: /usr/local/Ascend/driver
