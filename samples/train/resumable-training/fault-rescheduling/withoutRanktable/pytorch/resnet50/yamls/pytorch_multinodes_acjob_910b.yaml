@@ -59,10 +59,6 @@ spec:
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
-            lifecycle:
-              preStop:
-                exec:
-                  command: [ "/bin/bash", "-c", "cd /job/code/scripts; bash pre_stop.sh" ]
             resources:
               limits:
                 huawei.com/Ascend910: 2
@@ -152,10 +148,6 @@ spec:
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify
-            lifecycle:
-              preStop:
-                exec:
-                  command: [ "/bin/bash", "-c", "cd /job/code/scripts; bash pre_stop.sh" ]
             resources:
               limits:
                 huawei.com/Ascend910: 2

@@ -146,10 +146,6 @@ spec:
               - /bin/bash
               - -c
             args: ["/bin/bash", "-c", "cd /job/code/scripts; bash train_start.sh;"]
-            lifecycle:
-              preStop:
-                exec:
-                  command: [ "/bin/bash", "-c", "cd /job/code/resnet/scripts; bash pre_stop.sh" ]
             ports:                          # default value containerPort: 2222 name: ascendjob-port if not set
               - containerPort: 2222         # determined by user
                 name: ascendjob-port        # do not modify

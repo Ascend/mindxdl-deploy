@@ -70,10 +70,6 @@ spec:
           - name: INCLUSTER_FLAG                # whether training task run on multi nodes. If yes, set value to True, otherwise False
             value: "True"
           command: ["/bin/bash", "-c", "training-toolkit --test ms"] # Commands for running the training script. Ensure that the involved commands and paths exist on Docker.
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/bash", "-c", "cd /job/code/pangu_alpha/scripts; bash pre_stop.sh"]
           resources:
             requests:
               huawei.com/Ascend910: 1                                                # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
