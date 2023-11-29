@@ -79,10 +79,6 @@ spec:
           - "cd /job/code/scripts;chmod +x train_start.sh;bash train_start.sh /job/code/ /job/output/ main.py --data=/job/data/resnet50/imagenet --amp --arch=resnet50 --seed=49 -j=128 --lr=1.6 --dist-backend='hccl' --multiprocessing-distributed --epochs=90 --batch-size=1024 --resume=true;"
           #args: [ "while true; do sleep 30000; done;"  ]     # Comment out the preceding line and enable this line. You can manually run the training script in the container to facilitate debugging.
                                                               # The command is 'kubectl exec -it -n {namespace} {podname} bash'
-          lifecycle:
-            preStop:
-              exec:
-                command: [ "/bin/bash", "-c", "cd /job/code/scripts; bash pre_stop.sh" ]
           resources:
             requests:
               huawei.com/Ascend910: 8                 # Number of required NPUs. The maximum value is 8. You can add lines below to configure resources such as memory and CPU.
