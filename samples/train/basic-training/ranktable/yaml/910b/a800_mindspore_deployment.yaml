@@ -87,8 +87,6 @@ spec:
             mountPath: /job/output
           - name: ascend-driver
             mountPath: /usr/local/Ascend/driver
-          - name: ascend-add-ons
-            mountPath: /usr/local/Ascend/add-ons
           - name: localtime
             mountPath: /etc/localtime
       volumes:
@@ -110,9 +108,6 @@ spec:
       - name: ascend-driver
         hostPath:
           path: /usr/local/Ascend/driver                     # Configure the NPU driver and mount it to Docker.
-      - name: ascend-add-ons
-        hostPath:
-          path: /usr/local/Ascend/add-ons                    # Configure the add-ons driver of the NPU and mount it to Docker.
       - name: localtime
         hostPath:
           path: /etc/localtime                               # Configure the Docker time.

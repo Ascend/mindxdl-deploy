@@ -14,18 +14,6 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: fault-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
-  namespace: vcjob                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
-data:
-  fault-npus: |
-    {
-        "status":"initializing"
-    }
-  checkCode: ""
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
   name: reset-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
   namespace: vcjob                      # Name Space must be set to "vcjob"
 data:
@@ -97,8 +85,6 @@ spec:
           volumeMounts:
           - name: ascend-910-config
             mountPath: /user/serverid/devindex/config
-          - name: fault-config
-            mountPath: /user/restore/fault/config
           - name: reset-config
           - mountPath: /user/restore/reset/config
           - name: code
@@ -107,10 +93,6 @@ spec:
             mountPath: /job/data
           - name: ascend-driver
             mountPath: /usr/local/Ascend/driver
-          - name: ascend-add-ons
-            mountPath: /usr/local/Ascend/add-ons
-          - name: log-mindxelastic
-            mountPath: /var/log/mindx-dl/elastic
           - name: localtime
             mountPath: /etc/localtime
           - name: shm
@@ -121,9 +103,6 @@ spec:
         - name: ascend-910-config
           configMap:
             name: rings-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
-        - name: fault-config
-          configMap:
-            name: fault-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
         - name: reset-config
           configMap:
             name: reset-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
@@ -138,13 +117,6 @@ spec:
         - name: ascend-driver
           hostPath:
             path: /usr/local/Ascend/driver                     # Configure the NPU driver and mount it to Docker.
-        - name: ascend-add-ons
-          hostPath:
-            path: /usr/local/Ascend/add-ons                    # Configure the add-ons driver of the NPU and mount it to Docker.
-        - name: log-mindxelastic
-          hostPath:
-            path: /var/log/mindx-dl/elastic                    # Configure the path of log
-            type: Directory
         - name: localtime
           hostPath:
             path: /etc/localtime                               # Configure the Docker time.

@@ -95,8 +95,6 @@ spec:
             mountPath: /var/log/npu
           - name: ascend-driver
             mountPath: /usr/local/Ascend/driver
-          - name: ascend-add-ons
-            mountPath: /usr/local/Ascend/add-ons
           - name: localtime
             mountPath: /etc/localtime
         nodeSelector:
@@ -123,9 +121,6 @@ spec:
         - name: ascend-driver
           hostPath:
             path: /usr/local/Ascend/driver
-        - name: ascend-add-ons
-          hostPath:
-            path: /usr/local/Ascend/add-ons
         - name: localtime
           hostPath:
             path: /etc/localtime                      # Configure the Docker time.

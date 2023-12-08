@@ -149,8 +149,6 @@ spec:
               requests:
                 huawei.com/Ascend910: 2
             volumeMounts:
-            - name: ascend-server-config
-              mountPath: /user/serverid/devindex/config
             - name: code
               mountPath: /job/code
             - name: data
@@ -166,9 +164,6 @@ spec:
             - name: localtime
               mountPath: /etc/localtime
           volumes:
-          - name: ascend-server-config
-            configMap:
-              name: server-config-default-test-pytorch                  # Correspond to the ConfigMap name above.
           - name: code
             nfs:
               server: 127.0.0.1
