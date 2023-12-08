@@ -14,18 +14,6 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: fault-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
-  namespace: vcjob                      # Select a proper namespace based on the site requirements. (The namespaces of ConfigMap and Job must be the same. In addition, if the tjm component of MindX-add exists, the vcjob namespace cannot be used.)
-data:
-  fault-npus: |
-    {
-        "status":"initializing"
-    }
-  checkCode: ""
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
   name: reset-config-mindx-dls-test     # The value of JobName must be the same as the name attribute of the following job. The prefix fault-config- cannot be modified.
   namespace: vcjob                      # Name Space must be set to "vcjob"
 data:
@@ -120,14 +108,10 @@ spec:
             mountPath: /var/log/npu
           - name: ascend-driver
             mountPath: /usr/local/Ascend/driver
-          - name: ascend-add-ons
-            mountPath: /usr/local/Ascend/add-ons
           - name: dshm
             mountPath: /dev/shm
           - name: localtime
             mountPath: /etc/localtime
-          - name: fault-config
-            mountPath: /user/restore/fault/config
           - name: reset-config
             mountPath: /user/restore/reset/config
         nodeSelector:
@@ -136,9 +120,6 @@ spec:
         - name: ascend-910-config
           configMap:
             name: rings-config-mindx-dls-test         # Correspond to the ConfigMap name above.
-        - name: fault-config
-          configMap:
-            name: fault-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
         - name: reset-config
           configMap:
             name: reset-config-mindx-dls-test                  # Correspond to the ConfigMap name above.
@@ -160,9 +141,6 @@ spec:
         - name: ascend-driver
           hostPath:
             path: /usr/local/Ascend/driver
-        - name: ascend-add-ons
-          hostPath:
-            path: /usr/local/Ascend/add-ons
         - name: localtime
           hostPath:
             path: /etc/localtime                      # Configure the Docker time.
